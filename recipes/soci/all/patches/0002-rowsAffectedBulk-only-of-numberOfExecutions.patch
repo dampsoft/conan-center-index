@@ -1,0 +1,28 @@
+From 384950a09b63dc3814d0be39e1e69be1ed67b5ad Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jo=CC=88rn=20Reimerdes?= <joern.reimerdes@dampsoft.de>
+Date: Thu, 19 Dec 2019 13:54:49 +0100
+Subject: [PATCH] rowsAffectedBulk only of numberOfExecutions > 1
+
+---
+ src/backends/mysql/statement.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/backends/mysql/statement.cpp b/src/backends/mysql/statement.cpp
+index cc70e158..875bf026 100644
+--- a/src/backends/mysql/statement.cpp
++++ b/src/backends/mysql/statement.cpp
+@@ -255,10 +255,10 @@ mysql_statement_backend::execute(int number)
+                     query.clear();
+                 }
+             }
+-            rowsAffectedBulk_ = rowsAffectedBulkTemp;
+             if (numberOfExecutions > 1)
+             {
+                 // bulk
++                rowsAffectedBulk_ = rowsAffectedBulkTemp;
+                 return ef_no_data;
+             }
+         }
+-- 
+GitLab
+

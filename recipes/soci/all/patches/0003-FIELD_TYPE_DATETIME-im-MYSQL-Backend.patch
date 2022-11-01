@@ -1,0 +1,160 @@
+From 12aaa9233760bafddff40a3e3d5e7012b8d55498 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jo=CC=88rn=20Reimerdes?= <joern.reimerdes@dampsoft.de>
+Date: Fri, 20 Dec 2019 07:43:08 +0100
+Subject: [PATCH] FIELD_TYPE_DATETIME im MySQL-Backend als dt_string (nicht
+ dt_date) behandeln
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- damit wir nicht den EinschrÃ¤nkungen von std::tm unterliegen (nur
+  Sekundengenau).
+- Ã„nderung fÃ¼r Postgres wurde am 28.06.2017 durchgefÃ¼hrt
+
+timestamp und timestampz im PostgreSQL-Backend als dt_string (nicht
+dt_date) behandeln
+
+- damit wir diese ohne Informationsverlust in den ds::Decimal konvertieren
+  kÃ¶nnen.
+
+SOCI mit C++11 Ã¼bersetzen
+
+VS 2015 angepasst
+
+Boost zum Include-Dir der Backends hinzugefÃ¼gt
+---
+ cmake/SociBackend.cmake               |  1 +
+ include/soci/session.h                |  3 +++
+ src/backends/mysql/statement.cpp      |  2 +-
+ src/backends/postgresql/statement.cpp |  6 +++---
+ src/core/session.cpp                  | 10 +++++-----
+ 5 files changed, 13 insertions(+), 9 deletions(-)
+
+diff --git a/cmake/SociBackend.cmake b/cmake/SociBackend.cmake
+index 5d4ef0df..35b57fea 100644
+--- a/cmake/SociBackend.cmake
++++ b/cmake/SociBackend.cmake
+@@ -110,6 +110,7 @@ macro(soci_backend NAME)
+ 
+       # Backend-specific depedencies
+       set(THIS_BACKEND_DEPENDS_INCLUDE_DIRS ${${NAMEU}_DEPS_INCLUDE_DIRS})
++      list(APPEND THIS_BACKEND_DEPENDS_INCLUDE_DIRS "${Boost_INCLUDE_DIR}")
+       set(THIS_BACKEND_DEPENDS_LIBRARIES ${${NAMEU}_DEPS_LIBRARIES})
+       set(THIS_BACKEND_DEPENDS_DEFS ${${NAMEU}_DEPS_DEFS})
+ 
+diff --git a/include/soci/session.h b/include/soci/session.h
+index bcb1d7b4..3b82c523 100644
+--- a/include/soci/session.h
++++ b/include/soci/session.h
+@@ -190,6 +190,9 @@ public:
+     details::rowid_backend * make_rowid_backend();
+     details::blob_backend * make_blob_backend();
+ 
++    bool isFromPool() { return isFromPool_; }
++    std::size_t getPoolPosition() { return poolPosition_; }
++
+ private:
+     SOCI_NOT_COPYABLE(session)
+ 
+diff --git a/src/backends/mysql/statement.cpp b/src/backends/mysql/statement.cpp
+index 875bf026..0b06dee9 100644
+--- a/src/backends/mysql/statement.cpp
++++ b/src/backends/mysql/statement.cpp
+@@ -434,7 +434,6 @@ void mysql_statement_backend::describe_column(int colNum,
+     case FIELD_TYPE_TIMESTAMP:  //MYSQL_TYPE_TIMESTAMP:
+     case FIELD_TYPE_DATE:       //MYSQL_TYPE_DATE:
+     case FIELD_TYPE_TIME:       //MYSQL_TYPE_TIME:
+-    case FIELD_TYPE_DATETIME:   //MYSQL_TYPE_DATETIME:
+     case FIELD_TYPE_YEAR:       //MYSQL_TYPE_YEAR:
+     case FIELD_TYPE_NEWDATE:    //MYSQL_TYPE_NEWDATE:
+         type = dt_date;
+@@ -446,6 +445,7 @@ void mysql_statement_backend::describe_column(int colNum,
+     case FIELD_TYPE_TINY_BLOB:
+     case FIELD_TYPE_MEDIUM_BLOB:
+     case FIELD_TYPE_LONG_BLOB:
++    case FIELD_TYPE_DATETIME:   //MYSQL_TYPE_DATETIME:
+         type = dt_string;
+         break;
+     default:
+diff --git a/src/backends/postgresql/statement.cpp b/src/backends/postgresql/statement.cpp
+index 07804b21..506019b2 100644
+--- a/src/backends/postgresql/statement.cpp
++++ b/src/backends/postgresql/statement.cpp
+@@ -749,6 +749,9 @@ void postgresql_statement_backend::describe_column(int colNum, data_type & type,
+     case 114:  // json
+     case 17:   // bytea
+     case 2950: // uuid
++    case 1700: // numeric
++    case 1114: // timestamp
++    case 1184: // timestamptz
+         type = dt_string;
+         break;
+ 
+@@ -756,15 +759,12 @@ void postgresql_statement_backend::describe_column(int colNum, data_type & type,
+     case 703:  // reltime
+     case 1082: // date
+     case 1083: // time
+-    case 1114: // timestamp
+-    case 1184: // timestamptz
+     case 1266: // timetz
+         type = dt_date;
+         break;
+ 
+     case 700:  // float4
+     case 701:  // float8
+-    case 1700: // numeric
+         type = dt_double;
+         break;
+ 
+diff --git a/src/core/session.cpp b/src/core/session.cpp
+index 1bd07ba8..33685a4d 100644
+--- a/src/core/session.cpp
++++ b/src/core/session.cpp
+@@ -76,7 +76,7 @@ session::session()
+     : once(this), prepare(this), query_transformation_(NULL),
+       logger_(new standard_logger_impl),
+       uppercaseColumnNames_(false), backEnd_(NULL),
+-      isFromPool_(false), pool_(NULL)
++      isFromPool_(false), poolPosition_(-1), pool_(NULL)
+ {
+ }
+ 
+@@ -85,7 +85,7 @@ session::session(connection_parameters const & parameters)
+       logger_(new standard_logger_impl),
+       lastConnectParameters_(parameters),
+       uppercaseColumnNames_(false), backEnd_(NULL),
+-      isFromPool_(false), pool_(NULL)
++      isFromPool_(false), poolPosition_(-1), pool_(NULL)
+ {
+     open(lastConnectParameters_);
+ }
+@@ -96,7 +96,7 @@ session::session(backend_factory const & factory,
+     logger_(new standard_logger_impl),
+       lastConnectParameters_(factory, connectString),
+       uppercaseColumnNames_(false), backEnd_(NULL),
+-      isFromPool_(false), pool_(NULL)
++      isFromPool_(false), poolPosition_(-1), pool_(NULL)
+ {
+     open(lastConnectParameters_);
+ }
+@@ -107,7 +107,7 @@ session::session(std::string const & backendName,
+       logger_(new standard_logger_impl),
+       lastConnectParameters_(backendName, connectString),
+       uppercaseColumnNames_(false), backEnd_(NULL),
+-      isFromPool_(false), pool_(NULL)
++      isFromPool_(false), poolPosition_(-1), pool_(NULL)
+ {
+     open(lastConnectParameters_);
+ }
+@@ -117,7 +117,7 @@ session::session(std::string const & connectString)
+       logger_(new standard_logger_impl),
+       lastConnectParameters_(connectString),
+       uppercaseColumnNames_(false), backEnd_(NULL),
+-      isFromPool_(false), pool_(NULL)
++      isFromPool_(false), poolPosition_(-1), pool_(NULL)
+ {
+     open(lastConnectParameters_);
+ }
+-- 
+GitLab
+

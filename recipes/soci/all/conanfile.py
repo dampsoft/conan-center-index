@@ -68,15 +68,18 @@ class SociConan(ConanFile):
 
     def requirements(self):
         if self.options.with_sqlite3:
-            self.requires("sqlite3/3.38.0")
+            self.requires("sqlite3/3.39.3")
         if self.options.with_odbc and self.settings.os != "Windows":
             self.requires("odbc/2.3.9")
         if self.options.with_mysql:
-            self.requires("libmysqlclient/8.0.25")
+            if self.settings.os == "Windows":
+                self.requires("libmysqlclient/8.0.17")
+            else:
+                self.requires("libmysqlclient/8.0.30")
         if self.options.with_postgresql:
-            self.requires("libpq/13.4")
+            self.requires("libpq/14.2")
         if self.options.with_boost:
-            self.requires("boost/1.78.0")
+            self.requires("boost/1.79.0")
 
     @property
     def _minimum_compilers_version(self):
@@ -118,12 +121,17 @@ class SociConan(ConanFile):
         for patch in self.conan_data.get("patches", {}).get(self.version, []):
             tools.patch(**patch)
         cmakelists = os.path.join(self._source_subfolder, "CMakeLists.txt")
+        os.remove(os.path.join(self._source_subfolder, "cmake/modules/FindPostgreSQL.cmake"))
+        os.remove(os.path.join(self._source_subfolder, "cmake/modules/FindSQLite3.cmake"))
         tools.replace_in_file(cmakelists,
                               "set(CMAKE_MODULE_PATH ${SOCI_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})",
                               "list(APPEND CMAKE_MODULE_PATH ${SOCI_SOURCE_DIR}/cmake)")
         tools.replace_in_file(cmakelists,
                               "set(CMAKE_MODULE_PATH ${SOCI_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})",
                               "list(APPEND CMAKE_MODULE_PATH ${SOCI_SOURCE_DIR}/cmake/modules)")
+        tools.replace_in_file(os.path.join(self._source_subfolder, "src/core/soci_backends_config.h.in"),
+                              "#define DEFAULT_BACKENDS_PATH \"@CMAKE_INSTALL_FULL_LIBDIR@\"",
+                              "")
 
         # Remove hardcoded install_name_dir, it prevents relocatable shared lib on macOS
         soci_backend_cmake = os.path.join(self._source_subfolder, "cmake", "SociBackend.cmake")

@@ -1,0 +1,77 @@
+diff --git a/cmake/SociBackend.cmake b/cmake/SociBackend.cmake
+index b52f1de..7c8f21f 100644
+--- a/cmake/SociBackend.cmake
++++ b/cmake/SociBackend.cmake
+@@ -65,7 +65,7 @@ endmacro()
+ #
+ macro(soci_backend NAME)
+   parse_arguments(THIS_BACKEND
+-    "DEPENDS;DESCRIPTION;AUTHORS;MAINTAINERS;"
++    "DEPENDS;DESCRIPTION;AUTHORS;MAINTAINERS;TARGET_DEPENDS"
+     ""
+     ${ARGN})
+ 
+@@ -161,7 +161,7 @@ macro(soci_backend NAME)
+ 
+         target_link_libraries(${THIS_BACKEND_TARGET}
+           ${SOCI_CORE_TARGET}
+-          ${THIS_BACKEND_DEPENDS_LIBRARIES})
++          ${THIS_BACKEND_TARGET_DEPENDS})
+ 
+         if(WIN32)
+           set_target_properties(${THIS_BACKEND_TARGET}
+@@ -198,7 +198,7 @@ macro(soci_backend NAME)
+ 
+         # Still need to link the libraries for tests to work
+         target_link_libraries (${THIS_BACKEND_TARGET_STATIC}
+-          ${THIS_BACKEND_DEPENDS_LIBRARIES}
++          ${THIS_BACKEND_TARGET_DEPENDS}
+         )
+ 
+         set_target_properties(${THIS_BACKEND_TARGET_STATIC}
+diff --git a/src/backends/mysql/CMakeLists.txt b/src/backends/mysql/CMakeLists.txt
+index b2dcc9c..54814e8 100644
+--- a/src/backends/mysql/CMakeLists.txt
++++ b/src/backends/mysql/CMakeLists.txt
+@@ -12,4 +12,5 @@ soci_backend(MySQL
+   DEPENDS MySQL
+   DESCRIPTION "SOCI backend for MySQL"
+   AUTHORS "Pawel Aleksander Fedorynski"
+-  MAINTAINERS "Pawel Aleksander Fedorynski")
++  MAINTAINERS "Pawel Aleksander Fedorynski"
++  TARGET_DEPENDS MySQL::MySQL)
+diff --git a/src/backends/odbc/CMakeLists.txt b/src/backends/odbc/CMakeLists.txt
+index ce01953..bd01641 100644
+--- a/src/backends/odbc/CMakeLists.txt
++++ b/src/backends/odbc/CMakeLists.txt
+@@ -12,4 +12,5 @@ soci_backend(ODBC
+   DEPENDS ODBC
+   DESCRIPTION "SOCI backend for ODBC"
+   AUTHORS "Maciej Sobczak, Stephen Hutton, David Courtney"
+-  MAINTAINERS "Vadim Zeitlin, Mateusz Loskot, Maciej Sobczak")
++  MAINTAINERS "Vadim Zeitlin, Mateusz Loskot, Maciej Sobczak"
++  TARGET_DEPENDS objectbox::objectbox)
+diff --git a/src/backends/postgresql/CMakeLists.txt b/src/backends/postgresql/CMakeLists.txt
+index 44c27d3..ae5b185 100644
+--- a/src/backends/postgresql/CMakeLists.txt
++++ b/src/backends/postgresql/CMakeLists.txt
+@@ -27,6 +27,7 @@ soci_backend(PostgreSQL
+   DEPENDS PostgreSQL
+   DESCRIPTION "SOCI backend for PostgreSQL"
+   AUTHORS "Maciej Sobczak, Stephen Hutton"
+-  MAINTAINERS "Mateusz Loskot")
++  MAINTAINERS "Mateusz Loskot"
++  TARGET_DEPENDS PostgreSQL::PostgreSQL)
+ 
+ boost_report_value(SOCI_POSTGRESQL_NOSINLGEROWMODE)
+diff --git a/src/backends/sqlite3/CMakeLists.txt b/src/backends/sqlite3/CMakeLists.txt
+index cd90b7a..14ab1c4 100644
+--- a/src/backends/sqlite3/CMakeLists.txt
++++ b/src/backends/sqlite3/CMakeLists.txt
+@@ -13,4 +13,5 @@ soci_backend(SQLite3
+   DEPENDS SQLite3
+   DESCRIPTION "SOCI backend for SQLite 3"
+   AUTHORS "Maciej Sobczak, Stephen Hutton, David Courtney"
+-  MAINTAINERS "Maciej Sobczak, Mateusz Loskot")
++  MAINTAINERS "Maciej Sobczak, Mateusz Loskot"
++  TARGET_DEPENDS SQLite::SQLite)
