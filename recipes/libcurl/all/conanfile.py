@@ -136,7 +136,7 @@ class LibcurlConan(ConanFile):
 
     @property
     def _is_using_cmake_build(self):
-        return is_msvc(self) or self._is_win_x_android
+        return is_msvc(self) or self._is_win_x_android or is_apple_os(self)
 
     @property
     def _has_zstd_option(self):
@@ -152,6 +152,7 @@ class LibcurlConan(ConanFile):
         self.copy("lib_Makefile_add.am")
         for patch in self.conan_data.get("patches", {}).get(self.version, []):
             self.copy(patch["patch_file"])
+        self.copy("cacert.pem")
 
     def config_options(self):
         if Version(self.version) < "7.10.4":
@@ -219,7 +220,6 @@ class LibcurlConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
                   destination=self._source_subfolder, strip_root=True)
-        download(self, "https://curl.haxx.se/ca/cacert.pem", "cacert.pem", verify=True)
 
     # TODO: remove imports once rpath of shared libs of libcurl dependencies fixed on macOS
     def imports(self):
@@ -597,8 +597,8 @@ class LibcurlConan(ConanFile):
         cmake.build()
 
     def package(self):
-        self.copy("COPYING", dst="licenses", src=self._source_subfolder)
-        self.copy("cacert.pem", dst="res")
+        self.copy("COPYING", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        self.copy("cacert.pem", src=self.source_folder, dst=os.path.join(self.package_folder, "res"))
         if self._is_using_cmake_build:
             cmake = self._configure_cmake()
             cmake.install()
