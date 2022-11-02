@@ -152,7 +152,6 @@ class LibcurlConan(ConanFile):
         self.copy("lib_Makefile_add.am")
         for patch in self.conan_data.get("patches", {}).get(self.version, []):
             self.copy(patch["patch_file"])
-        self.copy("cacert.pem")
 
     def config_options(self):
         if Version(self.version) < "7.10.4":
@@ -220,6 +219,7 @@ class LibcurlConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
                   destination=self._source_subfolder, strip_root=True)
+        download(self, "https://curl.haxx.se/ca/cacert.pem", "cacert.pem", verify=True)
 
     # TODO: remove imports once rpath of shared libs of libcurl dependencies fixed on macOS
     def imports(self):
