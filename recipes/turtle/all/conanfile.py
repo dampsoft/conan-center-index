@@ -16,7 +16,7 @@ class TurtleConan(ConanFile):
         return "source_subfolder"
 
     def requirements(self):
-        self.requires("boost/1.73.0")
+        self.requires("boost/1.79.0")
 
     def package_id(self):
         self.info.header_only()
