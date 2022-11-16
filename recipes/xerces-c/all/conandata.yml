@@ -11,16 +11,10 @@ sources:
 patches:
   "3.2.4":
     - patch_file: "patches/0001-remove-test-samples-324.patch"
-      base_path: "source_subfolder"
     - patch_file: "patches/0002-find-icu-programs.patch"
-      base_path: "source_subfolder"
   "3.2.3":
     - patch_file: "patches/0001-remove-test-samples.patch"
-      base_path: "source_subfolder"
     - patch_file: "patches/0002-find-icu-programs.patch"
-      base_path: "source_subfolder"
   "3.2.2":
     - patch_file: "patches/0001-remove-test-samples.patch"
-      base_path: "source_subfolder"
     - patch_file: "patches/0002-find-icu-programs.patch"
-      base_path: "source_subfolder"

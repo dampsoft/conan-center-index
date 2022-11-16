@@ -1,4 +1,5 @@
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.env import Environment, VirtualBuildEnv
 from conan.tools.files import apply_conandata_patches, collect_libs, copy, export_conandata_patches, get, replace_in_file, rmdir, save
@@ -51,6 +52,8 @@ class LeptonicaConan(ConanFile):
             del self.options.fPIC
 
     def configure(self):
+        if self.options.with_tiff:
+            self.options["libtiff"].jpeg = self.options.with_jpeg
         if self.options.shared:
             try:
                 del self.options.fPIC
@@ -70,7 +73,7 @@ class LeptonicaConan(ConanFile):
 
     def requirements(self):
         if self.options.with_zlib:
-            self.requires("zlib/1.2.12")
+            self.requires("zlib/1.2.13")
         if self.options.with_gif:
             self.requires("giflib/5.2.1")
         if self.options.with_jpeg == "libjpeg":
@@ -81,15 +84,19 @@ class LeptonicaConan(ConanFile):
             self.requires("libpng/1.6.38")
         if self.options.with_tiff:
             self.requires("libtiff/4.4.0")
-            self.options["libtiff"].jpeg = self.options.with_jpeg
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_webp:
             self.requires("libwebp/1.2.4")
 
+    def validate(self):
+        libtiff = self.dependencies["libtiff"]
+        if libtiff.options.jpeg != self.info.options.with_jpeg:
+            raise ConanInvalidConfiguration(f"{self.ref} requires option value {self.name}:with_jpeg equal to libtiff:jpeg.")
+
     def build_requirements(self):
         if self.options.with_webp or self.options.with_openjpeg:
-            self.tool_requires("pkgconf/1.7.4")
+            self.tool_requires("pkgconf/1.9.3")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
