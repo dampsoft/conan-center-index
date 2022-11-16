@@ -68,9 +68,9 @@ class XercesCConan(ConanFile):
 
     def requirements(self):
         if "icu" in (self.options.transcoder, self.options.message_loader):
-            self.requires("icu/71.1")
+            self.requires("icu/72.1")
         if self.options.network_accessor == "curl":
-            self.requires("libcurl/7.85.0")
+            self.requires("libcurl/7.86.0")
 
     def _validate(self, option, value, os):
         """
@@ -100,7 +100,7 @@ class XercesCConan(ConanFile):
 
     def build_requirements(self):
         if hasattr(self, "settings_build") and self.options.message_loader == "icu":
-            self.tool_requires("icu/71.1")
+            self.tool_requires("icu/72.1")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
