@@ -400,7 +400,6 @@ class QtConan(ConanFile):
             self.requires("md4c/0.4.8")
 
     def build_requirements(self):
-        self.build_requires("cmake/3.23.2")
         self.build_requires("ninja/1.11.0")
         self.build_requires("pkgconf/1.7.4")
         if self.settings.os == "Windows":

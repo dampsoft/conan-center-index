@@ -89,6 +89,8 @@ class WaylandConan(ConanFile):
         tc.project_options["libraries"] = self.options.enable_libraries
         tc.project_options["dtd_validation"] = self.options.enable_dtd_validation
         tc.project_options["documentation"] = False
+        tc.c = os.environ["CC"]
+        tc.cpp = os.environ["CXX"]
         if cross_building(self):
             tc.project_options["build.pkg_config_path"] = self.generators_folder
         if Version(self.version) >= "1.18.91":

@@ -101,6 +101,8 @@ class XkbcommonConan(ConanFile):
         tc.project_options["enable-docs"] = False
         tc.project_options["enable-wayland"] = self.options.get_safe("with_wayland", False)
         tc.project_options["enable-x11"] = self.options.with_x11
+        tc.c = os.environ["CC"]
+        tc.cpp = os.environ["CXX"]
         if self._has_xkbregistry_option:
             tc.project_options["enable-xkbregistry"] = self.options.xkbregistry
         if self._has_build_profile:
