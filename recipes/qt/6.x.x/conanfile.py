@@ -353,9 +353,9 @@ class QtConan(ConanFile):
             if self.options.with_libjpeg == "libjpeg-turbo":
                 self.requires("libjpeg-turbo/2.1.3")
             else:
-                self.requires("libjpeg/9d")
+                self.requires("libjpeg/9e")
         if self.options.get_safe("with_libpng", False) and not self.options.multiconfiguration:
-            self.requires("libpng/1.6.37")
+            self.requires("libpng/1.6.38")
         if self.options.with_sqlite3 and not self.options.multiconfiguration:
             self.requires("sqlite3/3.39.2")
             self.options["sqlite3"].enable_column_metadata = True

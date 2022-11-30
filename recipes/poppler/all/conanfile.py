@@ -109,17 +109,17 @@ class PopplerConan(ConanFile):
         if self.options.with_lcms:
             self.requires("lcms/2.13.1")
         if self.options.with_libjpeg == "libjpeg":
-            self.requires("libjpeg/9d")
+            self.requires("libjpeg/9e")
         if self.options.with_png:
-            self.requires("libpng/1.6.37")
+            self.requires("libpng/1.6.38")
         if self.options.with_tiff:
             self.requires("libtiff/4.3.0")
         if self.options.splash:
-            self.requires("boost/1.79.0")
+            self.requires("boost/1.80.0")
         if self.options.with_libcurl:
             self.requires("libcurl/7.84.0")
         if self.options.with_zlib:
-            self.requires("zlib/1.2.12")
+            self.requires("zlib/1.2.13")
 
     @property
     def _minimum_compilers_version(self):
