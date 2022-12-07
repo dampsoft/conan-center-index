@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4)
 project(cmake_wrapper)
 
 include(conanbuildinfo.cmake)
-conan_basic_setup(TARGETS)
+conan_basic_setup(TARGETS KEEP_RPATHS)
 
 if(BUILD_SHARED_LIBS)
     if(MSVC)
