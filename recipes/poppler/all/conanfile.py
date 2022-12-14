@@ -25,7 +25,6 @@ class PopplerConan(ConanFile):
         "with_glib": [True, False],
         "with_gobject_introspection": [True, False],
         "with_qt": [True, False],
-        "with_gtk": [True, False],
         "with_libiconv": [True, False],
         "with_openjpeg": [True, False],
         "with_lcms": [True, False],
@@ -47,7 +46,6 @@ class PopplerConan(ConanFile):
         "with_glib": False,
         "with_gobject_introspection": True,
         "with_qt": False,
-        "with_gtk": False,
         "with_libiconv": True,
         "with_openjpeg": True,
         "with_lcms": True,
@@ -83,7 +81,6 @@ class PopplerConan(ConanFile):
             del self.options.with_glib
         if not self.options.get_safe("with_glib"):
             del self.options.with_gobject_introspection
-            del self.options.with_gtk
         if not self.options.cpp:
             del self.options.with_libiconv
 
@@ -102,8 +99,6 @@ class PopplerConan(ConanFile):
             self.requires("gobject-introspection/1.72.0")
         if self.options.with_qt:
             self.requires("qt/6.3.1")
-        if self.options.get_safe("with_gtk"):
-            self.requires("gtk/4.7.0")
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
@@ -187,7 +182,11 @@ class PopplerConan(ConanFile):
         self._cmake.definitions["ENABLE_UTILS"] = False
         self._cmake.definitions["ENABLE_CPP"] = self.options.cpp
 
-        self._cmake.definitions["ENABLE_SPLASH"] = self.options.splash
+        if tools.Version(self.version) < "22.12.0":
+            self._cmake.definitions["ENABLE_SPLASH"] = self.options.splash
+        else:
+            self._cmake.definitions["ENABLE_BOOST"] = self.options.splash
+            
         self._cmake.definitions["FONT_CONFIGURATION"] = self.options.fontconfiguration
         self._cmake.definitions["ENABLE_JPEG"] = self.options.with_libjpeg
         self._cmake.definitions["WITH_PNG"] = self.options.with_png
@@ -196,7 +195,6 @@ class PopplerConan(ConanFile):
         self._cmake.definitions["WITH_Cairo"] = self.options.with_cairo
         self._cmake.definitions["ENABLE_GLIB"] = self.options.get_safe("with_glib", False)
         self._cmake.definitions["ENABLE_GOBJECT_INTROSPECTION"] = self.options.get_safe("with_gobject_introspection", False)
-        self._cmake.definitions["WITH_GTK"] = self.options.get_safe("with_gtk", False)
         self._cmake.definitions["WITH_Iconv"] = self.options.get_safe("with_libiconv")
         self._cmake.definitions["ENABLE_ZLIB"] = self.options.with_zlib
         self._cmake.definitions["ENABLE_LIBOPENJPEG"] = "openjpeg2" if self.options.with_openjpeg else "none"
@@ -307,8 +305,6 @@ class PopplerConan(ConanFile):
             self.cpp_info.components["libpoppler-glib"].libs = ["poppler-glib"]
             self.cpp_info.components["libpoppler-glib"].names["pkg_config"] = "poppler-glib"
             self.cpp_info.components["libpoppler-glib"].requires = ["libpoppler-cairo", "glib::glib"]
-            if self.options.get_safe("with_gtk"):
-                self.cpp_info.components["libpoppler-glib"].requires.append("gtk::gtk")
             if self.options.get_safe("with_gobject_introspection"):
                 self.cpp_info.components["libpoppler-glib"].requires.append("gobject-introspection::gobject-introspection")
 
