@@ -42,4 +42,5 @@ patches:
       base_path: "source_subfolder"
     - patch_file: "patches/22/0003-add-POPPLER_DATADIR-environment-variable.patch"
       base_path: "source_subfolder"
-
+    - patch_file: "patches/22/0004-cmake-require-qt.patch"
+      base_path: "source_subfolder"
