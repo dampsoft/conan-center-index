@@ -63,23 +63,24 @@ class PopplerConan(ConanFile):
 
     def export_sources(self):
         export_conandata_patches(self)
+        copy(self, "FindOpenJPEG.cmake", self.recipe_folder, self.export_sources_folder)
 
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def config_options(self):
         if self.settings.os == "Windows":
-            del self.options.fPIC
+            self.options.rm_safe("fPIC")
 
     def configure(self):
         if self.options.shared:
-            del self.options.fPIC
+            self.options.rm_safe("fPIC")
         if not self.options.with_cairo:
-            del self.options.with_glib
+            self.options.rm_safe("with_glib")
         if not self.options.get_safe("with_glib"):
-            del self.options.with_gobject_introspection
+            self.options.rm_safe("with_gobject_introspection")
         if not self.options.cpp:
-            del self.options.with_libiconv
+            self.options.rm_safe("with_libiconv")
 
     def requirements(self):
         self.requires("poppler-data/0.4.11")
@@ -124,25 +125,25 @@ class PopplerConan(ConanFile):
         }
 
     def validate(self):
-        if self.options.fontconfiguration == "win32" and self.settings.os != "Windows":
+        if self.info.options.fontconfiguration == "win32" and self.settings.os != "Windows":
             raise ConanInvalidConfiguration("'win32' option of fontconfig is only available on Windows")
 
         # C++ standard required
-        if self.settings.compiler.get_safe("cppstd"):
+        if self.info.settings.compiler.get_safe("cppstd"):
             check_min_cppstd(self, 14)
 
         minimum_version = self._minimum_compilers_version.get(str(self.settings.compiler), False)
         if not minimum_version:
             self.output.warn("C++14 support required. Your compiler is unknown. Assuming it supports C++14.")
-        elif Version(self.settings.compiler.version) < minimum_version:
+        elif Version(self.info.settings.compiler.version) < minimum_version:
             raise ConanInvalidConfiguration("C++14 support required, which your compiler does not support.")
 
-        if self.options.with_nss:
+        if self.info.options.with_nss:
             # FIXME: missing nss recipe
             raise ConanInvalidConfiguration("nss is not (yet) available on cci")
 
     def build_requirements(self):
-        self.build_requires("pkgconf/1.7.4")
+        self.tool_requires("pkgconf/1.7.4")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
@@ -164,6 +165,8 @@ class PopplerConan(ConanFile):
 
     def _patch_sources(self):
         apply_conandata_patches(self)
+
+        copy(self, "FindOpenJPEG.cmake", self.export_sources_folder, os.path.join(self.source_folder, "cmake", "modules"))
 
         if Version(self.version) < "22.07.0":
             replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
@@ -200,9 +203,6 @@ class PopplerConan(ConanFile):
         tc.variables["WITH_Iconv"] = self.options.get_safe("with_libiconv")
         tc.variables["ENABLE_ZLIB"] = self.options.with_zlib
         tc.variables["ENABLE_LIBOPENJPEG"] = "openjpeg2" if self.options.with_openjpeg else "none"
-        if self.options.with_openjpeg:
-            # FIXME: openjpeg's cmake_find_package should provide these variables
-            tc.variables["OPENJPEG_MAJOR_VERSION"] = Version(self.requires["openjpeg"].ref.version).major
         tc.variables["ENABLE_CMS"] = "lcms2" if self.options.with_lcms else "none"
         tc.variables["ENABLE_LIBCURL"] = self.options.with_libcurl
 
