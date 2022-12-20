@@ -1,8 +1,9 @@
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
+from conan.tools.build import check_min_cppstd, cross_building
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
-from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, replace_in_file
+from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, replace_in_file, rmdir
 from conan.tools.scm import Version
-from conan.tools.build import cross_building, check_min_cppstd
 import os
 
 required_conan_version = ">=1.52.0"
@@ -151,17 +152,17 @@ class PopplerConan(ConanFile):
 
     @property
     def _dct_decoder(self):
-        if self.options.with_libjpeg == False:
-            return "none"
-        else:
+        if self.options.with_libjpeg:
             return str(self.options.with_libjpeg)
+
+        return "none"
 
     @property
     def _cppstd_required(self):
         if self.options.with_qt and Version(self.deps_cpp_info["qt"].version).major == "6":
             return 17
-        else:
-            return 14
+
+        return 14
 
     def _patch_sources(self):
         apply_conandata_patches(self)
@@ -191,7 +192,7 @@ class PopplerConan(ConanFile):
             tc.variables["ENABLE_SPLASH"] = self.options.splash
         else:
             tc.variables["ENABLE_BOOST"] = self.options.splash
-            
+
         tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
         tc.variables["WITH_JPEG"] = self.options.with_libjpeg
         tc.variables["WITH_PNG"] = self.options.with_png
@@ -298,10 +299,10 @@ class PopplerConan(ConanFile):
 
         if self.options.with_qt:
             qt_major = Version(self.deps_cpp_info["qt"].version).major
-            self.cpp_info.components["libpoppler-qt"].libs = ["poppler-qt{}".format(qt_major)]
-            self.cpp_info.components["libpoppler-qt"].names["pkg_config"] = "poppler-qt{}".format(qt_major)
+            self.cpp_info.components["libpoppler-qt"].libs = [f"poppler-qt{qt_major}"]
+            self.cpp_info.components["libpoppler-qt"].names["pkg_config"] = f"poppler-qt{qt_major}"
             self.cpp_info.components["libpoppler-qt"].requires = ["libpoppler", "qt::qtCore", "qt::qtGui", "qt::qtWidgets"]
 
         datadir = self.deps_user_info["poppler-data"].datadir
-        self.output.info("Setting POPPLER_DATADIR env var: {}".format(datadir))
+        self.output.info(f"Setting POPPLER_DATADIR env var: {datadir}")
         self.env_info.POPPLER_DATADIR = datadir
