@@ -17,7 +17,7 @@ patches:
       patch_type: "conan"
       patch_description: "Adjust to FindOpenJPEG.cmake"
   "21.07.0":
-    - patch_file: "patches/21/0001-cmake-use-PROJECT_SOURCE_DIR-fix-CMAKE_MODULE_PATH.patch"
+    - patch_file: "patches/21/0001-require-packages.patch"
       patch_type: "conan"
       patch_description: "Use cmake targets"
     - patch_file: "patches/21/0004-add-POPPLER_DATADIR-environment-variable.patch"
@@ -29,3 +29,6 @@ patches:
     - patch_file: "patches/21/0006-Adjust-OpenJPEG-variables-to-FindOpenJPEG.cmake.patch"
       patch_type: "conan"
       patch_description: "Adjust to FindOpenJPEG.cmake"
+    - patch_file: "patches/21/0007-fix-freetype-include.patch"
+      patch_type: "conan"
+      patch_description: "Properly include freetype include dir"
