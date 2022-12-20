@@ -94,7 +94,7 @@ class PopplerConan(ConanFile):
         if self.options.with_cairo:
             self.requires("cairo/1.17.4")
         if self.options.get_safe("with_glib"):
-            self.requires("glib/2.73.2")
+            self.requires("glib/2.74.1")
         if self.options.get_safe("with_gobject_introspection"):
             self.requires("gobject-introspection/1.72.0")
         if self.options.with_qt:
@@ -102,19 +102,19 @@ class PopplerConan(ConanFile):
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
-            self.requires("lcms/2.13.1")
+            self.requires("lcms/2.14")
         if self.options.with_libjpeg == "libjpeg":
-            self.requires("libjpeg/9d")
+            self.requires("libjpeg/9e")
         if self.options.with_png:
-            self.requires("libpng/1.6.37")
+            self.requires("libpng/1.6.39")
         if self.options.with_tiff:
-            self.requires("libtiff/4.3.0")
+            self.requires("libtiff/4.4.0")
         if self.options.splash:
-            self.requires("boost/1.79.0")
+            self.requires("boost/1.80.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/7.84.0")
+            self.requires("libcurl/7.86.0")
         if self.options.with_zlib:
-            self.requires("zlib/1.2.12")
+            self.requires("zlib/1.2.13")
 
     @property
     def _minimum_compilers_version(self):
