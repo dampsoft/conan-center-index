@@ -1,3 +1,9 @@
+commit 94509214b1c2cc3e2a643bdd4472ae28a143cea2
+Author: Rasmus Thomsen <rasmus.thomsen@dampsoft.de>
+Date:   Tue Dec 20 11:58:13 2022 +0100
+
+    Hard require Qt5 and Qt6, instead of just printing a warning
+
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 index c53a6265..b2139bca 100644
 --- a/CMakeLists.txt
