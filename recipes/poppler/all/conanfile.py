@@ -1,8 +1,9 @@
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
+from conan.tools.apple import is_apple_os
 from conan.tools.build import check_min_cppstd, cross_building
-from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
-from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, replace_in_file, rmdir
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
+from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir
 from conan.tools.scm import Version
 import os
 
@@ -66,7 +67,7 @@ class PopplerConan(ConanFile):
         export_conandata_patches(self)
 
     def layout(self):
-        cmake_layout(self, src_folder="src")
+        cmake_layout(self)
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -79,7 +80,10 @@ class PopplerConan(ConanFile):
             self.options.rm_safe("with_glib")
         if not self.options.get_safe("with_glib"):
             self.options.rm_safe("with_gobject_introspection")
-        if not self.options.cpp:
+        if self.options.cpp:
+            if is_apple_os(self):
+                self.options.with_libiconv = True
+        else:
             self.options.rm_safe("with_libiconv")
 
     def requirements(self):
@@ -171,9 +175,6 @@ class PopplerConan(ConanFile):
 
         return 14
 
-    def _patch_sources(self):
-        apply_conandata_patches(self)
-
     def generate(self):
         tc = CMakeToolchain(self)
 
@@ -200,7 +201,7 @@ class PopplerConan(ConanFile):
         tc.variables["WITH_Cairo"] = self.options.with_cairo
         tc.variables["ENABLE_GLIB"] = self.options.get_safe("with_glib", False)
         tc.variables["ENABLE_GOBJECT_INTROSPECTION"] = self.options.get_safe("with_gobject_introspection", False)
-        tc.variables["WITH_Iconv"] = self.options.get_safe("with_libiconv")
+        tc.variables["WITH_Iconv"] = self.options.get_safe("with_libiconv", False)
         tc.variables["ENABLE_ZLIB"] = self.options.with_zlib
         tc.variables["ENABLE_LIBOPENJPEG"] = "openjpeg2" if self.options.with_openjpeg else "none"
         tc.variables["ENABLE_CMS"] = "lcms2" if self.options.with_lcms else "none"
@@ -227,8 +228,12 @@ class PopplerConan(ConanFile):
             tc.variables["CMAKE_FIND_ROOT_PATH_MODE_LIBRARY"] = "BOTH"
         tc.generate()
 
+        deps = CMakeDeps(self)
+        deps.set_property("freetype", "cmake_target_name", "Freetype::Freetype")
+        deps.generate()
+
     def build(self):
-        self._patch_sources()
+        apply_conandata_patches(self)
         cmake = CMake(self)
         cmake.configure()
         cmake.build()

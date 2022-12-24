@@ -1,0 +1,34 @@
+From cfafc80f205428b3bc93fa0884855f80cdd8a704 Mon Sep 17 00:00:00 2001
+From: Rasmus Thomsen <oss@cogitri.dev>
+Date: Tue, 20 Dec 2022 13:28:29 +0100
+Subject: [PATCH] Adjust OpenJPEG variables to FindOpenJPEG.cmake
+
+---
+ CMakeLists.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9952ad9e..75e07d7e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -242,7 +242,7 @@ set(WITH_OPENJPEG FALSE)
+ if(ENABLE_LIBOPENJPEG STREQUAL "openjpeg2")
+   find_package(OpenJPEG REQUIRED)
+   set(WITH_OPENJPEG ${OpenJPEG_FOUND})
+-  if(NOT OpenJPEG_FOUND OR OPENJPEG_MAJOR_VERSION VERSION_LESS 2)
++  if(NOT OpenJPEG_FOUND OR OpenJPEG_VERSION_MAJOR VERSION_LESS 2)
+     message(FATAL_ERROR "Install libopenjpeg2 before trying to build poppler. You can also decide to use the internal unmaintained JPX decoder or none at all.")
+   endif()
+   set(HAVE_JPX_DECODER ON)
+@@ -310,7 +310,7 @@ if(TIFF_FOUND)
+   set(ENABLE_LIBTIFF ON)
+ endif()
+ if(OpenJPEG_FOUND)
+-  include_directories(SYSTEM ${OPENJPEG_INCLUDE_DIRS})
++  include_directories(SYSTEM ${OpenJPEG_INCLUDE_DIR})
+ endif()
+ if(LCMS2_FOUND)
+   include_directories(SYSTEM ${LCMS2_INCLUDE_DIR})
+-- 
+2.37.1 (Apple Git-137.1)
+
