@@ -7,7 +7,8 @@ from conan.tools.files import apply_conandata_patches, copy, export_conandata_pa
 from conan.tools.scm import Version
 import os
 
-required_conan_version = ">=1.53.0"
+# For CMakeDeps.set_property
+required_conan_version = ">=1.55.0"
 
 
 class PopplerConan(ConanFile):
@@ -67,7 +68,7 @@ class PopplerConan(ConanFile):
         export_conandata_patches(self)
 
     def layout(self):
-        cmake_layout(self)
+        cmake_layout(self, src_folder="src")
 
     def config_options(self):
         if self.settings.os == "Windows":
