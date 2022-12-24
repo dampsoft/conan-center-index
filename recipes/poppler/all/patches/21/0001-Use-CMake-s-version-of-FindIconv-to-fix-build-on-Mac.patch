@@ -1,0 +1,49 @@
+From 1769a0233a23073de5f42b98c9974ea55f134b3d Mon Sep 17 00:00:00 2001
+From: Rasmus Thomsen <oss@cogitri.dev>
+Date: Sat, 24 Dec 2022 15:47:22 +0100
+Subject: [PATCH] Use CMake's version of FindIconv to fix build on MacOS
+
+---
+ CMakeLists.txt     | 4 ++--
+ cpp/CMakeLists.txt | 3 +--
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d1d3653a..dc4fac65 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -236,8 +236,8 @@ endif()
+ 
+ if(ENABLE_CPP)
+   macro_optional_find_package(Iconv)
+-  set(ENABLE_CPP ${ICONV_FOUND})
+-  set(HAVE_ICONV ${ICONV_FOUND})
++  set(ENABLE_CPP ${Iconv_FOUND})
++  set(HAVE_ICONV ${Iconv_FOUND})
+ endif()
+ if(ENABLE_ZLIB)
+   find_package(ZLIB)
+diff --git a/cpp/CMakeLists.txt b/cpp/CMakeLists.txt
+index c37936b6..950555f2 100644
+--- a/cpp/CMakeLists.txt
++++ b/cpp/CMakeLists.txt
+@@ -1,7 +1,6 @@
+ include_directories(
+   ${CMAKE_CURRENT_SOURCE_DIR}
+   ${CMAKE_CURRENT_BINARY_DIR}
+-  ${ICONV_INCLUDE_DIR}
+ )
+ 
+ configure_file(poppler-version.h.in ${CMAKE_CURRENT_BINARY_DIR}/poppler-version.h @ONLY)
+@@ -31,7 +30,7 @@ if(MINGW AND BUILD_SHARED_LIBS)
+     get_target_property(POPPLER_CPP_SOVERSION poppler-cpp SOVERSION)
+     set_target_properties(poppler-cpp PROPERTIES SUFFIX "-${POPPLER_CPP_SOVERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+ endif()
+-target_link_libraries(poppler-cpp poppler ${ICONV_LIBRARIES})
++target_link_libraries(poppler-cpp poppler Iconv::Iconv)
+ install(TARGETS poppler-cpp RUNTIME DESTINATION bin LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+ 
+ install(FILES
+-- 
+2.37.1 (Apple Git-137.1)
+

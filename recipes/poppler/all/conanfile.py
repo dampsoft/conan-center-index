@@ -3,7 +3,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.build import check_min_cppstd, cross_building
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
-from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir
+from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm
 from conan.tools.scm import Version
 import os
 
@@ -149,6 +149,7 @@ class PopplerConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("pkgconf/1.9.3")
+        self.tool_requires("cmake/3.25.0")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
@@ -235,6 +236,10 @@ class PopplerConan(ConanFile):
 
     def build(self):
         apply_conandata_patches(self)
+
+        # Use CMake's built-in version of FindIconv.cmake to fix the build on MacOS
+        rm(self, "FindIconv.cmake", os.path.join(self.source_folder, "cmake", "modules"))
+
         cmake = CMake(self)
         cmake.configure()
         cmake.build()

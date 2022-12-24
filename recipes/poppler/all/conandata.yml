@@ -16,6 +16,9 @@ patches:
     - patch_file: "patches/22/0006-Adjust-OpenJPEG-variables-to-FindOpenJPEG.cmake.patch"
       patch_type: "conan"
       patch_description: "Correctly find OpenJPEG"
+    - patch_file: "patches/22/0001-Use-CMake-s-version-of-FindIconv-to-fix-build-on-Mac.patch"
+      patch_type: "portability"
+      patch_description: "Use CMake's FindIconv variables to fix the build on MacOS"
   "21.07.0":
     - patch_file: "patches/21/0001-require-packages.patch"
       patch_type: "conan"
@@ -29,3 +32,6 @@ patches:
     - patch_file: "patches/21/0006-Adjust-OpenJPEG-variables-to-FindOpenJPEG.cmake.patch"
       patch_type: "conan"
       patch_description: "Correctly find OpenJPEG"
+    - patch_file: "patches/21/0001-Use-CMake-s-version-of-FindIconv-to-fix-build-on-Mac.patch"
+      patch_type: "portability"
+      patch_description: "Use CMake's FindIconv variables to fix the build on MacOS"
