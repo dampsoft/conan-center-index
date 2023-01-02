@@ -1,15 +1,21 @@
-from conans import CMake, ConanFile, tools
-from conans.errors import ConanInvalidConfiguration
+from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
+from conan.tools.apple import is_apple_os
+from conan.tools.build import check_min_cppstd, cross_building
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
+from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm
+from conan.tools.scm import Version
 import os
 
-required_conan_version = ">=1.33.0"
+# For CMakeDeps.set_property
+required_conan_version = ">=1.55.0"
 
 
 class PopplerConan(ConanFile):
     name = "poppler"
     description = "Poppler is a PDF rendering library based on the xpdf-3.0 code base"
     homepage = "https://poppler.freedesktop.org/"
-    topics = ("conan", "poppler", "pdf", "rendering")
+    topics = "pdf", "rendering"
     license = "GPL-2.0-or-later", "GPL-3.0-or-later"
     url = "https://github.com/conan-io/conan-center-index"
 
@@ -58,31 +64,28 @@ class PopplerConan(ConanFile):
         "float": False,
     }
 
-    exports_sources = "CMakeLists.txt", "patches/**"
-    generators = "cmake", "cmake_find_package", "pkg_config"
-    _cmake = None
+    def export_sources(self):
+        export_conandata_patches(self)
 
-    @property
-    def _source_subfolder(self):
-        return "source_subfolder"
-
-    @property
-    def _build_subfolder(self):
-        return "build_subfolder"
+    def layout(self):
+        cmake_layout(self, src_folder="src")
 
     def config_options(self):
         if self.settings.os == "Windows":
-            del self.options.fPIC
+            self.options.rm_safe("fPIC")
 
     def configure(self):
         if self.options.shared:
-            del self.options.fPIC
+            self.options.rm_safe("fPIC")
         if not self.options.with_cairo:
-            del self.options.with_glib
+            self.options.rm_safe("with_glib")
         if not self.options.get_safe("with_glib"):
-            del self.options.with_gobject_introspection
-        if not self.options.cpp:
-            del self.options.with_libiconv
+            self.options.rm_safe("with_gobject_introspection")
+        if self.options.cpp:
+            if is_apple_os(self):
+                self.options.with_libiconv = True
+        else:
+            self.options.rm_safe("with_libiconv")
 
     def requirements(self):
         self.requires("poppler-data/0.4.11")
@@ -94,25 +97,25 @@ class PopplerConan(ConanFile):
         if self.options.with_cairo:
             self.requires("cairo/1.17.4")
         if self.options.get_safe("with_glib"):
-            self.requires("glib/2.73.2")
+            self.requires("glib/2.74.1")
         if self.options.get_safe("with_gobject_introspection"):
             self.requires("gobject-introspection/1.72.0")
         if self.options.with_qt:
-            self.requires("qt/6.3.1")
+            self.requires("qt/6.4.1")
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
-            self.requires("lcms/2.13.1")
+            self.requires("lcms/2.14")
         if self.options.with_libjpeg == "libjpeg":
             self.requires("libjpeg/9e")
         if self.options.with_png:
-            self.requires("libpng/1.6.38")
+            self.requires("libpng/1.6.39")
         if self.options.with_tiff:
-            self.requires("libtiff/4.3.0")
+            self.requires("libtiff/4.4.0")
         if self.options.splash:
             self.requires("boost/1.80.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/7.84.0")
+            self.requires("libcurl/7.86.0")
         if self.options.with_zlib:
             self.requires("zlib/1.2.13")
 
@@ -131,13 +134,13 @@ class PopplerConan(ConanFile):
             raise ConanInvalidConfiguration("'win32' option of fontconfig is only available on Windows")
 
         # C++ standard required
-        if self.settings.compiler.get_safe("cppstd"):
-            tools.check_min_cppstd(self, 14)
+        if self.settings.get_safe("compiler.cppstd"):
+            check_min_cppstd(self, self._cppstd_required)
 
         minimum_version = self._minimum_compilers_version.get(str(self.settings.compiler), False)
         if not minimum_version:
             self.output.warn("C++14 support required. Your compiler is unknown. Assuming it supports C++14.")
-        elif tools.Version(self.settings.compiler.version) < minimum_version:
+        elif Version(self.settings.compiler.version) < minimum_version:
             raise ConanInvalidConfiguration("C++14 support required, which your compiler does not support.")
 
         if self.options.with_nss:
@@ -145,111 +148,107 @@ class PopplerConan(ConanFile):
             raise ConanInvalidConfiguration("nss is not (yet) available on cci")
 
     def build_requirements(self):
-        self.build_requires("pkgconf/1.7.4")
+        self.tool_requires("pkgconf/1.9.3")
+        self.tool_requires("cmake/3.25.0")
 
     def source(self):
-        tools.get(**self.conan_data["sources"][self.version],
-                  destination=self._source_subfolder, strip_root=True)
+        get(self, **self.conan_data["sources"][self.version],
+                  destination=self.source_folder, strip_root=True)
 
     @property
     def _dct_decoder(self):
-        if self.options.with_libjpeg == False:
-            return "none"
-        else:
+        if self.options.with_libjpeg:
             return str(self.options.with_libjpeg)
+
+        return "none"
+
+    @property
+    def _qt_major(self):
+        return Version(self.dependencies["qt"].ref.version).major
+
+    @property
+    def _uses_qt6(self):
+        return self._qt_major == "6"
 
     @property
     def _cppstd_required(self):
-        if self.options.with_qt and tools.Version(self.deps_cpp_info["qt"].version).major == "6":
+        if self.options.with_qt and self._uses_qt6:
             return 17
+
+        return 14
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+
+        tc.variables["ENABLE_UNSTABLE_API_ABI_HEADERS"] = True
+        tc.variables["BUILD_GTK_TESTS"] = False
+        tc.variables["BUILD_QT5_TESTS"] = False
+        tc.variables["BUILD_QT6_TESTS"] = False
+        tc.variables["BUILD_CPP_TESTS"] = False
+        tc.variables["BUILD_MANUAL_TESTS"] = False
+
+        tc.variables["ENABLE_UTILS"] = False
+        tc.variables["ENABLE_CPP"] = self.options.cpp
+
+        if Version(self.version) < "22.12.0":
+            tc.variables["ENABLE_SPLASH"] = self.options.splash
         else:
-            return 14
+            tc.variables["ENABLE_BOOST"] = self.options.splash
 
-    def _configure_cmake(self):
-        if self._cmake:
-            return self._cmake
-        self._cmake = CMake(self)
+        tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
+        tc.variables["WITH_JPEG"] = self.options.with_libjpeg
+        tc.variables["WITH_PNG"] = self.options.with_png
+        tc.variables["WITH_TIFF"] = self.options.with_tiff
+        tc.variables["WITH_NSS3"] = self.options.with_nss
+        tc.variables["WITH_Cairo"] = self.options.with_cairo
+        tc.variables["ENABLE_GLIB"] = self.options.get_safe("with_glib", False)
+        tc.variables["ENABLE_GOBJECT_INTROSPECTION"] = self.options.get_safe("with_gobject_introspection", False)
+        tc.variables["WITH_Iconv"] = self.options.get_safe("with_libiconv", False)
+        tc.variables["ENABLE_ZLIB"] = self.options.with_zlib
+        tc.variables["ENABLE_LIBOPENJPEG"] = "openjpeg2" if self.options.with_openjpeg else "none"
+        tc.variables["ENABLE_CMS"] = "lcms2" if self.options.with_lcms else "none"
+        tc.variables["ENABLE_LIBCURL"] = self.options.with_libcurl
 
-        self._cmake.definitions["CMAKE_CXX_STANDARD"] = self._cppstd_required
+        tc.variables["POPPLER_DATADIR"] = self.deps_user_info["poppler-data"].datadir.replace("\\", "/")
+        tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
+        tc.variables["BUILD_CPP_TESTS"] = False
+        tc.variables["ENABLE_GTK_DOC"] = False
+        tc.variables["ENABLE_QT5"] = self.options.with_qt and not self._uses_qt6
+        tc.variables["ENABLE_QT6"] = self.options.with_qt and self._uses_qt6
 
-        self._cmake.definitions["ENABLE_UNSTABLE_API_ABI_HEADERS"] = True
-        self._cmake.definitions["BUILD_GTK_TESTS"] = False
-        self._cmake.definitions["BUILD_QT5_TESTS"] = False
-        self._cmake.definitions["BUILD_QT6_TESTS"] = False
-        self._cmake.definitions["BUILD_CPP_TESTS"] = False
-        self._cmake.definitions["BUILD_MANUAL_TESTS"] = False
-
-        self._cmake.definitions["ENABLE_UTILS"] = False
-        self._cmake.definitions["ENABLE_CPP"] = self.options.cpp
-
-        if tools.Version(self.version) < "22.12.0":
-            self._cmake.definitions["ENABLE_SPLASH"] = self.options.splash
-        else:
-            self._cmake.definitions["ENABLE_BOOST"] = self.options.splash
-            
-        self._cmake.definitions["FONT_CONFIGURATION"] = self.options.fontconfiguration
-        self._cmake.definitions["ENABLE_JPEG"] = self.options.with_libjpeg
-        self._cmake.definitions["WITH_PNG"] = self.options.with_png
-        self._cmake.definitions["WITH_TIFF"] = self.options.with_tiff
-        self._cmake.definitions["WITH_NSS3"] = self.options.with_nss
-        self._cmake.definitions["WITH_Cairo"] = self.options.with_cairo
-        self._cmake.definitions["ENABLE_GLIB"] = self.options.get_safe("with_glib", False)
-        self._cmake.definitions["ENABLE_GOBJECT_INTROSPECTION"] = self.options.get_safe("with_gobject_introspection", False)
-        self._cmake.definitions["WITH_Iconv"] = self.options.get_safe("with_libiconv")
-        self._cmake.definitions["ENABLE_ZLIB"] = self.options.with_zlib
-        self._cmake.definitions["ENABLE_LIBOPENJPEG"] = "openjpeg2" if self.options.with_openjpeg else "none"
-        if self.options.with_openjpeg:
-            # FIXME: openjpeg's cmake_find_package should provide these variables
-            self._cmake.definitions["OPENJPEG_MAJOR_VERSION"] = tools.Version(self.requires["openjpeg"].ref.version).major
-        self._cmake.definitions["ENABLE_CMS"] = "lcms2" if self.options.with_lcms else "none"
-        self._cmake.definitions["ENABLE_LIBCURL"] = self.options.with_libcurl
-
-        self._cmake.definitions["POPPLER_DATADIR"] = self.deps_user_info["poppler-data"].datadir.replace("\\", "/")
-        self._cmake.definitions["FONT_CONFIGURATION"] = self.options.fontconfiguration
-        self._cmake.definitions["BUILD_CPP_TESTS"] = False
-        self._cmake.definitions["ENABLE_GTK_DOC"] = False
-        self._cmake.definitions["ENABLE_QT5"] = self.options.with_qt and tools.Version(self.deps_cpp_info["qt"].version).major == "5"
-        self._cmake.definitions["ENABLE_QT6"] = self.options.with_qt and tools.Version(self.deps_cpp_info["qt"].version).major == "6"
-
-        self._cmake.definitions["ENABLE_CMS"] = "lcms2" if self.options.with_lcms else "none"
-        self._cmake.definitions["ENABLE_DCTDECODER"] = self._dct_decoder
-        self._cmake.definitions["USE_FLOAT"] = self.options.float
-        self._cmake.definitions["RUN_GPERF_IF_PRESENT"] = False
+        tc.variables["ENABLE_DCTDECODER"] = self._dct_decoder
+        tc.variables["USE_FLOAT"] = self.options.float
+        tc.variables["RUN_GPERF_IF_PRESENT"] = False
         if self.settings.os == "Windows":
-            self._cmake.definitions["ENABLE_RELOCATABLE"] = self.options.shared
-        self._cmake.definitions["EXTRA_WARN"] = False
+            tc.variables["ENABLE_RELOCATABLE"] = self.options.shared
+        tc.variables["EXTRA_WARN"] = False
 
         # Workaround for cross-build to at least iOS/tvOS/watchOS,
         # when dependencies are found with find_path() and find_library()
-        if tools.cross_building(self):
-            self._cmake.definitions["CMAKE_FIND_ROOT_PATH_MODE_INCLUDE"] = "BOTH"
-            self._cmake.definitions["CMAKE_FIND_ROOT_PATH_MODE_LIBRARY"] = "BOTH"
+        if cross_building(self):
+            tc.variables["CMAKE_FIND_ROOT_PATH_MODE_INCLUDE"] = "BOTH"
+            tc.variables["CMAKE_FIND_ROOT_PATH_MODE_LIBRARY"] = "BOTH"
+        tc.generate()
 
-        self._cmake.configure(build_folder=self._build_subfolder)
-        return self._cmake
-
-    def _patch_sources(self):
-        for patchdata in self.conan_data["patches"][self.version]:
-            tools.patch(**patchdata)
-        if tools.Version(self.version) < "21.07.0" and not self.options.shared:
-            poppler_global = os.path.join(self._source_subfolder, "cpp", "poppler-global.h")
-            tools.replace_in_file(poppler_global, "__declspec(dllimport)", "")
-            tools.replace_in_file(poppler_global, "__declspec(dllexport)", "")
-        if tools.Version(self.version) < "22.07.0":
-            tools.replace_in_file(os.path.join(self._source_subfolder, "CMakeLists.txt"),
-                    "FREETYPE_INCLUDE_DIRS",
-                    "Freetype_INCLUDE_DIRS")
+        deps = CMakeDeps(self)
+        deps.set_property("freetype", "cmake_target_name", "Freetype::Freetype")
+        deps.generate()
 
     def build(self):
-        self._patch_sources()
-        cmake = self._configure_cmake()
+        apply_conandata_patches(self)
+
+        # Use CMake's built-in version of FindIconv.cmake to fix the build on MacOS
+        rm(self, "FindIconv.cmake", os.path.join(self.source_folder, "cmake", "modules"))
+
+        cmake = CMake(self)
+        cmake.configure()
         cmake.build()
 
     def package(self):
-        self.copy("COPYING*", src=self._source_subfolder, dst="licenses")
-        cmake = self._configure_cmake()
+        copy(self, "COPYING*", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        cmake = CMake(self)
         cmake.install()
-        tools.rmdir(os.path.join(self.package_folder, "lib", "pkgconfig"))
+        rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
 
     def package_info(self):
         self.cpp_info.components["libpoppler"].libs = ["poppler"]
@@ -309,11 +308,11 @@ class PopplerConan(ConanFile):
                 self.cpp_info.components["libpoppler-glib"].requires.append("gobject-introspection::gobject-introspection")
 
         if self.options.with_qt:
-            qt_major = tools.Version(self.deps_cpp_info["qt"].version).major
-            self.cpp_info.components["libpoppler-qt"].libs = ["poppler-qt{}".format(qt_major)]
-            self.cpp_info.components["libpoppler-qt"].names["pkg_config"] = "poppler-qt{}".format(qt_major)
+            qt_major = self._qt_major
+            self.cpp_info.components["libpoppler-qt"].libs = [f"poppler-qt{qt_major}"]
+            self.cpp_info.components["libpoppler-qt"].names["pkg_config"] = f"poppler-qt{qt_major}"
             self.cpp_info.components["libpoppler-qt"].requires = ["libpoppler", "qt::qtCore", "qt::qtGui", "qt::qtWidgets"]
 
         datadir = self.deps_user_info["poppler-data"].datadir
-        self.output.info("Setting POPPLER_DATADIR env var: {}".format(datadir))
+        self.output.info(f"Setting POPPLER_DATADIR env var: {datadir}")
         self.env_info.POPPLER_DATADIR = datadir
