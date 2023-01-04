@@ -5,6 +5,7 @@ from conan.tools.build import check_min_cppstd, cross_building
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm
 from conan.tools.scm import Version
+from conan.tools.env import VirtualRunEnv
 import os
 
 # For CMakeDeps.set_property
@@ -233,6 +234,9 @@ class PopplerConan(ConanFile):
         deps = CMakeDeps(self)
         deps.set_property("freetype", "cmake_target_name", "Freetype::Freetype")
         deps.generate()
+
+        env = VirtualRunEnv(self)
+        env.generate(scope="build")
 
     def build(self):
         apply_conandata_patches(self)
