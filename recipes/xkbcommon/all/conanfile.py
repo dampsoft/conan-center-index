@@ -73,8 +73,7 @@ class XkbcommonConan(ConanFile):
             self.requires("libxml2/2.10.3")
         if self.options.get_safe("with_wayland"):
             self.requires("wayland/1.21.0")
-            if not self._has_build_profile:
-                self.requires("wayland-protocols/1.27")
+            self.requires("wayland-protocols/1.27")
 
     def validate(self):
         if self.info.settings.os not in ["Linux", "FreeBSD"]:
@@ -85,9 +84,6 @@ class XkbcommonConan(ConanFile):
         self.tool_requires("bison/3.8.2")
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
             self.tool_requires("pkgconf/1.9.3")
-        if self._has_build_profile and self.options.get_safe("with_wayland"):
-            self.tool_requires("wayland/1.21.0")
-            self.tool_requires("wayland-protocols/1.27")
 
     def layout(self):
         basic_layout(self, src_folder="src")
