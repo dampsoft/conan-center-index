@@ -8,10 +8,10 @@ Subject: [PATCH] Adjust OpenJPEG variables to FindOpenJPEG.cmake
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 95c33040..2895704a 100644
+index 3de278ef..83db90f4 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -250,7 +250,7 @@ set(WITH_OPENJPEG FALSE)
+@@ -288,7 +288,7 @@ set(WITH_OPENJPEG FALSE)
  if(ENABLE_LIBOPENJPEG STREQUAL "openjpeg2")
    find_package(OpenJPEG REQUIRED)
    set(WITH_OPENJPEG ${OpenJPEG_FOUND})
@@ -20,15 +20,15 @@ index 95c33040..2895704a 100644
      message(STATUS "Could NOT find openjpeg2.")
      message(FATAL_ERROR "Install libopenjpeg2 before trying to build poppler. You \
  can also decide to use the internal unmaintained JPX decoder or none at all.\n\
-@@ -502,7 +502,7 @@ if (OpenJPEG_FOUND)
-   )
-   set(poppler_LIBS ${poppler_LIBS} openjp2)
+@@ -595,7 +595,7 @@ add_library(poppler ${poppler_SRCS})
+ if (OpenJPEG_FOUND)
+   # check if we can remove this when we depend on newer openjpeg versions, 2.5 seems fixed
    # target openjp2 may lack interface include directories
--  include_directories(SYSTEM ${OPENJPEG_INCLUDE_DIRS})
-+  include_directories(SYSTEM ${OpenJPEG_INCLUDE_DIR})
- else ()
-   set(poppler_SRCS ${poppler_SRCS}
-     poppler/JPXStream.cc
+-  target_include_directories(poppler SYSTEM PRIVATE ${OPENJPEG_INCLUDE_DIRS})
++  target_include_directories(poppler SYSTEM PRIVATE ${OpenJPEG_INCLUDE_DIR})
+ endif()
+ if(USE_CMS)
+   target_include_directories(poppler SYSTEM PRIVATE ${LCMS2_INCLUDE_DIR})
 -- 
 2.37.1 (Apple Git-137.1)
 
