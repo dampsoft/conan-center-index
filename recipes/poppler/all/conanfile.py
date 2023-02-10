@@ -122,12 +122,20 @@ class PopplerConan(ConanFile):
     @property
     def _minimum_compilers_version(self):
         # Poppler requires C++14
-        return {
-            "Visual Studio": "15",
-            "gcc": "5",
-            "clang": "5",
-            "apple-clang": "5.1"
-        }
+        if Version(self.version) < "23":
+            return {
+                "Visual Studio": "15",
+                "gcc": "5",
+                "clang": "5",
+                "apple-clang": "5.1"
+            }
+        else:
+            return {
+                "Visual Studio": "16",
+                "gcc": "9",
+                "clang": "10",
+                "apple-clang": "11"
+            }
 
     def validate(self):
         if self.options.fontconfiguration == "win32" and self.settings.os != "Windows":
