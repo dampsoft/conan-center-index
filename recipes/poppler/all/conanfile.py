@@ -3,7 +3,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.build import check_min_cppstd, cross_building
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
-from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm
+from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm, replace_in_file
 from conan.tools.scm import Version
 import os
 
@@ -240,10 +240,16 @@ class PopplerConan(ConanFile):
 
         deps = CMakeDeps(self)
         deps.set_property("freetype", "cmake_target_name", "Freetype::Freetype")
+        if Version(self.version) < "23":
+            deps.set_property("freetype", "cmake_module_file_name", "FREETYPE")
         deps.generate()
 
     def build(self):
         apply_conandata_patches(self)
+
+        if Version(self.version) < "23" and self._uses_qt6:
+            # Qt might need a higher cppstd, so respect what conan sets
+            replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"), "set(CMAKE_CXX_STANDARD 14)", "")
 
         # Use CMake's built-in version of FindIconv.cmake to fix the build on MacOS
         rm(self, "FindIconv.cmake", os.path.join(self.source_folder, "cmake", "modules"))
