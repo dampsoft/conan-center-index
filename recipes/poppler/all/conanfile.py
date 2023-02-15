@@ -6,6 +6,7 @@ from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm, replace_in_file
 from conan.tools.scm import Version
 import os
+import functools
 
 # For CMakeDeps.set_property
 required_conan_version = ">=1.55.0"
@@ -171,6 +172,7 @@ class PopplerConan(ConanFile):
         return "none"
 
     @property
+    @functools.lru_cache(1)
     def _qt_major(self):
         return Version(self.dependencies["qt"].ref.version).major
 
@@ -247,7 +249,7 @@ class PopplerConan(ConanFile):
     def build(self):
         apply_conandata_patches(self)
 
-        if Version(self.version) < "23" and self._uses_qt6:
+        if Version(self.version) < "23" and self.options.with_qt and self._uses_qt6:
             # Qt might need a higher cppstd, so respect what conan sets
             replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"), "set(CMAKE_CXX_STANDARD 14)", "")
 
