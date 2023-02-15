@@ -99,7 +99,7 @@ class DCMTKConan(ConanFile):
                 # FIXME: CMake configuration fails to detect Openssl 1.1 on Windows.
                 self.requires("openssl/1.0.2u")
             else:
-                self.requires("openssl/1.1.1s")
+                self.requires("openssl/1.1.1t")
         if self.options.with_libpng:
             self.requires("libpng/1.6.37")
         if self.options.with_libtiff:
