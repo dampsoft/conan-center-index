@@ -116,27 +116,19 @@ class PopplerConan(ConanFile):
         if self.options.splash:
             self.requires("boost/1.80.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/7.86.0")
+            self.requires("libcurl/7.88.1")
         if self.options.with_zlib:
             self.requires("zlib/1.2.13")
 
     @property
     def _minimum_compilers_version(self):
         # Poppler requires C++14
-        if Version(self.version) < "23":
-            return {
-                "Visual Studio": "15",
-                "gcc": "5",
-                "clang": "5",
-                "apple-clang": "5.1"
-            }
-        else:
-            return {
-                "Visual Studio": "16",
-                "gcc": "9",
-                "clang": "10",
-                "apple-clang": "11"
-            }
+        return {
+            "Visual Studio": "16",
+            "gcc": "9",
+            "clang": "10",
+            "apple-clang": "11"
+        }
 
     def validate(self):
         if self.options.fontconfiguration == "win32" and self.settings.os != "Windows":
@@ -158,7 +150,7 @@ class PopplerConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("pkgconf/1.9.3")
-        self.tool_requires("cmake/3.25.0")
+        self.tool_requires("cmake/3.25.2")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
