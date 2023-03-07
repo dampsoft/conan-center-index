@@ -3,10 +3,10 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.build import check_min_cppstd, cross_building
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
-from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm
+from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm, replace_in_file
 from conan.tools.scm import Version
-from conan.tools.env import VirtualRunEnv
 import os
+import functools
 
 # For CMakeDeps.set_property
 required_conan_version = ">=1.55.0"
@@ -102,7 +102,7 @@ class PopplerConan(ConanFile):
         if self.options.get_safe("with_gobject_introspection"):
             self.requires("gobject-introspection/1.72.0")
         if self.options.with_qt:
-            self.requires("qt/6.4.1")
+            self.requires("qt/6.4.2")
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
@@ -114,9 +114,9 @@ class PopplerConan(ConanFile):
         if self.options.with_tiff:
             self.requires("libtiff/4.4.0")
         if self.options.splash:
-            self.requires("boost/1.80.0")
+            self.requires("boost/1.81.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/7.86.0")
+            self.requires("libcurl/7.88.1")
         if self.options.with_zlib:
             self.requires("zlib/1.2.13")
 
@@ -124,10 +124,10 @@ class PopplerConan(ConanFile):
     def _minimum_compilers_version(self):
         # Poppler requires C++14
         return {
-            "Visual Studio": "15",
-            "gcc": "5",
-            "clang": "5",
-            "apple-clang": "5.1"
+            "Visual Studio": "16",
+            "gcc": "9",
+            "clang": "10",
+            "apple-clang": "11"
         }
 
     def validate(self):
@@ -150,7 +150,7 @@ class PopplerConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("pkgconf/1.9.3")
-        self.tool_requires("cmake/3.25.0")
+        self.tool_requires("cmake/3.25.2")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
@@ -164,6 +164,7 @@ class PopplerConan(ConanFile):
         return "none"
 
     @property
+    @functools.lru_cache(1)
     def _qt_major(self):
         return Version(self.dependencies["qt"].ref.version).major
 
@@ -233,13 +234,16 @@ class PopplerConan(ConanFile):
 
         deps = CMakeDeps(self)
         deps.set_property("freetype", "cmake_target_name", "Freetype::Freetype")
+        if Version(self.version) < "23":
+            deps.set_property("freetype", "cmake_module_file_name", "FREETYPE")
         deps.generate()
-
-        env = VirtualRunEnv(self)
-        env.generate(scope="build")
 
     def build(self):
         apply_conandata_patches(self)
+
+        if Version(self.version) < "23" and self.options.with_qt and self._uses_qt6:
+            # Qt might need a higher cppstd, so respect what conan sets
+            replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"), "set(CMAKE_CXX_STANDARD 14)", "")
 
         # Use CMake's built-in version of FindIconv.cmake to fix the build on MacOS
         rm(self, "FindIconv.cmake", os.path.join(self.source_folder, "cmake", "modules"))
