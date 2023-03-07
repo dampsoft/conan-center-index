@@ -190,7 +190,7 @@ class LibcurlConan(ConanFile):
         if self.options.with_brotli:
             self.requires("brotli/1.0.9")
         if self.options.with_zstd:
-            self.requires("zstd/1.5.2")
+            self.requires("zstd/1.5.4")
         if self.options.with_c_ares:
             self.requires("c-ares/1.18.1")
         if self.options.get_safe("with_libpsl"):

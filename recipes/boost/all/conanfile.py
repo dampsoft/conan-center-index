@@ -537,7 +537,7 @@ class BoostConan(ConanFile):
         if self._with_lzma:
             self.requires("xz_utils/5.2.5")
         if self._with_zstd:
-            self.requires("zstd/1.5.2")
+            self.requires("zstd/1.5.4")
         if self._with_stacktrace_backtrace:
             self.requires("libbacktrace/cci.20210118", transitive_headers=True, transitive_libs=True)
 
