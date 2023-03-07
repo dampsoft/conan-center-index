@@ -79,7 +79,7 @@ class SociConan(ConanFile):
         if self.options.with_postgresql:
             self.requires("libpq/14.7")
         if self.options.with_boost:
-            self.requires("boost/1.80.0")
+            self.requires("boost/1.81.0")
 
     @property
     def _minimum_compilers_version(self):
