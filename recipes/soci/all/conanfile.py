@@ -68,7 +68,7 @@ class SociConan(ConanFile):
 
     def requirements(self):
         if self.options.with_sqlite3:
-            self.requires("sqlite3/3.40.1")
+            self.requires("sqlite3/3.41.1")
         if self.options.with_odbc and self.settings.os != "Windows":
             self.requires("odbc/2.3.9")
         if self.options.with_mysql:
