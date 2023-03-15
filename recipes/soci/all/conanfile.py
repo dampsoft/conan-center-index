@@ -259,6 +259,3 @@ class SociConan(ConanFile):
         if self.options.with_postgresql:
             self.cpp_info.components["soci_postgresql"].names["cmake_find_package"] = "soci_postgresql{}".format(target_suffix)
             self.cpp_info.components["soci_postgresql"].names["cmake_find_package_multi"] = "soci_postgresql{}".format(target_suffix)
-
-    def package_id(self):
-        self.info.requires["boost"].minor_mode()
