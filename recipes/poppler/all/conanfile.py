@@ -116,7 +116,7 @@ class PopplerConan(ConanFile):
         if self.options.splash:
             self.requires("boost/1.81.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/7.87.0")
+            self.requires("libcurl/7.88.1")
         if self.options.with_zlib:
             self.requires("zlib/1.2.13")
 
@@ -150,7 +150,7 @@ class PopplerConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("pkgconf/1.9.3")
-        self.tool_requires("cmake/3.25.2")
+        self.tool_requires("cmake/3.25.3")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
