@@ -1112,7 +1112,10 @@ class BoostConan(ConanFile):
         if self._with_iconv:
             flags.append(f"-sICONV_PATH={self.dependencies['libiconv'].package_folder}")
         if self._with_icu:
-            flags.append(f"-sICU_PATH={self.dependencies['icu'].package_folder}")
+            icu_path = self.dependencies['icu'].package_folder
+            if is_msvc(self):
+                icu_path = icu_path.lower()
+            flags.append(f"-sICU_PATH={icu_path}")
             if not self.dependencies["icu"].options.shared:
                 # Using ICU_OPTS to pass ICU system libraries is not possible due to Boost.Regex disallowing it.
                 icu_system_libs = self.dependencies["icu"].cpp_info.aggregated_components().system_libs
