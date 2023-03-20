@@ -233,6 +233,11 @@ class ICUConan(ConanFile):
                 rm(self, dll_name, bin_dir)
                 rename(self, src=dll, dst=os.path.join(bin_dir, dll_name))
 
+        # FIXME: Boost sucht aus Gründen nach lib64 statt libs
+        if self.settings.os == "Windows":
+            mkdir(self, os.path.join(self.package_folder, "lib64"))
+            copy("*.lib", src=os.path.join(self.package_folder, "lib"), dst=os.path.join(self.package_folder, "lib64"))
+
         if self.settings.os != "Windows" and self.options.data_packaging in ["files", "archive"]:
             mkdir(self, os.path.join(self.package_folder, "res"))
             rename(self, src=self._data_path, dst=os.path.join(self.package_folder, "res", self._data_filename))
