@@ -236,7 +236,7 @@ class ICUConan(ConanFile):
         # FIXME: Boost sucht aus Gründen nach lib64 statt libs
         if self.settings.os == "Windows":
             mkdir(self, os.path.join(self.package_folder, "lib64"))
-            copy("*.lib", src=os.path.join(self.package_folder, "lib"), dst=os.path.join(self.package_folder, "lib64"))
+            copy(self, "*.lib", src=os.path.join(self.package_folder, "lib"), dst=os.path.join(self.package_folder, "lib64"))
 
         if self.settings.os != "Windows" and self.options.data_packaging in ["files", "archive"]:
             mkdir(self, os.path.join(self.package_folder, "res"))
