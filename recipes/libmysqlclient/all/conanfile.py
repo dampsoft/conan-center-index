@@ -79,7 +79,7 @@ class LibMysqlClientCConan(ConanFile):
         del self.info.options.with_zlib
 
     def requirements(self):
-        self.requires("openssl/1.1.1t")
+        self.requires("openssl/3.0.8")
         self.requires("zlib/1.2.13")
         if self._with_zstd:
             self.requires("zstd/1.5.4")

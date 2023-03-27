@@ -58,7 +58,7 @@ class Nghttp2Conan(ConanFile):
 
     def requirements(self):
         if self.options.with_app or self.options.with_asio:
-            self.requires("openssl/1.1.1s")
+            self.requires("openssl/3.0.8")
         if self.options.with_app:
             self.requires("c-ares/1.18.1")
             self.requires("libev/4.33")
