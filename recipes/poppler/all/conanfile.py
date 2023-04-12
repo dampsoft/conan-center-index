@@ -114,9 +114,9 @@ class PopplerConan(ConanFile):
         if self.options.with_tiff:
             self.requires("libtiff/4.4.0")
         if self.options.splash:
-            self.requires("boost/1.80.0")
+            self.requires("boost/1.81.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/7.86.0")
+            self.requires("libcurl/8.0.0")
         if self.options.with_zlib:
             self.requires("zlib/1.2.13")
 
@@ -146,7 +146,7 @@ class PopplerConan(ConanFile):
 
         minimum_version = self._minimum_compilers_version.get(str(self.settings.compiler), False)
         if not minimum_version:
-            self.output.warn("C++14 support required. Your compiler is unknown. Assuming it supports C++14.")
+            self.output.warning("C++14 support required. Your compiler is unknown. Assuming it supports C++14.")
         elif Version(self.settings.compiler.version) < minimum_version:
             raise ConanInvalidConfiguration("C++14 support required, which your compiler does not support.")
 
