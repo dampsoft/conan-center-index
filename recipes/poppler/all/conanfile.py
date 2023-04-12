@@ -123,20 +123,12 @@ class PopplerConan(ConanFile):
     @property
     def _minimum_compilers_version(self):
         # Poppler requires C++14
-        if Version(self.version) < "23":
-            return {
-                "Visual Studio": "15",
-                "gcc": "5",
-                "clang": "5",
-                "apple-clang": "5.1"
-            }
-        else:
-            return {
-                "Visual Studio": "16",
-                "gcc": "9",
-                "clang": "10",
-                "apple-clang": "11"
-            }
+        return {
+            "Visual Studio": "16",
+            "gcc": "9",
+            "clang": "10",
+            "apple-clang": "11"
+        }
 
     def validate(self):
         if self.options.fontconfiguration == "win32" and self.settings.os != "Windows":
@@ -199,12 +191,7 @@ class PopplerConan(ConanFile):
 
         tc.variables["ENABLE_UTILS"] = False
         tc.variables["ENABLE_CPP"] = self.options.cpp
-
-        if Version(self.version) < "22.12.0":
-            tc.variables["ENABLE_SPLASH"] = self.options.splash
-        else:
-            tc.variables["ENABLE_BOOST"] = self.options.splash
-
+        tc.variables["ENABLE_BOOST"] = self.options.splash
         tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
         tc.variables["WITH_JPEG"] = self.options.with_libjpeg
         tc.variables["WITH_PNG"] = self.options.with_png
@@ -242,16 +229,10 @@ class PopplerConan(ConanFile):
 
         deps = CMakeDeps(self)
         deps.set_property("freetype", "cmake_target_name", "Freetype::Freetype")
-        if Version(self.version) < "23":
-            deps.set_property("freetype", "cmake_module_file_name", "FREETYPE")
         deps.generate()
 
     def build(self):
         apply_conandata_patches(self)
-
-        if Version(self.version) < "23" and self.options.with_qt and self._uses_qt6:
-            # Qt might need a higher cppstd, so respect what conan sets
-            replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"), "set(CMAKE_CXX_STANDARD 14)", "")
 
         # Use CMake's built-in version of FindIconv.cmake to fix the build on MacOS
         rm(self, "FindIconv.cmake", os.path.join(self.source_folder, "cmake", "modules"))
