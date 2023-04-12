@@ -130,6 +130,12 @@ class PopplerConan(ConanFile):
             "apple-clang": "11"
         }
 
+    @property
+    @functools.lru_cache(1)
+    def _poppler_data_datadir(self):
+        poppler_data_conf = self.dependencies["poppler-data"].conf_info
+        return poppler_data_conf.get("user.poppler-data:datadir", check_type=str)
+
     def validate(self):
         if self.options.fontconfiguration == "win32" and self.settings.os != "Windows":
             raise ConanInvalidConfiguration("'win32' option of fontconfig is only available on Windows")
@@ -206,7 +212,7 @@ class PopplerConan(ConanFile):
         tc.variables["ENABLE_CMS"] = "lcms2" if self.options.with_lcms else "none"
         tc.variables["ENABLE_LIBCURL"] = self.options.with_libcurl
 
-        tc.variables["POPPLER_DATADIR"] = self.deps_user_info["poppler-data"].datadir.replace("\\", "/")
+        tc.variables["POPPLER_DATADIR"] = self._poppler_data_datadir.replace("\\", "/")
         tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
         tc.variables["BUILD_CPP_TESTS"] = False
         tc.variables["ENABLE_GTK_DOC"] = False
@@ -310,6 +316,6 @@ class PopplerConan(ConanFile):
             self.cpp_info.components["libpoppler-qt"].names["pkg_config"] = f"poppler-qt{qt_major}"
             self.cpp_info.components["libpoppler-qt"].requires = ["libpoppler", "qt::qtCore", "qt::qtGui", "qt::qtWidgets"]
 
-        datadir = self.deps_user_info["poppler-data"].datadir
+        datadir = self._poppler_data_datadir
         self.output.info(f"Setting POPPLER_DATADIR env var: {datadir}")
         self.env_info.POPPLER_DATADIR = datadir
