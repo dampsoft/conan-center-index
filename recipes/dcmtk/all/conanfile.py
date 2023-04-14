@@ -90,10 +90,26 @@ class DCMTKConan(ConanFile):
         if self.options.get_safe("with_tcpwrappers"):
             self.requires("tcp-wrappers/7.6")
 
+    @property
+    def _compilers_minimum_version(self):
+        return {
+            "gcc": "7",
+            "Visual Studio": "16",
+            "msvc": "192",
+            "clang": "7",
+            "apple-clang": "10",
+        }
+
     def validate(self):
         if not can_run(self) and self.settings.os == "Macos" and self.settings.arch == "armv8":
             # FIXME: Probable issue with flags, build includes header 'mmintrin.h'
             raise ConanInvalidConfiguration("Cross building to Macos M1 is not supported (yet)")
+
+        minimum_version = self._compilers_minimum_version.get(str(self.settings.compiler), False)
+        if minimum_version and Version(self.settings.compiler.version) < minimum_version:
+            raise ConanInvalidConfiguration(
+                f"{self.ref} requires C++11, which your compiler does not support."
+            )
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -159,7 +175,8 @@ class DCMTKConan(ConanFile):
         tc.generate()
 
         deps = CMakeDeps(self)
-        deps.set_property("openssl", "cmake_file_name", "OPENSSL")
+        deps.set_property("openssl", "cmake_file_name", "openssl")
+        deps.set_property("openssl", "cmake_target_name", "openssl")
         deps.set_property("openssl", "cmake_find_mode", "both")
         deps.set_property("libiconv", "cmake_file_name", "ICONV")
         deps.set_property("libiconv", "cmake_find_mode", "both")
@@ -293,6 +310,7 @@ class DCMTKConan(ConanFile):
                     "iphlpapi", "ws2_32", "netapi32", "wsock32"
                 ])
             elif self.settings.os in ["Linux", "FreeBSD"]:
+                self.cpp_info.system_libs.extend("nsl")
                 self.cpp_info.components["ofstd"].system_libs.append("m")
                 if self.options.with_multithreading:
                     self.cpp_info.components["ofstd"].system_libs.append("pthread")
