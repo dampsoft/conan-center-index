@@ -3,6 +3,13 @@ from conan.tools.files import rename, get, apply_conandata_patches, replace_in_f
 from conan.tools.build import cross_building
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
+from conan.tools.apple import is_apple_os
+from conan.tools.build import check_min_cppstd, cross_building, stdcpp_library
+from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
+from conan.tools.env import VirtualRunEnv, VirtualBuildEnv
+from conan.tools.files import rename, get, apply_conandata_patches, replace_in_file, rmdir, rm, export_conandata_patches, copy, mkdir
+from conan.tools.gnu import PkgConfigDeps
+from conan.tools.microsoft import is_msvc, is_msvc_static_runtime
 from conan.tools.scm import Version
 from conan.tools.apple import is_apple_os
 from conans import CMake, tools
@@ -50,6 +57,10 @@ class LibMysqlClientCConan(ConanFile):
         return Version(self.version) > "8.0.17"
 
     @property
+    def _min_cppstd(self):
+        return "17" if Version(self.version) >= "8.0.27" else "11"
+
+    @property
     def _compilers_minimum_version(self):
         return {
             "Visual Studio": "16" if Version(self.version) > "8.0.17" else "15",
@@ -81,14 +92,15 @@ class LibMysqlClientCConan(ConanFile):
     def requirements(self):
         self.requires("openssl/3.0.8")
         self.requires("zlib/1.2.13")
-        if self._with_zstd:
-            self.requires("zstd/1.5.4")
-        if self._with_lz4:
-            self.requires("lz4/1.9.4")
+        self.requires("zstd/1.5.5")
+        self.requires("lz4/1.9.4")
         if self.settings.os == "FreeBSD":
             self.requires("libunwind/1.6.2")
 
     def validate(self):
+        if self.settings.compiler.get_safe("cppstd"):
+            check_min_cppstd(self, self._min_cppstd)
+
         def loose_lt_semver(v1, v2):
             lv1 = [int(v) for v in v1.split(".")]
             lv2 = [int(v) for v in v2.split(".")]
@@ -97,9 +109,7 @@ class LibMysqlClientCConan(ConanFile):
 
         minimum_version = self._compilers_minimum_version.get(str(self.settings.compiler), False)
         if minimum_version and loose_lt_semver(str(self.settings.compiler.version), minimum_version):
-            raise ConanInvalidConfiguration(
-                f"{self.name} {self.version} requires {self.settings.compiler} {minimum_version} or newer"
-            )
+            raise ConanInvalidConfiguration(f"{self.ref} requires {self.settings.compiler} {minimum_version} or newer")
 
         if hasattr(self, "settings_build") and cross_building(self, skip_x64_x86=True):
             raise ConanInvalidConfiguration(
@@ -119,20 +129,20 @@ class LibMysqlClientCConan(ConanFile):
 
         # mysql>=8.0.17 doesn't support shared library on MacOS.
         # https://github.com/mysql/mysql-server/blob/mysql-8.0.17/cmake/libutils.cmake#L333-L335
-        if Version(self.version) >= "8.0.17" and self.settings.compiler == "apple-clang" and self.options.shared:
-            raise ConanInvalidConfiguration(f"{self.name}/{self.version} doesn't support shared library")
+        if self.settings.compiler == "apple-clang" and self.options.shared:
+            raise ConanInvalidConfiguration(f"{self.ref} doesn't support shared library")
 
         # mysql < 8.0.29 uses `requires` in source code. It is the reserved keyword in C++20.
         # https://github.com/mysql/mysql-server/blob/mysql-8.0.0/include/mysql/components/services/dynamic_loader.h#L270
         if self.settings.compiler.get_safe("cppstd") == "20" and Version(self.version) < "8.0.29":
-            raise ConanInvalidConfiguration(f"{self.name}/{self.version} doesn't support C++20")
+            raise ConanInvalidConfiguration(f"{self.ref} doesn't support C++20")
 
     def build_requirements(self):
         if Version(self.version) >= "8.0.25" and is_apple_os(self):
             # CMake 3.18 or higher is required if Apple, but CI of CCI may run CMake 3.15
-            self.build_requires("cmake/3.25.3")
-        if self.settings.os == "FreeBSD":
-            self.build_requires("pkgconf/1.9.3")
+            self.tool_requires("cmake/3.25.3")
+        if self.settings.os == "FreeBSD" and not self.conf.get("tools.gnu:pkg_config", check_type=str):
+            self.tool_requires("pkgconf/1.9.3")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True, destination=self._source_subfolder)
@@ -182,36 +192,32 @@ class LibMysqlClientCConan(ConanFile):
             )
         rmdir(self, os.path.join(self._source_subfolder, "storage", "ndb"))
         for t in ["INCLUDE(cmake/boost.cmake)\n", "MYSQL_CHECK_EDITLINE()\n"]:
-            replace_in_file(self, os.path.join(self._source_subfolder, "CMakeLists.txt"), t, "", strict=False)
-        if self._with_zstd:
-            replace_in_file(
-                self,
-                os.path.join(self._source_subfolder, "cmake", "zstd.cmake"),
-                "NAMES zstd",
-                "NAMES zstd %s" % self.deps_cpp_info["zstd"].libs[0],
-            )
+            replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
+                            t,
+                            "",
+                            strict=False)
 
-        replace_in_file(
-            self,
-            os.path.join(self._source_subfolder, "cmake", "ssl.cmake"),
-            "NAMES ssl",
-            "NAMES ssl %s" % self.deps_cpp_info["openssl"].components["ssl"].libs[0],
-        )
+        # Upstream does not actually load lz4 directories for system, force it to
+        replace_in_file(self, os.path.join(self.source_folder, "libbinlogevents", "CMakeLists.txt"),
+                        "INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/libbinlogevents/include)",
+                        "MY_INCLUDE_SYSTEM_DIRECTORIES(LZ4)\nINCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/libbinlogevents/include)")
 
-        replace_in_file(
-            self,
-            os.path.join(self._source_subfolder, "cmake", "ssl.cmake"),
-            "NAMES crypto",
-            "NAMES crypto %s" % self.deps_cpp_info["openssl"].components["crypto"].libs[0],
-        )
+        replace_in_file(self, os.path.join(self.source_folder, "cmake", "zstd.cmake"),
+                        "NAMES zstd",
+                        f"NAMES zstd {self.dependencies['zstd'].cpp_info.aggregated_components().libs[0]}")
 
-        replace_in_file(
-            self,
-            os.path.join(self._source_subfolder, "cmake", "ssl.cmake"),
-            "IF(NOT OPENSSL_APPLINK_C)\n",
-            "IF(FALSE AND NOT OPENSSL_APPLINK_C)\n",
-            strict=False,
-        )
+        replace_in_file(self, os.path.join(self.source_folder, "cmake", "ssl.cmake"),
+                        "NAMES ssl",
+                        f"NAMES ssl {self.dependencies['openssl'].cpp_info.components['ssl'].libs[0]}")
+
+        replace_in_file(self, os.path.join(self.source_folder, "cmake", "ssl.cmake"),
+                        "NAMES crypto",
+                        f"NAMES crypto {self.dependencies['openssl'].cpp_info.components['crypto'].libs[0]}")
+
+        replace_in_file(self, os.path.join(self.source_folder, "cmake", "ssl.cmake"),
+                        "IF(NOT OPENSSL_APPLINK_C)\n",
+                        "IF(FALSE AND NOT OPENSSL_APPLINK_C)\n",
+                        strict=False)
 
         # Do not copy shared libs of dependencies to package folder
         deps_shared = ["SSL"]
