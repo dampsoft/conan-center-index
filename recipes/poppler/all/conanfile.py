@@ -102,7 +102,7 @@ class PopplerConan(ConanFile):
         if self.options.get_safe("with_gobject_introspection"):
             self.requires("gobject-introspection/1.72.0")
         if self.options.with_qt:
-            self.requires("qt/6.4.2")
+            self.requires("qt/6.4.1")
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
@@ -116,7 +116,7 @@ class PopplerConan(ConanFile):
         if self.options.splash:
             self.requires("boost/1.81.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/7.88.1")
+            self.requires("libcurl/8.0.0")
         if self.options.with_zlib:
             self.requires("zlib/1.2.13")
 
@@ -130,6 +130,12 @@ class PopplerConan(ConanFile):
             "apple-clang": "11"
         }
 
+    @property
+    @functools.lru_cache(1)
+    def _poppler_data_datadir(self):
+        poppler_data_conf = self.dependencies["poppler-data"].conf_info
+        return poppler_data_conf.get("user.poppler-data:datadir", check_type=str)
+
     def validate(self):
         if self.options.fontconfiguration == "win32" and self.settings.os != "Windows":
             raise ConanInvalidConfiguration("'win32' option of fontconfig is only available on Windows")
@@ -140,7 +146,7 @@ class PopplerConan(ConanFile):
 
         minimum_version = self._minimum_compilers_version.get(str(self.settings.compiler), False)
         if not minimum_version:
-            self.output.warn("C++14 support required. Your compiler is unknown. Assuming it supports C++14.")
+            self.output.warning("C++14 support required. Your compiler is unknown. Assuming it supports C++14.")
         elif Version(self.settings.compiler.version) < minimum_version:
             raise ConanInvalidConfiguration("C++14 support required, which your compiler does not support.")
 
@@ -191,12 +197,7 @@ class PopplerConan(ConanFile):
 
         tc.variables["ENABLE_UTILS"] = False
         tc.variables["ENABLE_CPP"] = self.options.cpp
-
-        if Version(self.version) < "22.12.0":
-            tc.variables["ENABLE_SPLASH"] = self.options.splash
-        else:
-            tc.variables["ENABLE_BOOST"] = self.options.splash
-
+        tc.variables["ENABLE_BOOST"] = self.options.splash
         tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
         tc.variables["WITH_JPEG"] = self.options.with_libjpeg
         tc.variables["WITH_PNG"] = self.options.with_png
@@ -211,7 +212,7 @@ class PopplerConan(ConanFile):
         tc.variables["ENABLE_CMS"] = "lcms2" if self.options.with_lcms else "none"
         tc.variables["ENABLE_LIBCURL"] = self.options.with_libcurl
 
-        tc.variables["POPPLER_DATADIR"] = self.deps_user_info["poppler-data"].datadir.replace("\\", "/")
+        tc.variables["POPPLER_DATADIR"] = self._poppler_data_datadir.replace("\\", "/")
         tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
         tc.variables["BUILD_CPP_TESTS"] = False
         tc.variables["ENABLE_GTK_DOC"] = False
@@ -234,16 +235,10 @@ class PopplerConan(ConanFile):
 
         deps = CMakeDeps(self)
         deps.set_property("freetype", "cmake_target_name", "Freetype::Freetype")
-        if Version(self.version) < "23":
-            deps.set_property("freetype", "cmake_module_file_name", "FREETYPE")
         deps.generate()
 
     def build(self):
         apply_conandata_patches(self)
-
-        if Version(self.version) < "23" and self.options.with_qt and self._uses_qt6:
-            # Qt might need a higher cppstd, so respect what conan sets
-            replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"), "set(CMAKE_CXX_STANDARD 14)", "")
 
         # Use CMake's built-in version of FindIconv.cmake to fix the build on MacOS
         rm(self, "FindIconv.cmake", os.path.join(self.source_folder, "cmake", "modules"))
@@ -321,6 +316,6 @@ class PopplerConan(ConanFile):
             self.cpp_info.components["libpoppler-qt"].names["pkg_config"] = f"poppler-qt{qt_major}"
             self.cpp_info.components["libpoppler-qt"].requires = ["libpoppler", "qt::qtCore", "qt::qtGui", "qt::qtWidgets"]
 
-        datadir = self.deps_user_info["poppler-data"].datadir
+        datadir = self._poppler_data_datadir
         self.output.info(f"Setting POPPLER_DATADIR env var: {datadir}")
         self.env_info.POPPLER_DATADIR = datadir
