@@ -1,0 +1,49 @@
+Correct the CMake variable names to match what Conan exports via CMakeDeps
+diff --git a/CMake/CheckFunctionWithHeaderExists.cmake b/CMake/CheckFunctionWithHeaderExists.cmake
+index f22f56a28..e8f32f7b0 100644
+--- a/CMake/CheckFunctionWithHeaderExists.cmake
++++ b/CMake/CheckFunctionWithHeaderExists.cmake
+@@ -34,6 +34,7 @@ macro(CHECK_FUNCTIONWITHHEADER_EXISTS SYMBOL FILES VARIABLE)
+       -DCOMPILE_DEFINITIONS:STRING=${MACRO_CHECK_SYMBOL_EXISTS_FLAGS}
+       "-DINCLUDE_DIRECTORIES:STRING=${CMAKE_REQUIRED_INCLUDES}"
+       "${CHECK_SYMBOL_EXISTS_LIBS}"
++      "-DLINK_DIRECTORIES:STRING=${OPENSSL_INCLUDE_DIR}/../lib"
+       ${DCMTK_TRY_COMPILE_REQUIRED_CMAKE_FLAGS}
+       OUTPUT_VARIABLE OUTPUT)
+     if(${VARIABLE})
+diff --git a/CMake/3rdparty.cmake b/CMake/3rdparty.cmake
+index 47e34763b..5a75e4299 100644
+--- a/CMake/3rdparty.cmake
++++ b/CMake/3rdparty.cmake
+@@ -38,7 +38,7 @@ if(DCMTK_USE_FIND_PACKAGE)
+         message(STATUS "Info: DCMTK TIFF support will be enabled")
+         include_directories(${TIFF_INCLUDE_DIR} ${JPEG_INCLUDE_DIR})
+       endif()
+-      set(LIBTIFF_LIBS ${TIFF_LIBRARY} ${TIFF_EXTRA_LIBS_STATIC} ${JPEG_LIBRARY})
++      set(LIBTIFF_LIBS ${TIFF_LIBRARIES} ${TIFF_EXTRA_LIBS_STATIC} ${JPEG_LIBRARIES})
+     endif()
+   endif()
+ 
+@@ -53,7 +53,7 @@ if(DCMTK_USE_FIND_PACKAGE)
+       message(STATUS "Info: DCMTK PNG support will be enabled")
+       set(WITH_LIBPNG 1)
+       include_directories(${PNG_INCLUDE_DIR})
+-      set(LIBPNG_LIBS ${PNG_LIBRARY})
++      set(LIBPNG_LIBS ${PNG_LIBRARIES})
+     endif()
+   endif()
+ 
+diff --git a/CMake/dcmtkPrepare.cmake b/CMake/dcmtkPrepare.cmake
+index 2f83c5acb..467b48fc0 100644
+--- a/CMake/dcmtkPrepare.cmake
++++ b/CMake/dcmtkPrepare.cmake
+@@ -662,7 +662,8 @@ if(DCMTK_WITH_OPENSSL)
+   set(CMAKE_REQUIRED_LIBRARIES_TEMP ${CMAKE_REQUIRED_LIBRARIES})
+ 
+   # add OpenSSL libraries
+-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${OPENSSL_LIBS} ${THREAD_LIBS})
++  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ssl crypto ${THREAD_LIBS})
++  set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${OPENSSL_INCLUDE_DIR})
+ 
+   # check whether we have <openssl/provider.h>
+   CHECK_INCLUDE_FILE_CXX("openssl/provider.h" HAVE_OPENSSL_PROVIDER_H)
