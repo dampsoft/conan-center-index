@@ -171,6 +171,7 @@ class DCMTKConan(ConanFile):
         if is_msvc(self):
             tc.variables["DCMTK_ICONV_FLAGS_ANALYZED"] = True
             tc.variables["DCMTK_COMPILE_WIN32_MULTITHREADED_DLL"] = "MD" in msvc_runtime_flag(self)
+            tc.cache_variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)
 
         tc.generate()
 
@@ -319,6 +320,9 @@ class DCMTKConan(ConanFile):
         self.output.info(f"Settings DCMDICTPATH environment variable: {dcmdictpath}")
         self.runenv_info.define_path("DCMDICTPATH", dcmdictpath)
         self.env_info.DCMDICTPATH = dcmdictpath # remove in conan v2?
+        # dcmtk requires us to build with the same cppstd as it was built with
+        self.buildenv_info.define("CXX_STANDARD", str(self.settings.compiler.cppstd or "11"))
+        self.conf_info.define("user.dcmtk:used-cppstd", self.settings.compiler.cppstd)
 
         if self.options.with_applications:
             self.buildenv_info.define_path("DCMDICTPATH", dcmdictpath)
