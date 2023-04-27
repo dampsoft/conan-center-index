@@ -62,7 +62,7 @@ class LibMysqlClientCConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/3.0.8")
+        self.requires("openssl/[>=1.1 <4]")
         self.requires("zlib/1.2.13")
         self.requires("zstd/1.5.5")
         self.requires("lz4/1.9.4")

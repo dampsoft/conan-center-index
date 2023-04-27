@@ -38,7 +38,7 @@ class CMakeConan(ConanFile):
 
     def requirements(self):
         if self.options.with_openssl:
-            self.requires("openssl/3.0.8")
+            self.requires("openssl/[>=1.1 <4]")
 
     def validate_build(self):
         if self.settings.os == "Windows" and self.options.bootstrap:
