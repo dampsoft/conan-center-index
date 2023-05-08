@@ -9,4 +9,3 @@ patches:
       patch_type: "portability"
     - patch_file: "patches/0002-rowsAffectedBulk-only-of-numberOfExecutions.patch"
     - patch_file: "patches/0003-FIELD_TYPE_DATETIME-im-MYSQL-Backend.patch"
-    - patch_file: "patches/0004-find-conan-pkgs.patch"
