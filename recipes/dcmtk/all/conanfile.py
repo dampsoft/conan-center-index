@@ -74,6 +74,7 @@ class DCMTKConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("cmake/3.25.3")
+        self.requires("ninja/1.11.1")
 
     def requirements(self):
         if self.options.charset_conversion == "libiconv":
