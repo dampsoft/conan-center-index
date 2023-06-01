@@ -72,9 +72,6 @@ class DCMTKConan(ConanFile):
         if self.options.shared:
             self.options.rm_safe("fPIC")
 
-    def build_requirements(self):
-        self.tool_requires("cmake/3.25.3")
-
     def requirements(self):
         if self.options.charset_conversion == "libiconv":
             self.requires("libiconv/1.17")
