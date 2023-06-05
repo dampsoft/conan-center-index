@@ -46,7 +46,7 @@ class MoldConan(ConanFile):
 
     def requirements(self):
         self.requires("zlib/1.2.13")
-        self.requires("openssl/1.1.1t")
+        self.requires("openssl/[>=1.1 <4]")
         self.requires("xxhash/0.8.1")
         self.requires("onetbb/2021.3.0")
         if self.options.with_mimalloc:
