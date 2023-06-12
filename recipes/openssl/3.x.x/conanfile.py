@@ -10,6 +10,7 @@ from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
 import fnmatch
 import os
 import textwrap
+from pathlib import Path
 
 required_conan_version = ">=1.57.0"
 
@@ -532,8 +533,6 @@ class OpenSSLConan(ConanFile):
     def package(self):
         copy(self, "*LICENSE*", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
         self._make_install()
-        if is_apple_os(self):
-            fix_apple_shared_install_name(self)
 
         for root, _, files in os.walk(self.package_folder):
             for filename in files:
@@ -553,9 +552,9 @@ class OpenSSLConan(ConanFile):
                 if file.endswith(".a"):
                     os.unlink(os.path.join(libdir, file))
 
+        modules_dir = os.path.join(self.package_folder, "lib", "ossl-modules")
         if not self.options.no_fips:
             provdir = os.path.join(self.source_folder, "providers")
-            modules_dir = os.path.join(self.package_folder, "lib", "ossl-modules")
             if self.settings.os == "Macos":
                 copy(self, "fips.dylib", src=provdir, dst=modules_dir)
             elif self.settings.os == "Windows":
@@ -564,6 +563,12 @@ class OpenSSLConan(ConanFile):
                 copy(self, "fips.so", src=provdir, dst=modules_dir)
 
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
+
+        if is_apple_os(self):
+            fix_apple_shared_install_name(self)
+            for module in ["fips.dylib", "legacy.dylib"]:
+                path = Path(modules_dir) / module
+                self.run(f"install_name_tool -change /lib/libcrypto.3.dylib @rpath/libcrypto.3.dylib {path}")
 
         self._create_cmake_module_variables(
             os.path.join(self.package_folder, self._module_file_rel_path)
