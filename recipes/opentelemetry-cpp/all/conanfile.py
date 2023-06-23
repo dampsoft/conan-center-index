@@ -210,9 +210,9 @@ class OpenTelemetryCppConan(ConanFile):
 
         if self.settings.os == "Linux":
             env = Environment()
-            if self.dependencies["grpc"].options.shared:
+            if self.options.get_safe("with_otlp_grpc") and self.dependencies["grpc"].options.shared:
                 env.append_path("LD_LIBRARY_PATH", os.path.join(self.dependencies["grpc"].package_folder, "lib"))
-            if self.dependencies["protobuf"].options.shared:
+            if self.options.with_otlp and self.dependencies["protobuf"].options.shared:
                 env.append_path("LD_LIBRARY_PATH", os.path.join(self.dependencies["protobuf"].package_folder, "lib"))
             env.vars(self).save_script("conanbuild_loadpath")
 
