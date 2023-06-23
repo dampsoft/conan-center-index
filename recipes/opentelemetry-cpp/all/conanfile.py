@@ -94,7 +94,7 @@ class OpenTelemetryCppConan(ConanFile):
             self.requires("abseil/20220623.0")
 
         if self.options.with_otlp:
-            self.requires("protobuf/3.21.4")
+            self.requires("protobuf/3.21.9")
             if Version(self.version) <= "1.4.1":
                 self.requires("opentelemetry-proto/0.11.0")
             else:
@@ -109,13 +109,13 @@ class OpenTelemetryCppConan(ConanFile):
            self.options.with_etw
         ):
            self.requires("nlohmann_json/3.11.2")
-           self.requires("openssl/1.1.1t")
+           self.requires("openssl/[>=1.1 <4]")
 
         if (self.options.with_zipkin or
            self.options.with_elasticsearch or
            self.options.get_safe("with_otlp_http")
         ):
-           self.requires("libcurl/7.87.0")
+           self.requires("libcurl/8.1.1")
 
         if self.options.with_prometheus:
             self.requires("prometheus-cpp/1.1.0")
@@ -144,8 +144,9 @@ class OpenTelemetryCppConan(ConanFile):
         if self.options.get_safe("with_otlp_http") and not self.options.with_otlp:
             raise ConanInvalidConfiguration("Option 'with_otlp_http' requires 'with_otlp'")
 
-        if not self.dependencies["grpc"].options.cpp_plugin:
-            raise ConanInvalidConfiguration(f"{self.ref} requires grpc with cpp_plugin=True")
+        if self.options.get_safe("with_otlp_grpc"):
+            if not self.dependencies["grpc"].options.cpp_plugin:
+                raise ConanInvalidConfiguration(f"{self.ref} requires grpc with cpp_plugin=True")
 
         boost_required_comp = any(self.dependencies["boost"].options.get_safe(f"without_{boost_comp}", True)
                                        for boost_comp in self._required_boost_components)
@@ -157,8 +158,10 @@ class OpenTelemetryCppConan(ConanFile):
             )
 
     def build_requirements(self):
-        self.tool_requires("protobuf/3.21.4")
-        self.tool_requires("grpc/1.50.1")
+        if self.options.with_otlp:
+            self.tool_requires("protobuf/3.21.9")
+            if self.options.get_safe("with_otlp_grpc"):
+                self.tool_requires("grpc/1.50.1")
 
     def _create_cmake_module_variables(self, module_file):
         content = textwrap.dedent("""\
@@ -205,7 +208,7 @@ class OpenTelemetryCppConan(ConanFile):
         tc.generate()
 
     def _patch_sources(self):
-        protos_path = self.deps_user_info["opentelemetry-proto"].proto_root.replace("\\", "/")
+        protos_path = self.dependencies["opentelemetry-proto"].conf_info.get("user.opentelemetry-proto:proto_root", False)
         protos_cmake_path = os.path.join(
             self.source_folder,
             "cmake",
@@ -424,6 +427,7 @@ class OpenTelemetryCppConan(ConanFile):
             self.options.with_elasticsearch
         ):
             self.cpp_info.components[self._http_client_name].requires.append("libcurl::libcurl")
+            self.cpp_info.components[self._http_client_name].requires.append("openssl::openssl")
 
         if self.options.get_safe("with_otlp_http"):
             self.cpp_info.components["opentelemetry_exporter_otlp_http_client"].requires.extend([
