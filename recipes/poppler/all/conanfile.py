@@ -90,7 +90,7 @@ class PopplerConan(ConanFile):
 
     def requirements(self):
         self.requires("poppler-data/0.4.11")
-        self.requires("freetype/2.12.1")
+        self.requires("freetype/2.13.0")
         if self.options.get_safe("with_libiconv"):
             self.requires("libiconv/1.17")
         if self.options.fontconfiguration == "fontconfig":
@@ -102,7 +102,7 @@ class PopplerConan(ConanFile):
         if self.options.get_safe("with_gobject_introspection"):
             self.requires("gobject-introspection/1.72.0")
         if self.options.with_qt:
-            self.requires("qt/6.4.1")
+            self.requires("qt/6.5.1")
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
@@ -112,11 +112,11 @@ class PopplerConan(ConanFile):
         if self.options.with_png:
             self.requires("libpng/1.6.39")
         if self.options.with_tiff:
-            self.requires("libtiff/4.4.0")
+            self.requires("libtiff/4.5.1")
         if self.options.splash:
-            self.requires("boost/1.81.0")
+            self.requires("boost/1.82.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/8.0.0")
+            self.requires("libcurl/8.1.2")
         if self.options.with_zlib:
             self.requires("zlib/1.2.13")
 
@@ -156,7 +156,7 @@ class PopplerConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("pkgconf/1.9.3")
-        self.tool_requires("cmake/3.25.3")
+        self.tool_requires("cmake/3.26.4")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],

@@ -307,7 +307,7 @@ class QtConan(ConanFile):
         if self.options.get_safe("with_fontconfig", False):
             self.requires("fontconfig/2.13.93")
         if self.options.get_safe("with_icu", False):
-            self.requires("icu/72.1")
+            self.requires("icu/73.2")
         if self.options.get_safe("with_harfbuzz", False) and not self.options.multiconfiguration:
             self.requires("harfbuzz/6.0.0")
         if self.options.get_safe("with_libjpeg", False) and not self.options.multiconfiguration:
@@ -318,7 +318,7 @@ class QtConan(ConanFile):
         if self.options.get_safe("with_libpng", False) and not self.options.multiconfiguration:
             self.requires("libpng/1.6.39")
         if self.options.with_sqlite3 and not self.options.multiconfiguration:
-            self.requires("sqlite3/3.41.1")
+            self.requires("sqlite3/3.42.0")
         if self.options.get_safe("with_mysql", False):
             self.requires("libmysqlclient/8.0.31")
         if self.options.with_pq:
@@ -361,7 +361,7 @@ class QtConan(ConanFile):
             self.requires("md4c/0.4.8")
 
     def build_requirements(self):
-        self.tool_requires("cmake/3.25.3")
+        self.tool_requires("cmake/3.26.4")
         self.tool_requires("ninja/1.11.1")
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
             self.tool_requires("pkgconf/1.9.3")

@@ -96,9 +96,9 @@ class OpenTelemetryCppConan(ConanFile):
             self.requires("abseil/20220623.0", transitive_headers=True)
 
         if self.options.with_otlp:
-            self.requires("protobuf/3.21.9")
+            self.requires("protobuf/3.21.12")
             if Version(self.version) <= "1.4.1":
-                self.requires("opentelemetry-proto/0.11.0")
+                self.requires("opentelemetry-proto/0.20.0")
             else:
                 self.requires("opentelemetry-proto/0.20.0")
 
@@ -117,7 +117,7 @@ class OpenTelemetryCppConan(ConanFile):
            self.options.with_elasticsearch or
            self.options.get_safe("with_otlp_http")
         ):
-           self.requires("libcurl/8.1.1")
+           self.requires("libcurl/8.1.2")
 
         if self.options.with_prometheus:
             self.requires("prometheus-cpp/1.1.0")
@@ -161,7 +161,7 @@ class OpenTelemetryCppConan(ConanFile):
 
     def build_requirements(self):
         if self.options.with_otlp:
-            self.tool_requires("protobuf/3.21.9")
+            self.tool_requires("protobuf/3.21.12")
             if self.options.get_safe("with_otlp_grpc"):
                 self.tool_requires("grpc/1.50.1")
 
