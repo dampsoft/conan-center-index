@@ -5,6 +5,7 @@ from conan.tools.build import check_min_cppstd, cross_building
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.env import VirtualRunEnv, VirtualBuildEnv
 from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm
+from conan.tools.microsoft import is_msvc
 from conan.tools.scm import Version
 import os
 import functools
@@ -36,7 +37,7 @@ class PopplerConan(ConanFile):
         "with_libiconv": [True, False],
         "with_openjpeg": [True, False],
         "with_lcms": [True, False],
-        "with_libjpeg": ["libjpeg", False],
+        "with_libjpeg": ["libjpeg", "libjpeg-turbo", False],
         "with_png": [True, False],
         "with_nss": [True, False],
         "with_tiff": [True, False],
@@ -108,7 +109,9 @@ class PopplerConan(ConanFile):
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
             self.requires("lcms/2.14")
-        if self.options.with_libjpeg == "libjpeg":
+        if self.options.with_libjpeg == "libjpeg-turbo":
+            self.requires("libjpeg-turbo/2.1.5")
+        elif self.options.with_libjpeg == "libjpeg":
             self.requires("libjpeg/9e")
         if self.options.with_png:
             self.requires("libpng/1.6.39")
@@ -155,6 +158,9 @@ class PopplerConan(ConanFile):
             # FIXME: missing nss recipe
             raise ConanInvalidConfiguration("nss is not (yet) available on cci")
 
+        if self.settings.os == "Windows" and self.options.with_libjpeg == "libjpeg":
+            raise ConanInvalidConfiguration("Build with libjpeg isn't supported on Windows (see https://gitlab.freedesktop.org/poppler/poppler/-/issues/1180)")
+
     def build_requirements(self):
         self.tool_requires("pkgconf/1.9.3")
         self.tool_requires("cmake/3.26.4")
@@ -166,7 +172,7 @@ class PopplerConan(ConanFile):
     @property
     def _dct_decoder(self):
         if self.options.with_libjpeg:
-            return str(self.options.with_libjpeg)
+            return "libjpeg"
 
         return "none"
 
@@ -200,7 +206,7 @@ class PopplerConan(ConanFile):
         tc.variables["ENABLE_CPP"] = self.options.cpp
         tc.variables["ENABLE_BOOST"] = self.options.splash
         tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
-        tc.variables["WITH_JPEG"] = self.options.with_libjpeg
+        tc.variables["WITH_JPEG"] = bool(self.options.with_libjpeg)
         tc.variables["WITH_PNG"] = self.options.with_png
         tc.variables["WITH_TIFF"] = self.options.with_tiff
         tc.variables["WITH_NSS3"] = self.options.with_nss
@@ -243,6 +249,10 @@ class PopplerConan(ConanFile):
 
         deps = CMakeDeps(self)
         deps.set_property("freetype", "cmake_target_name", "Freetype::Freetype")
+        # conan-io/conan#12600
+        if is_msvc(self):
+            deps.set_property("libjpeg", "cmake_find_mode", "module")
+            deps.set_property("libiconv", "cmake_find_mode", "module")
         deps.generate()
 
     def build(self):
@@ -280,7 +290,9 @@ class PopplerConan(ConanFile):
             self.cpp_info.components["libpoppler"].requires.append("openjpeg::openjpeg")
         if self.options.with_lcms:
             self.cpp_info.components["libpoppler"].requires.append("lcms::lcms")
-        if self.options.with_libjpeg == "libjpeg":
+        if self.options.with_libjpeg == "libjpeg-turbo":
+            self.cpp_info.components["libpoppler"].requires.append("libjpeg-turbo::libjpeg-turbo")
+        elif self.options.with_libjpeg == "libjpeg":
             self.cpp_info.components["libpoppler"].requires.append("libjpeg::libjpeg")
         if self.options.with_png:
             self.cpp_info.components["libpoppler"].requires.append("libpng::libpng")
