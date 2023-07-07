@@ -1,15 +1,15 @@
-From 80f73b188ed1465b02ba123cf8dc2b7effabef5b Mon Sep 17 00:00:00 2001
-From: Rasmus Thomsen <oss@cogitri.dev>
-Date: Tue, 20 Dec 2022 12:42:14 +0100
+From 57233c2df0fe1a2c7aae2828afe9800b7b138272 Mon Sep 17 00:00:00 2001
+From: Rasmus Thomsen <rasmus.thomsen@dampsoft.de>
+Date: Fri, 7 Jul 2023 08:46:18 +0200
 Subject: [PATCH] Always require packes when their option is enabled
 
 ---
- CMakeLists.txt                               | 27 +++++++-------------
+ CMakeLists.txt                               | 24 +++++++-------------
  cmake/modules/MacroOptionalFindPackage.cmake |  2 +-
- 2 files changed, 10 insertions(+), 19 deletions(-)
+ 2 files changed, 9 insertions(+), 17 deletions(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 27403fdf..3de278ef 100644
+index 48c5b6e3..e27f7c79 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -191,24 +191,16 @@ else()
@@ -43,25 +43,7 @@ index 27403fdf..3de278ef 100644
  endif()
  
  # Check for Cairo rendering backend
-@@ -285,7 +277,7 @@ if(ENABLE_CPP)
-   endif()
- endif()
- if(ENABLE_ZLIB)
--  find_package(ZLIB)
-+  find_package(ZLIB REQUIRED)
-   set(ENABLE_ZLIB ${ZLIB_FOUND})
- endif()
- if(ENABLE_ZLIB_UNCOMPRESS AND NOT ENABLE_ZLIB)
-@@ -294,7 +286,7 @@ if(ENABLE_ZLIB_UNCOMPRESS AND NOT ENABLE_ZLIB)
- endif()
- set(WITH_OPENJPEG FALSE)
- if(ENABLE_LIBOPENJPEG STREQUAL "openjpeg2")
--  find_package(OpenJPEG)
-+  find_package(OpenJPEG REQUIRED)
-   set(WITH_OPENJPEG ${OpenJPEG_FOUND})
-   if(NOT OpenJPEG_FOUND OR OPENJPEG_MAJOR_VERSION VERSION_LESS 2)
-     message(STATUS "Could NOT find openjpeg2.")
-@@ -315,13 +307,13 @@ else()
+@@ -309,13 +301,13 @@ else()
  endif()
  set(ENABLE_LIBOPENJPEG "${WITH_OPENJPEG}")
  if(ENABLE_CMS STREQUAL "lcms2")
@@ -91,5 +73,5 @@ index d4ed48e3..ad1393ac 100644
        string(TOUPPER ${_name} _nameUpper)
        set(${_name}_FOUND FALSE)
 -- 
-2.37.1 (Apple Git-137.1)
+2.25.1
 

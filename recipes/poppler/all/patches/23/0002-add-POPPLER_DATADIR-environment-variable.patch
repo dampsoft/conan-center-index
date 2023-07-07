@@ -8,8 +8,8 @@ diff --git a/poppler/GlobalParams.cc b/poppler/GlobalParams.cc
 index 82ac1fd8..6e845501 100644
 --- a/poppler/GlobalParams.cc
 +++ b/poppler/GlobalParams.cc
-@@ -410,6 +410,10 @@ const SysFontInfo *SysFontList::find(const std::string &name, bool fixedWidth, b
-
+@@ -411,6 +411,10 @@ const SysFontInfo *SysFontList::find(const std::string &name, bool fixedWidth, b
+ 
  GlobalParams::GlobalParams(const char *customPopplerDataDir) : popplerDataDir(customPopplerDataDir)
  {
 +    if (!popplerDataDir) {

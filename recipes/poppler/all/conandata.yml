@@ -1,9 +1,9 @@
 sources:
-  "23.04.0":
-    url: "https://poppler.freedesktop.org/poppler-23.04.0.tar.xz"
-    sha256: "b6d893dc7dcd4138b9e9df59a13c59695e50e80dc5c2cacee0674670693951a1"
+  "23.07.0":
+    url: "https://poppler.freedesktop.org/poppler-23.07.0.tar.xz"
+    sha256: "f29b4b4bf47572611176454c8f21506d71d27eca5011a39aa44038b30b957db0"
 patches:
-  "23.04.0":
+  "23.07.0":
     - patch_file: "patches/23/0001-require-packages.patch"
       patch_type: "conan"
       patch_description: "Require packages when their options is enabled, so options aren't silently disabled"

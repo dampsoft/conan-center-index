@@ -3,7 +3,8 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.build import check_min_cppstd, cross_building
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
-from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm, replace_in_file
+from conan.tools.env import VirtualRunEnv, VirtualBuildEnv
+from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, rm
 from conan.tools.scm import Version
 import os
 import functools
@@ -225,6 +226,7 @@ class PopplerConan(ConanFile):
         if self.settings.os == "Windows":
             tc.variables["ENABLE_RELOCATABLE"] = self.options.shared
         tc.variables["EXTRA_WARN"] = False
+        tc.variables["WITH_Gpgmepp"] = False
 
         # Workaround for cross-build to at least iOS/tvOS/watchOS,
         # when dependencies are found with find_path() and find_library()
@@ -232,6 +234,12 @@ class PopplerConan(ConanFile):
             tc.variables["CMAKE_FIND_ROOT_PATH_MODE_INCLUDE"] = "BOTH"
             tc.variables["CMAKE_FIND_ROOT_PATH_MODE_LIBRARY"] = "BOTH"
         tc.generate()
+
+        vbe = VirtualBuildEnv(self)
+        vbe.generate()
+        if not cross_building(self):
+            vre = VirtualRunEnv(self)
+            vre.generate(scope="build")
 
         deps = CMakeDeps(self)
         deps.set_property("freetype", "cmake_target_name", "Freetype::Freetype")
