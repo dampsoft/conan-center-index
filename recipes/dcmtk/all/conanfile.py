@@ -35,6 +35,7 @@ class DCMTKConan(ConanFile):
         "builtin_dictionary": [None, True, False],
         "builtin_private_tags": [True, False],
         "external_dictionary": [None, True, False],
+        "default_dict": [None, "external", "builtin"],
         "wide_io": [True, False],
         "enable_stl": [True, False],
     }
@@ -53,6 +54,7 @@ class DCMTKConan(ConanFile):
         "builtin_dictionary": None,
         "builtin_private_tags": False,
         "external_dictionary": None,
+        "default_dict": None,
         "wide_io": False,
         "enable_stl": True,
     }
@@ -147,11 +149,12 @@ class DCMTKConan(ConanFile):
         tc.variables["DCMTK_WITH_DOXYGEN"] = False
 
         tc.variables["DCMTK_ENABLE_PRIVATE_TAGS"] = self.options.builtin_private_tags
-        if self.options.external_dictionary is not None:
-            if Version(self.version) < "3.6.7":
+        if Version(self.version) < "3.6.7":
+            if self.options.external_dictionary is not None:
                 tc.variables["DCMTK_ENABLE_EXTERNAL_DICTIONARY"] = self.options.external_dictionary
-            else:
-                tc.variables["DCMTK_DEFAULT_DICT"] = self.options.external_dictionary
+        else:
+            if self.options.default_dict is not None:
+                tc.variables["DCMTK_DEFAULT_DICT"] = self.options.default_dict
         if self.options.builtin_dictionary is not None:
             tc.variables["DCMTK_ENABLE_BUILTIN_DICTIONARY"] = self.options.builtin_dictionary
         tc.variables["DCMTK_WIDE_CHAR_FILE_IO_FUNCTIONS"] = self.options.wide_io
