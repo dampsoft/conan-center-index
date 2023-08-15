@@ -239,8 +239,8 @@ class QtConan(ConanFile):
         if Version(self.version) < "6.3.0" and self.settings.compiler == "gcc" and Version(self.settings.compiler.version) >= "11":
             raise ConanInvalidConfiguration("Qt lower then 6.3.0 needs to be compiled for gcc with a version lower then 11")
 
-        if self.settings.os == "Macos" and self.dependencies["double-conversion"].options.shared:
-            raise ConanInvalidConfiguration("Test recipe fails because of Macos' SIP. Contributions are welcome.")
+        #if self.settings.os == "Macos" and self.dependencies["double-conversion"].options.shared:
+        #    raise ConanInvalidConfiguration("Test recipe fails because of Macos' SIP. Contributions are welcome.")
 
         if self.options.get_safe("qtwebengine"):
             if not self.options.shared:
