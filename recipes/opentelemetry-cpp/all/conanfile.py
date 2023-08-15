@@ -408,7 +408,6 @@ class OpenTelemetryCppConan(ConanFile):
 
         if self.options.with_otlp:
             self.cpp_info.components["opentelemetry_proto"].requires.extend([
-                "opentelemetry-proto::opentelemetry-proto",
                 "protobuf::protobuf",
             ])
 
