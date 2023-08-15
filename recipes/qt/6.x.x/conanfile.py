@@ -318,7 +318,7 @@ class QtConan(ConanFile):
             self.requires("harfbuzz/8.0.1")
         if self.options.get_safe("with_libjpeg", False) and not self.options.multiconfiguration:
             if self.options.with_libjpeg == "libjpeg-turbo":
-                self.requires("libjpeg-turbo/2.1.5")
+                self.requires("libjpeg-turbo/3.0.0")
             else:
                 self.requires("libjpeg/9e")
         if self.options.get_safe("with_libpng", False) and not self.options.multiconfiguration:
@@ -326,9 +326,9 @@ class QtConan(ConanFile):
         if self.options.with_sqlite3 and not self.options.multiconfiguration:
             self.requires("sqlite3/3.42.0")
         if self.options.get_safe("with_mysql", False):
-            self.requires("libmysqlclient/8.0.31")
+            self.requires("libmysqlclient/8.1.0")
         if self.options.with_pq:
-            self.requires("libpq/15.3")
+            self.requires("libpq/15.4")
         if self.options.with_odbc:
             if self.settings.os != "Windows":
                 self.requires("odbc/2.3.11")
