@@ -77,6 +77,7 @@ class CcacheConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["REDIS_STORAGE_BACKEND"] = self.options.redis_storage_backend
         tc.variables["HIREDIS_FROM_INTERNET"] = False
+        tc.variables["ZSTD_FROM_INTERNET"] = False
         tc.variables["ENABLE_DOCUMENTATION"] = False
         tc.variables["ENABLE_TESTING"] = False
         tc.generate()
@@ -85,6 +86,7 @@ class CcacheConan(ConanFile):
         deps.set_property("hiredis", "cmake_target_name", "HIREDIS::HIREDIS")
         deps.set_property("hiredis", "cmake_find_mode", "module")
         deps.set_property("zstd", "cmake_target_name", "ZSTD::ZSTD")
+        deps.set_property("zstd", "cmake_find_mode", "module")
         deps.generate()
 
     def build(self):
