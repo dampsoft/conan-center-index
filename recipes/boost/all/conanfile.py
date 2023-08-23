@@ -859,6 +859,12 @@ class BoostConan(ConanFile):
                             "! [ $(property-set).get <target-os> ] in windows cygwin darwin aix android &&",
                             strict=False)
 
+        if self.settings.os == "Windows":
+            replace_in_file(self, os.path.join(self.source_folder, "libs", "locale", "build", "Jamfile.v2"),
+                            ".icu-path = [ path.make $(.icu-path) ] ; # Normalize", "", strict=False)
+            replace_in_file(self, os.path.join(self.source_folder, "libs", "locale", "build", "Jamfile.v2"),
+                            "/lib64", "\\\lib64", strict=False)
+
         if self.options.header_only:
             self.output.warning("Header only package, skipping build")
             return
@@ -1120,9 +1126,7 @@ class BoostConan(ConanFile):
             flags.append(f"-sICONV_PATH={self.dependencies['libiconv'].package_folder}")
         if self._with_icu:
             icu_path = self.dependencies['icu'].package_folder
-            if is_msvc(self):
-                icu_path = icu_path.lower()
-            flags.append(f"-sICU_PATH={icu_path}")
+            flags.append(f"-sICU_PATH=\"{icu_path}\"")
             if not self.dependencies["icu"].options.shared:
                 # Using ICU_OPTS to pass ICU system libraries is not possible due to Boost.Regex disallowing it.
                 icu_system_libs = self.dependencies["icu"].cpp_info.aggregated_components().system_libs
@@ -1131,6 +1135,10 @@ class BoostConan(ConanFile):
                 else:
                     icu_ldflags = " ".join(f"-l{l}" for l in icu_system_libs)
                 link_flags.append(icu_ldflags)
+            if self.settings.build_type == "Debug":
+                flags.append("-sICU_ICUUC_NAME=icuucd")
+                flags.append("-sICU_ICUDT_NAME=icudtd")
+                flags.append("-sICU_ICUIN_NAME=icuind")
 
         link_flags = f'linkflags="{" ".join(link_flags)}"'
         flags.append(link_flags)
