@@ -66,10 +66,10 @@ class MoldConan(ConanFile):
             self.deps_cpp_info["mimalloc"].lib_paths[0]))
 
     def requirements(self):
-        self.requires("zlib/1.2.13")
+        self.requires("zlib/1.3")
         self.requires("openssl/3.1.2")
         self.requires("xxhash/0.8.2")
-        self.requires("onetbb/2021.9.0")
+        self.requires("onetbb/2021.10.0")
         self.requires("mimalloc/2.0.6")
 
     def source(self):

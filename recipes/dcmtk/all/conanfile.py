@@ -82,7 +82,7 @@ class DCMTKConan(ConanFile):
         if self.options.with_libxml2:
             self.requires("libxml2/2.11.4")
         if self.options.with_zlib:
-            self.requires("zlib/1.2.13")
+            self.requires("zlib/[>=1.2.11 <2]")
         if self.options.with_openssl:
             self.requires("openssl/[>=1.1 <4]")
         if self.options.with_libpng:

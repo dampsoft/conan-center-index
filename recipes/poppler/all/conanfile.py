@@ -118,11 +118,11 @@ class PopplerConan(ConanFile):
         if self.options.with_tiff:
             self.requires("libtiff/4.5.1")
         if self.options.splash:
-            self.requires("boost/1.82.0")
+            self.requires("boost/1.83.0")
         if self.options.with_libcurl:
             self.requires("libcurl/8.2.1")
         if self.options.with_zlib:
-            self.requires("zlib/1.2.13")
+            self.requires("zlib/[>=1.2.11 <2]")
 
     @property
     def _minimum_compilers_version(self):
@@ -162,8 +162,8 @@ class PopplerConan(ConanFile):
             raise ConanInvalidConfiguration("Build with libjpeg isn't supported on Windows (see https://gitlab.freedesktop.org/poppler/poppler/-/issues/1180)")
 
     def build_requirements(self):
-        self.tool_requires("pkgconf/1.9.5")
-        self.tool_requires("cmake/3.27.1")
+        self.tool_requires("pkgconf/2.0.2")
+        self.tool_requires("cmake/3.27.4")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
