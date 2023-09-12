@@ -62,7 +62,7 @@ class SociConan(ConanFile):
 
     def requirements(self):
         if self.options.with_sqlite3:
-            self.requires("sqlite3/3.42.0")
+            self.requires("sqlite3/3.43.0")
         if self.options.with_odbc and self.settings.os != "Windows":
             self.requires("odbc/2.3.11")
         if self.options.with_mysql:
@@ -70,7 +70,7 @@ class SociConan(ConanFile):
         if self.options.with_postgresql:
             self.requires("libpq/15.4")
         if self.options.with_boost:
-            self.requires("boost/1.82.0")
+            self.requires("boost/1.83.0")
 
     @property
     def _minimum_compilers_version(self):
