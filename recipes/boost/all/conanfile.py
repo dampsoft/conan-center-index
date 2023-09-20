@@ -1135,7 +1135,7 @@ class BoostConan(ConanFile):
                 else:
                     icu_ldflags = " ".join(f"-l{l}" for l in icu_system_libs)
                 link_flags.append(icu_ldflags)
-            if self.settings.build_type == "Debug":
+            if self.settings.build_type == "Debug" and is_msvc(self):
                 flags.append("-sICU_ICUUC_NAME=icuucd")
                 flags.append("-sICU_ICUDT_NAME=icudtd")
                 flags.append("-sICU_ICUIN_NAME=icuind")
