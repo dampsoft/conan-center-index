@@ -1,0 +1,34 @@
+From c68c5c7a2b94f66070709400051f1b2c9ad1850f Mon Sep 17 00:00:00 2001
+From: Alexander Grund <alexander.grund@tu-dresden.de>
+Date: Tue, 19 Sep 2023 10:27:50 +0200
+Subject: [PATCH 1/2] Fix handling of escaped opening brace in format strings
+
+When using an escaped opening brace in a format string it was output 2
+times instead of one.
+Fix and add test
+---
+ include/boost/locale/format.hpp |  3 +++
+ 1 files changed, 3 insertions(+), 0 deletion(-)
+
+diff --git a/include/boost/locale/format.hpp b/include/boost/locale/format.hpp
+index 6054ffed..6adb8440 100644
+--- a/boost/locale/format.hpp
++++ b/boost/locale/format.hpp
+@@ -295,6 +295,7 @@ namespace boost { namespace locale {
+             for(size_t pos = 0; format[pos];) {
+                 if(format[pos] != obrk) {
+                     if(format[pos] == cbrk && format[pos + 1] == cbrk) {
++                        // Escaped closing brace
+                         out << cbrk;
+                         pos += 2;
+                     } else {
+@@ -305,7 +306,9 @@ namespace boost { namespace locale {
+                 }
+                 pos++;
+                 if(format[pos] == obrk) {
++                    // Escaped opening brace
+                     out << obrk;
++                    pos++;
+                     continue;
+                 }
+ 
