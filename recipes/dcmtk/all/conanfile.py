@@ -329,7 +329,7 @@ class DCMTKConan(ConanFile):
         self.env_info.DCMDICTPATH = dcmdictpath # remove in conan v2?
         # dcmtk requires us to build with the same cppstd as it was built with
         self.buildenv_info.define("CXX_STANDARD", str(self.settings.compiler.cppstd or "11"))
-        self.conf_info.define("user.dcmtk:used-cppstd", self.settings.compiler.cppstd)
+        self.conf_info.define("user.dcmtk:used-cppstd", str(self.settings.compiler.cppstd))
 
         if self.options.with_applications:
             self.buildenv_info.define_path("DCMDICTPATH", dcmdictpath)
