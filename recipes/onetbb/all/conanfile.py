@@ -85,6 +85,9 @@ class OneTBBConan(ConanFile):
         if self._tbbbind_explicit_hwloc:
             self.options["hwloc"].shared = True
 
+    def layout(self):
+        cmake_layout(self, src_folder="src")
+
     def requirements(self):
         if self._tbbbind_build:
             self.requires("hwloc/2.9.2")
@@ -92,9 +95,6 @@ class OneTBBConan(ConanFile):
     def build_requirements(self):
         if not self._tbbbind_explicit_hwloc and not self.conf.get("tools.gnu:pkg_config", check_type=str):
             self.build_requires("pkgconf/2.0.3")
-
-    def layout(self):
-        cmake_layout(self, src_folder="src")
 
     def package_id(self):
         if Version(self.version) < "2021.5.0":
@@ -113,6 +113,8 @@ class OneTBBConan(ConanFile):
                     "Please consider fixing at least the aforementioned issue in upstream."
                 )
             self.output.warning("oneTBB strongly discourages usage of static linkage")
+
+    def validate(self):
         if self._tbbbind_explicit_hwloc and not self.dependencies["hwloc"].options.shared:
             raise ConanInvalidConfiguration(f"{self.ref} requires hwloc:shared=True to be built.")
 

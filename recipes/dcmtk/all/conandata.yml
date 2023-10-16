@@ -4,6 +4,9 @@ sources:
     sha256: "7c58298e3e8d60232ee6fc8408cfadd14463cc11a3c4ca4c59af5988c7e9710a"
 patches:
   "3.6.7":
-    - patch_file: "patches/0001-use-conan-target-variables.patch"
+    - patch_file: "patches/3.6.7-0001-cmake-robust-deps-handling.patch"
+      patch_description: "CMake: robust discovery with find_package() and use imported targets"
       patch_type: conan
-      patch_description: "Patch variable names to fit what conan generates"
+    - patch_file: "patches/3.6.7-0002-cmake-check-openssl-symbol.patch"
+      patch_description: "CMake: fix OpenSSL compatibility checks"
+      patch_type: conan

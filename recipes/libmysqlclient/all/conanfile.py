@@ -63,7 +63,7 @@ class LibMysqlClientCConan(ConanFile):
 
     def requirements(self):
         if Version(self.version) < "8.0.30":
-            self.requires("openssl/1.1.1u")
+            self.requires("openssl/1.1.1w")
         else:
             self.requires("openssl/[>=1.1 <4]")
         self.requires("zlib/[>=1.2.11 <2]")
@@ -229,6 +229,9 @@ class LibMysqlClientCConan(ConanFile):
         tc.cache_variables["WITH_SSL"] = self.dependencies["openssl"].package_folder.replace("\\", "/")
 
         tc.cache_variables["WITH_ZLIB"] = "system"
+
+        # Remove to ensure reproducible build, this only affects docs generation
+        tc.cache_variables["CMAKE_DISABLE_FIND_PACKAGE_Doxygen"] = True
         tc.generate()
 
         deps = CMakeDeps(self)
