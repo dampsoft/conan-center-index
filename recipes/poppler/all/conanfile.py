@@ -104,7 +104,7 @@ class PopplerConan(ConanFile):
         if self.options.get_safe("with_gobject_introspection"):
             self.requires("gobject-introspection/1.72.0")
         if self.options.with_qt:
-            self.requires("qt/6.5.2")
+            self.requires("qt/6.6.0")
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
@@ -120,7 +120,7 @@ class PopplerConan(ConanFile):
         if self.options.splash:
             self.requires("boost/1.83.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/8.3.0")
+            self.requires("libcurl/8.4.0")
         if self.options.with_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
 
@@ -163,7 +163,7 @@ class PopplerConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("pkgconf/2.0.3")
-        self.tool_requires("cmake/3.27.5")
+        self.tool_requires("cmake/3.27.7")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
