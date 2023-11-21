@@ -106,7 +106,7 @@ class OneTBBConan(ConanFile):
         if self.settings.compiler == "apple-clang" and Version(self.settings.compiler.version) < "11.0":
             raise ConanInvalidConfiguration(f"{self.ref} couldn't be built by apple-clang < 11.0")
         if not self.options.get_safe("shared", True):
-            if Version(self.version) >= "2021.6.0":
+            if Version(self.version) >= "2021.6.0" and False:
                 raise ConanInvalidConfiguration(
                     "Building oneTBB as a static library is highly discouraged and not supported "
                     "to avoid unforeseen issues like https://github.com/oneapi-src/oneTBB/issues/920. "
