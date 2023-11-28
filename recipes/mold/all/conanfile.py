@@ -24,9 +24,11 @@ class MoldConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "with_mimalloc": [True, False],
+        "mold_mostly_static": [True, False],
     }
     default_options = {
         "with_mimalloc": False,
+        "mold_mostly_static": False,
     }
 
     def configure(self):
@@ -39,14 +41,15 @@ class MoldConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("zlib/[>=1.2.11 <2]")
-        self.requires("xxhash/0.8.2")
-        self.requires("onetbb/2021.10.0")
-        self.requires("zstd/1.5.5")
-        if self.options.with_mimalloc:
-            self.requires("mimalloc/2.1.2")
-        if Version(self.version) < "2.2":
-            self.requires("openssl/[>=1.1 <4]")
+        if (not self.options.mold_mostly_static):
+            self.requires("zlib/[>=1.2.11 <2]")
+            self.requires("xxhash/0.8.2")
+            self.requires("onetbb/2021.10.0")
+            self.requires("zstd/1.5.5")
+            if self.options.with_mimalloc:
+                self.requires("mimalloc/2.1.2")
+            if Version(self.version) < "2.2":
+                self.requires("openssl/[>=1.1 <4]")
 
     def package_id(self):
         del self.info.settings.compiler
@@ -76,8 +79,11 @@ class MoldConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables["MOLD_USE_MIMALLOC"] = self.options.with_mimalloc
-        tc.variables["MOLD_USE_SYSTEM_MIMALLOC"] = True
-        tc.variables["MOLD_USE_SYSTEM_TBB"] = True
+        if self.options.mold_mostly_static:
+            tc.variables["MOLD_MOSTLY_STATIC"] = True
+        else:
+            tc.variables["MOLD_USE_SYSTEM_MIMALLOC"] = True
+            tc.variables["MOLD_USE_SYSTEM_TBB"] = True
         tc.variables["CMAKE_INSTALL_LIBEXECDIR"] = "libexec"
         tc.generate()
 

@@ -49,6 +49,8 @@ def install_patchelf(out: ConanOutput, deploy_folder: Path, conan_api: ConanAPI)
     return deploy_folder / 'patchelf' / 'ds_nexus_deploy' / 'out'  / 'bin' / 'patchelf'
 
 def archive_hook(pkg: RecipeReference, deploy_folder: Path, conan_api: ConanAPI):
+    return
+
     out = ConanOutput()
 
     patchelf_path = install_patchelf(out, deploy_folder, conan_api)
