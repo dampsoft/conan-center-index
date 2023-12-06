@@ -206,7 +206,7 @@ class LibcurlConan(ConanFile):
                 self.tool_requires("ninja/1.11.1")
         else:
             if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-                self.tool_requires("pkgconf/2.0.3")
+                self.tool_requires("pkgconf/2.1.0")
             if self.settings.os in [ "tvOS", "watchOS" ]:
                 self.tool_requires("gnu-config/cci.20210814")
             if self._settings_build.os == "Windows":

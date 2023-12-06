@@ -96,7 +96,7 @@ class DCMTKConan(ConanFile):
         elif self.options.charset_conversion == "icu":
             self.requires("icu/74.1")
         if self.options.with_libxml2:
-            self.requires("libxml2/2.11.5")
+            self.requires("libxml2/2.12.1")
         if self.options.with_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
         if self.options.with_openssl:
