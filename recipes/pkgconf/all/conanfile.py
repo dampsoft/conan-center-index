@@ -56,7 +56,7 @@ class PkgConfConan(ConanFile):
             del self.info.settings.compiler
 
     def build_requirements(self):
-        self.tool_requires("meson/1.3.0")
+        self.tool_requires("meson/1.3.1")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
