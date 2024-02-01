@@ -40,6 +40,10 @@ sources:
     sha256: "32f12ff15ec257e3462883f84bc291c2d5dc30055604c12ec4b46a36dfa3f189"
 
 patches:
+  "1.13.0":
+    - patch_file: "patches/2475.patch"
+      patch_description: "Fix build w/ MSVC"
+      patch_type: "compatibility"
   "1.9.1":
     - patch_file: "patches/1.9.1-0001-fix-cmake.patch"
       patch_description: "fix lack of linking libraries due to conan not generating the variables that are expected"
