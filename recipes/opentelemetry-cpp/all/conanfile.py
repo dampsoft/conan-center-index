@@ -1,6 +1,6 @@
 from conan import ConanFile, conan_version
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.files import get, copy, rmdir, replace_in_file, save
+from conan.tools.files import get, copy, rmdir, replace_in_file, save, export_conandata_patches, apply_conandata_patches
 from conan.tools.build import check_min_cppstd
 from conan.tools.scm import Version
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
@@ -109,6 +109,8 @@ class OpenTelemetryCppConan(ConanFile):
         else:
             return self.options.with_stl
 
+    def export_sources(self):
+        export_conandata_patches(self)
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -264,6 +266,8 @@ class OpenTelemetryCppConan(ConanFile):
         deps.generate()
 
     def _patch_sources(self):
+        apply_conandata_patches(self)
+
         if (self.options.with_otlp_http or self.options.with_otlp_grpc) and Version(self.version) < "1.8":
             protos_path = self.dependencies.build["opentelemetry-proto"].conf_info.get("user.opentelemetry-proto:proto_root").replace("\\", "/")
             protos_cmake_path = os.path.join(self.source_folder, "cmake", "opentelemetry-proto.cmake")
