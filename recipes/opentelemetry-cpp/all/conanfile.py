@@ -204,7 +204,7 @@ class OpenTelemetryCppConan(ConanFile):
 
     def build_requirements(self):
         if self.options.with_otlp_http or self.options.with_otlp_grpc:
-            self.tool_requires("opentelemetry-proto/1.0.0")
+            self.tool_requires("opentelemetry-proto/1.1.0")
             self.tool_requires("protobuf/<host_version>")
 
         if self.options.with_otlp_grpc:
@@ -262,6 +262,10 @@ class OpenTelemetryCppConan(ConanFile):
         tc.cache_variables["OPENTELEMETRY_INSTALL"] = True
         if not self.settings.compiler.cppstd:
             tc.variables["CMAKE_CXX_STANDARD"] = self._min_cppstd
+
+        if Version(self.version) >= "1.13" and Version(self.version) < "1.14":
+            tc.variables["WITH_OTLP_HTTP_SSL_PREVIEW"] = False
+            tc.variables["WITH_OTLP_HTTP_SSL_TLS_PREVIEW"] = False
         tc.generate()
 
         deps = CMakeDeps(self)
