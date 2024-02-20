@@ -1,0 +1,473 @@
+From 17cb3f83221e797999d1cf4c4b569534a93c8c76 Mon Sep 17 00:00:00 2001
+From: Simon Sigurdhsson <Sigurdhsson@gmail.com>
+Date: Wed, 9 Sep 2020 21:36:44 +0200
+Subject: [PATCH] Add a TAP reporter based on the node-tap specification
+
+Closes #146.
+---
+ bandit/reporters.h      |   1 +
+ bandit/reporters/tap.h  | 152 ++++++++++++++++++++++++
+ bandit/runner.h         |   3 +
+ specs/options.cpp       |   2 +-
+ specs/reporters/tap.cpp | 255 ++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 412 insertions(+), 1 deletion(-)
+ create mode 100644 bandit/reporters/tap.h
+ create mode 100644 specs/reporters/tap.cpp
+
+diff --git a/bandit/reporters.h b/bandit/reporters.h
+index b15ca01..e440bec 100644
+--- a/bandit/reporters.h
++++ b/bandit/reporters.h
+@@ -7,5 +7,6 @@
+ #include <bandit/reporters/info.h>
+ #include <bandit/reporters/spec.h>
+ #include <bandit/reporters/crash.h>
++#include <bandit/reporters/tap.h>
+ 
+ #endif
+diff --git a/bandit/reporters/tap.h b/bandit/reporters/tap.h
+new file mode 100644
+index 0000000..a9423e7
+--- /dev/null
++++ b/bandit/reporters/tap.h
+@@ -0,0 +1,152 @@
++#ifndef BANDIT_REPORTERS_TAP_H
++#define BANDIT_REPORTERS_TAP_H
++
++#include <iostream>
++#include <vector>
++#include <cmath>
++#include <bandit/reporters/interface.h>
++
++namespace bandit {
++  namespace reporter {
++    struct tap : public interface {
++      tap(std::ostream& stm)
++          : success_(true), ctxs_(), stm_(stm) {}
++
++      tap()
++          : tap(std::cout) {}
++
++      tap& operator=(const tap&) {
++        return *this;
++      }
++
++      void test_run_starting() override {
++        stm_ << "TAP version 13" << "\n";
++        ctxs_.push_back(context{});
++        stm_.flush();
++      }
++
++      void test_run_complete() override {
++        success_ = ctxs_.back().is_success;
++        stm_ << "1.." << ctxs_.back().total_specs << "\n";
++        ctxs_.pop_back();
++        stm_.flush();
++      }
++
++      void context_starting(const std::string& desc) override {
++        stm_ << indent() << "# Subtest: " << desc << "\n";
++        ctxs_.push_back(context{});
++        stm_.flush();
++      }
++
++      void context_ended(const std::string& desc) override {
++        const std::string error = std::move(ctxs_.back().error);
++        const bool is_success = ctxs_.back().is_success;
++        const char* is_ok = is_success ? "ok" : "not ok";
++        stm_ << indent() << "1.." << ctxs_.back().total_specs << "\n";
++        ctxs_.pop_back();
++        ctxs_.back().is_success = ctxs_.back().is_success && is_success;
++        stm_ << indent() << is_ok << " " << (++ctxs_.back().total_specs) << " - " << desc << "\n";
++        if (!error.empty()) {
++          stm_ << indent() << "  ---\n";
++          stm_ << indent() << "  at: ~\n";
++          stm_ << indent() << "  message: \"" << escape(error) << "\"\n";
++          stm_ << indent() << "  ...\n";
++        }
++        stm_.flush();
++      }
++
++      void test_run_error(const std::string&, const detail::test_run_error& err) override {
++        ctxs_.back().is_success = false;
++        ctxs_.back().error = err.what();
++      }
++
++      void it_starting(const std::string&) override {
++        // No-op.
++      }
++
++      void it_skip(const std::string& desc) override {
++        stm_ << indent() << "ok " << (++ctxs_.back().total_specs) << " - " << desc << " # SKIP\n";
++        stm_.flush();
++      }
++
++      void it_succeeded(const std::string& desc) override {
++        stm_ << indent() << "ok " << (++ctxs_.back().total_specs) << " - " << desc << "\n";
++        stm_.flush();
++      }
++
++      void it_failed(const std::string& desc, const detail::assertion_exception& ex) override {
++        ctxs_.back().is_success = false;
++        stm_ << indent() << "not ok " << (++ctxs_.back().total_specs) << " - " << desc << "\n";
++        stm_ << indent() << "  ---\n";
++        stm_ << indent() << "  at:\n";
++        stm_ << indent() << "    file: '" << ex.file_name() << "'\n";
++        stm_ << indent() << "    line: " << ex.line_number() << "\n";
++        stm_ << indent() << "  message: \"" << escape(ex.what()) << "\"\n";
++        stm_ << indent() << "  ...\n";
++        stm_.flush();
++      }
++
++      void it_unknown_error(const std::string& desc) override {
++        ctxs_.back().is_success = false;
++        stm_ << indent() << "not ok " << (++ctxs_.back().total_specs) << " - " << desc << "\n";
++        stm_ << indent() << "  ---\n";
++        stm_ << indent() << "  at: ~\n";
++        stm_ << indent() << "  message: unknown error!\n";
++        stm_ << indent() << "  ...\n";
++        stm_.flush();
++      }
++
++      bool did_we_pass() const override {
++        return ctxs_.empty() ? success_ : ctxs_.back().is_success;
++      }
++
++    private:
++      std::string escape(const std::string& str) {
++        std::stringstream stm;
++
++        for (char c : str) {
++          switch (c) {
++          case '\n':
++            stm << "\\n";
++            break;
++          case '\r':
++            stm << "\\r";
++            break;
++          case '\t':
++            stm << "\\t";
++            break;
++          case '\'':
++            stm << "\\'";
++            break;
++          case '\\':
++            stm << "\\\\";
++            break;
++          case '\"':
++            stm << "\\\"";
++            break;
++          default:
++            stm << c;
++          }
++        }
++
++        return stm.str();
++      }
++
++      std::string indent() {
++        int level = std::max(static_cast<std::size_t>(1u), ctxs_.size()) - 1u;
++        return std::string(4 * level, ' ');
++      }
++
++      struct context {
++        int total_specs = 0;
++        bool is_success = true;
++        std::string error = "";
++      };
++
++      bool success_;
++      std::vector<context> ctxs_;
++      std::ostream& stm_;
++    };
++  }
++}
++#endif
+diff --git a/bandit/runner.h b/bandit/runner.h
+index c4c2e57..16e493f 100644
+--- a/bandit/runner.h
++++ b/bandit/runner.h
+@@ -70,6 +70,9 @@ namespace bandit {
+     choices.reporters.add("xunit", [&](detail::controller_t& controller) {
+       controller.set_reporter(new bandit::reporter::xunit(controller.get_formatter(), controller.get_report_timing()));
+     });
++    choices.reporters.add("tap", [&](detail::controller_t& controller) {
++      controller.set_reporter(new bandit::reporter::tap());
++    });
+     choices.reporters.add("info", [&](detail::controller_t& controller) {
+       controller.set_reporter(new bandit::reporter::info(controller.get_formatter(), controller.get_colorizer(), controller.get_report_timing()));
+     });
+diff --git a/specs/options.cpp b/specs/options.cpp
+index a68899b..383cedf 100644
+--- a/specs/options.cpp
++++ b/specs/options.cpp
+@@ -162,7 +162,7 @@ go_bandit([]() {
+         for (auto pair : {
+                  slpair{"colorizer", {"off", "dark", "light"}},
+                  slpair{"formatter", {"posix", "vs", "qt"}},
+-                 slpair{"reporter", {"singleline", "xunit", "info", "spec", "crash", "dots"}}}) {
++                 slpair{"reporter", {"singleline", "xunit", "tap", "info", "spec", "crash", "dots"}}}) {
+           for (std::string name : pair.second) {
+             it("works with known " + pair.first + " '" + name + "'", [&] {
+               error_collector cerr;
+diff --git a/specs/reporters/tap.cpp b/specs/reporters/tap.cpp
+new file mode 100644
+index 0000000..cdbab67
+--- /dev/null
++++ b/specs/reporters/tap.cpp
+@@ -0,0 +1,255 @@
++#include <specs/specs.h>
++
++namespace bd = bandit::detail;
++
++go_bandit([]() {
++  describe("reporter::tap", [&]() {
++    std::stringstream stm;
++    std::unique_ptr<reporter::tap> reporter;
++
++    auto output = [&]() { return stm.str(); };
++
++    before_each([&]() {
++      stm.str(std::string());
++      reporter.reset(new reporter::tap(stm));
++    });
++
++    describe("an empty test run", [&]() {
++      before_each([&]() {
++        reporter->test_run_starting();
++        reporter->test_run_complete();
++      });
++
++      it("adds a header to the output", [&]() {
++        AssertThat(output(), StartsWith("TAP version 13\n"));
++      });
++
++      it("outputs an empty test plan", [&]() {
++        AssertThat(output(), Contains("1..0\n"));
++      });
++
++      it("ends successfully", [&]() {
++        AssertThat(reporter->did_we_pass(), IsTrue());
++      });
++    });
++
++    describe("a test run with one, successful, test", [&]() {
++      before_each([&]() {
++        reporter->test_run_starting();
++        reporter->context_starting("my context");
++        reporter->it_starting("my test");
++        reporter->it_succeeded("my test");
++        reporter->context_ended("my context");
++        reporter->test_run_complete();
++      });
++
++      it("outputs a non-empty test plan", [&]() {
++        AssertThat(output(), Contains("1..1\n"));
++      });
++
++      it("outputs the successful test", [&]() {
++        AssertThat(output(), Contains("ok 1 - my test\n"));
++      });
++
++      it("ends successfully", [&]() {
++        AssertThat(reporter->did_we_pass(), IsTrue());
++      });
++    });
++
++    describe("a test run with one, failing test", [&]() {
++      before_each([&]() {
++        reporter->test_run_starting();
++        reporter->context_starting("my context");
++        reporter->it_starting("my test");
++
++        bd::assertion_exception exception("assertion failed!", "some_file", 123);
++        reporter->it_failed("my test", exception);
++
++        reporter->context_ended("my context");
++        reporter->test_run_complete();
++      });
++
++      it("outputs the failing test", [&]() {
++        AssertThat(output(), Contains("not ok 1 - my test\n"));
++      });
++
++      it("outputs YAML metadata for the assertion", [&]() {
++        AssertThat(output(), Contains(
++          "      ---\n"
++          "      at:\n"
++          "        file: 'some_file'\n"
++          "        line: 123\n"
++          "      message: \"assertion failed!\"\n"
++          "      ...\n"
++        ));
++      });
++
++      it("does not end successfully", [&]() {
++        AssertThat(reporter->did_we_pass(), IsFalse());
++      });
++    });
++
++    describe("a test run with one test with an unknown error", [&]() {
++      before_each([&]() {
++        reporter->test_run_starting();
++        reporter->context_starting("my context");
++        reporter->it_starting("my test");
++
++        reporter->it_unknown_error("my test");
++
++        reporter->context_ended("my context");
++        reporter->test_run_complete();
++      });
++
++      it("outputs the erroneous test", [&]() {
++        AssertThat(output(), Contains("not ok 1 - my test\n"));
++      });
++
++      it("outputs YAML metadata for the error", [&]() {
++        AssertThat(output(), Contains(
++          "      ---\n"
++          "      at: ~\n"
++          "      message: unknown error!\n"
++          "      ...\n"
++        ));
++      });
++
++      it("does not end successfully", [&]() {
++        AssertThat(reporter->did_we_pass(), IsFalse());
++      });
++    });
++
++    describe("a context with a skipped test", [&]() {
++      before_each([&]() {
++        reporter->test_run_starting();
++        reporter->context_starting("my context");
++
++        reporter->it_starting("my test");
++        reporter->it_succeeded("my test");
++        reporter->it_skip("my skipped test");
++
++        reporter->context_ended("my context");
++        reporter->test_run_complete();
++      });
++
++      it("outputs the skipped test", [&]() {
++        AssertThat(output(), Contains("ok 2 - my skipped test # SKIP\n"));
++      });
++
++      it("ends successfully", [&]() {
++        AssertThat(reporter->did_we_pass(), IsTrue());
++      });
++    });
++
++    describe("a successful test run with nested contexts", [&]() {
++      before_each([&]() {
++        reporter->test_run_starting();
++        reporter->context_starting("context");
++        reporter->it_starting("passes");
++        reporter->it_succeeded("passes");
++        reporter->context_starting("nested context");
++        reporter->it_starting("passes");
++        reporter->it_succeeded("passes");
++        reporter->context_ended("nested context");
++        reporter->context_ended("context");
++        reporter->test_run_complete();
++      });
++
++      it("outputs context diagnostics", [&]() {
++        AssertThat(output(), Contains("# Subtest: context\n"));
++        AssertThat(output(), Contains("    # Subtest: nested context\n"));
++      });
++
++      it("shows the passing tests as passed", [&]() {
++        AssertThat(output(), Contains("    ok 1 - passes\n"));
++        AssertThat(output(), Contains("        ok 1 - passes\n"));
++      });
++
++      it("shows the passing contexts as failed", [&]() {
++        AssertThat(output(), Contains("    ok 2 - nested context\n"));
++        AssertThat(output(), Contains("ok 1 - context\n"));
++      });
++
++      it("ends successfully", [&]() {
++        AssertThat(reporter->did_we_pass(), IsTrue());
++      });
++    });
++
++    describe("a failing test run with nested contexts", [&]() {
++      before_each([&]() {
++        reporter->test_run_starting();
++        reporter->context_starting("context");
++        reporter->it_starting("passes");
++        reporter->it_succeeded("passes");
++        reporter->context_starting("nested context");
++        reporter->it_starting("fails");
++        bd::assertion_exception exception("assertion failed!", "some_file", 123);
++        reporter->it_failed("fails", exception);
++        reporter->context_ended("nested context");
++        reporter->context_ended("context");
++        reporter->test_run_complete();
++      });
++
++      it("outputs context diagnostics", [&]() {
++        AssertThat(output(), Contains("# Subtest: context\n"));
++        AssertThat(output(), Contains("    # Subtest: nested context\n"));
++      });
++
++      it("shows the passing test as passed", [&]() {
++        AssertThat(output(), Contains("    ok 1 - passes\n"));
++      });
++
++      it("shows the failing test as failed", [&]() {
++        AssertThat(output(), Contains("        not ok 1 - fails\n"));
++      });
++
++      it("outputs YAML metadata for the error", [&]() {
++        AssertThat(output(), Contains(
++          "          ---\n"
++          "          at:\n"
++          "            file: 'some_file'\n"
++          "            line: 123\n"
++          "          message: \"assertion failed!\"\n"
++          "          ...\n"
++        ));
++      });
++
++      it("shows the failing contexts as failed", [&]() {
++        AssertThat(output(), Contains("    not ok 2 - nested context\n"));
++        AssertThat(output(), Contains("not ok 1 - context\n"));
++      });
++
++      it("does not end successfully", [&]() {
++        AssertThat(reporter->did_we_pass(), IsFalse());
++      });
++    });
++
++    describe("a context with test run errors", [&]() {
++      before_each([&]() {
++        reporter->test_run_starting();
++        reporter->context_starting("context");
++        bd::test_run_error error("error!");
++        reporter->test_run_error("context", error);
++        reporter->context_ended("context");
++        reporter->test_run_complete();
++      });
++
++      it("shows the failing context as failed", [&]() {
++        AssertThat(output(), Contains("not ok 1 - context\n"));
++      });
++
++      it("outputs YAML metadata for the error", [&]() {
++        AssertThat(output(), Contains(
++          "  ---\n"
++          "  at: ~\n"
++          "  message: \"error!\"\n"
++          "  ...\n"
++        ));
++      });
++
++      it("does not end successfully", [&]() {
++        AssertThat(reporter->did_we_pass(), IsFalse());
++      });
++    });
++  });
++});
