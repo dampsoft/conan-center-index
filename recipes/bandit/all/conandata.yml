@@ -10,6 +10,7 @@ patches:
     - patch_file: "patches/0001-change-snowhouse-path.patch"
       patch_description: "Fix snowhouse.h include path"
       patch_type: "conan"
+    - patch_file: "patches/17cb3f83221e797999d1cf4c4b569534a93c8c76.patch"
   "cci.20210618":
     - patch_file: "patches/0001-change-snowhouse-path.patch"
       patch_description: "Fix snowhouse.h include path"
