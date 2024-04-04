@@ -96,7 +96,7 @@ class PopplerConan(ConanFile):
         if self.options.get_safe("with_libiconv"):
             self.requires("libiconv/1.17")
         if self.options.fontconfiguration == "fontconfig":
-            self.requires("fontconfig/2.13.93")
+            self.requires("fontconfig/2.15.0")
         if self.options.with_cairo:
             self.requires("cairo/1.17.4")
         if self.options.get_safe("with_glib"):
@@ -104,7 +104,7 @@ class PopplerConan(ConanFile):
         if self.options.get_safe("with_gobject_introspection"):
             self.requires("gobject-introspection/1.72.0")
         if self.options.with_qt:
-            self.requires("qt/6.6.1")
+            self.requires("qt/6.6.2")
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
@@ -198,25 +198,25 @@ class PopplerConan(ConanFile):
         tc.variables["ENABLE_UNSTABLE_API_ABI_HEADERS"] = True
         tc.variables["BUILD_GTK_TESTS"] = False
         tc.variables["BUILD_QT5_TESTS"] = False
-        tc.variables["BUILD_QT6_TESTS"] = False
+        tc.variables["BUILD_QT6_TESTS"] = True
         tc.variables["BUILD_CPP_TESTS"] = False
         tc.variables["BUILD_MANUAL_TESTS"] = False
 
-        tc.variables["ENABLE_UTILS"] = False
+        tc.variables["ENABLE_UTILS"] = True
         tc.variables["ENABLE_CPP"] = self.options.cpp
         tc.variables["ENABLE_BOOST"] = self.options.splash
         tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
         tc.variables["WITH_JPEG"] = bool(self.options.with_libjpeg)
         tc.variables["WITH_PNG"] = self.options.with_png
-        tc.variables["WITH_TIFF"] = self.options.with_tiff
-        tc.variables["WITH_NSS3"] = self.options.with_nss
+        tc.variables["ENABLE_LIBTIFF"] = self.options.with_tiff
+        tc.variables["ENABLE_NSS3"] = self.options.with_nss
         tc.variables["WITH_Cairo"] = self.options.with_cairo
         tc.variables["ENABLE_GLIB"] = self.options.get_safe("with_glib", False)
         tc.variables["ENABLE_GOBJECT_INTROSPECTION"] = self.options.get_safe("with_gobject_introspection", False)
         tc.variables["WITH_Iconv"] = self.options.get_safe("with_libiconv", False)
         tc.variables["ENABLE_ZLIB"] = self.options.with_zlib
         tc.variables["ENABLE_LIBOPENJPEG"] = "openjpeg2" if self.options.with_openjpeg else "none"
-        tc.variables["ENABLE_CMS"] = "lcms2" if self.options.with_lcms else "none"
+        tc.variables["ENABLE_LCMS"] = self.options.with_lcms
         tc.variables["ENABLE_LIBCURL"] = self.options.with_libcurl
 
         tc.variables["POPPLER_DATADIR"] = self._poppler_data_datadir.replace("\\", "/")
@@ -232,7 +232,9 @@ class PopplerConan(ConanFile):
         if self.settings.os == "Windows":
             tc.variables["ENABLE_RELOCATABLE"] = self.options.shared
         tc.variables["EXTRA_WARN"] = False
-        tc.variables["WITH_Gpgmepp"] = False
+
+        tc.variables["ENABLE_NSS3"] = False
+        tc.variables["ENABLE_GPGME"] = False
 
         # Workaround for cross-build to at least iOS/tvOS/watchOS,
         # when dependencies are found with find_path() and find_library()
@@ -260,6 +262,11 @@ class PopplerConan(ConanFile):
 
         # Use CMake's built-in version of FindIconv.cmake to fix the build on MacOS
         rm(self, "FindIconv.cmake", os.path.join(self.source_folder, "cmake", "modules"))
+
+        if is_apple_os(self):
+            pcre_path = self.dependencies["pcre2"].package_folder
+            qt_path = self.dependencies["qt"].package_folder
+            self.run(f"install_name_tool -add_rpath {pcre_path}/lib {qt_path}/bin/moc", ignore_errors=True)
 
         cmake = CMake(self)
         cmake.configure()
