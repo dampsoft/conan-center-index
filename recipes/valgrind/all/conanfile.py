@@ -102,7 +102,7 @@ class ValgrindConan(ConanFile):
         copy(
             self,
             pattern="COPYING*",
-            dst=os.path.join(self.package_folder, "licenses"),
+            dst=os.path.join(self._get_rel_prefix_path(), "licenses"),
             src=self.source_folder,
             keep_path=False,
         )
@@ -110,5 +110,7 @@ class ValgrindConan(ConanFile):
     def package_info(self):
         # As Valgrind bakes paths to libs etc. into the binary, we need to set VALGRIND_LIB to the package folder
         # Without this, we cannot execute the Valgrind package test, as Valgrind won't be able to find its libraries
-        rel_path = os.path.join(os.path.relpath(str(self.options.prefix), "/"), "libexec/valgrind")
-        self.buildenv_info.define("VALGRIND_LIB", os.path.join(self.package_folder, rel_path))
+        self.buildenv_info.define("VALGRIND_LIB", os.path.join(self._get_rel_prefix_path(), "libexec/valgrind"))
+
+    def _get_rel_prefix_path(self):
+        return os.path.join(self.package_folder, os.path.relpath(str(self.options.prefix), "/"))
