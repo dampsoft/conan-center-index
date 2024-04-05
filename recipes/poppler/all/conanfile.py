@@ -198,11 +198,11 @@ class PopplerConan(ConanFile):
         tc.variables["ENABLE_UNSTABLE_API_ABI_HEADERS"] = True
         tc.variables["BUILD_GTK_TESTS"] = False
         tc.variables["BUILD_QT5_TESTS"] = False
-        tc.variables["BUILD_QT6_TESTS"] = True
+        tc.variables["BUILD_QT6_TESTS"] = False
         tc.variables["BUILD_CPP_TESTS"] = False
         tc.variables["BUILD_MANUAL_TESTS"] = False
 
-        tc.variables["ENABLE_UTILS"] = True
+        tc.variables["ENABLE_UTILS"] = False
         tc.variables["ENABLE_CPP"] = self.options.cpp
         tc.variables["ENABLE_BOOST"] = self.options.splash
         tc.variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
