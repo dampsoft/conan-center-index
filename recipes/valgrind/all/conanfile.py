@@ -58,9 +58,9 @@ class ValgrindConan(ConanFile):
         }
 
         if self.settings.os not in supported_os:
-            raise ConanInvalidConfiguration("Building Valgrind is only supported on {}.", ", ".join(supported_os))
+            raise ConanInvalidConfiguration("Building Valgrind is only supported on {}.".format(", ".join(supported_os)))
         if self.settings.arch not in os_with_arch[str(self.settings.os)]:
-            raise ConanInvalidConfiguration("Building Valgrind on {} is only supported on {}.", self.settings.os, ", ".join(supported_arch))
+            raise ConanInvalidConfiguration("Building Valgrind on {} is only supported on {}.".format(self.settings.os, ", ".join(supported_arch)))
         
         # Valgrind's code, more specifically a compiler feature check when running configure, is not compatible with C++20
         check_max_cppstd(self, "17")
