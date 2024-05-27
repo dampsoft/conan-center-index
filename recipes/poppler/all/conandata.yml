@@ -1,18 +1,11 @@
 sources:
-  "23.07.0":
-    url: "https://poppler.freedesktop.org/poppler-23.07.0.tar.xz"
-    sha256: "f29b4b4bf47572611176454c8f21506d71d27eca5011a39aa44038b30b957db0"
+  "24.04.0":
+    url: "https://poppler.freedesktop.org/poppler-24.04.0.tar.xz"
+    sha256: "1e804ec565acf7126eb2e9bb3b56422ab2039f7e05863a5dfabdd1ffd1bb77a7"
 patches:
-  "23.07.0":
-    - patch_file: "patches/23/0001-require-packages.patch"
+  "24.04.0":
+    - patch_file: "patches/24/fix-qt-targets.patch"
       patch_type: "conan"
-      patch_description: "Require packages when their options is enabled, so options aren't silently disabled"
-    - patch_file: "patches/23/0002-add-POPPLER_DATADIR-environment-variable.patch"
-      patch_type: "conan"
-      patch_description: "Add way to discover poppler-data"
-    - patch_file: "patches/23/0003-Adjust-OpenJPEG-variables-to-FindOpenJPEG.cmake.patch"
-      patch_type: "conan"
-      patch_description: "Correctly find OpenJPEG"
-    - patch_file: "patches/23/0004-allow-no-additional-flags-with-msvc.patch"
-      patch_type: "conan"
-      patch_description: "Fix the build on MSVC"
+      patch_description: "Fix the target names of Qt"
+    - patch_file: "patches/24/fix-fontconfig-include.patch"
+    - patch_file: "patches/24/allow-no-additional-flags-with-msvc.patch"

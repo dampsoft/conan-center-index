@@ -1,0 +1,30 @@
+diff --git a/cmake/modules/MacroOptionalFindPackage.cmake b/cmake/modules/MacroOptionalFindPackage.cmake
+index d4ed48e3..ad1393ac 100644
+--- a/cmake/modules/MacroOptionalFindPackage.cmake
++++ b/cmake/modules/MacroOptionalFindPackage.cmake
+@@ -29,7 +29,7 @@ endmacro(_MOFP_SET_EMPTY_IF_DEFINED _package _var)
+ macro (MACRO_OPTIONAL_FIND_PACKAGE _name )
+    option(WITH_${_name} "Search for ${_name} package" ON)
+    if (WITH_${_name})
+-      find_package(${_name} ${ARGN})
++      find_package(${_name} ${ARGN} REQUIRED)
+    else (WITH_${_name})
+       string(TOUPPER ${_name} _nameUpper)
+       set(${_name}_FOUND FALSE)
+diff --git a/cmake/modules/PopplerMacros.cmake b/cmake/modules/PopplerMacros.cmake
+index 2aed0284..7f6d9e70 100644
+--- a/cmake/modules/PopplerMacros.cmake
++++ b/cmake/modules/PopplerMacros.cmake
+@@ -75,6 +75,7 @@ if(WIN32)
+                                 "${CMAKE_INSTALL_PREFIX}/bin" )
+ endif(WIN32)
+ 
++if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+   set(CMAKE_BUILD_TYPE RelWithDebInfo)
+ endif(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+@@ -197,3 +198,4 @@ if(_compiler_flags_changed)
+     set(CMAKE_C_FLAGS_${_build_type} "${CMAKE_C_FLAGS_${_build_type}} ${_save_cflags}")
+   endforeach()
+ endif()
++endif()
