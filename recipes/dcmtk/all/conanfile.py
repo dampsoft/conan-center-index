@@ -3,11 +3,10 @@ import textwrap
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.build import cross_building, check_min_cppstd
+from conan.tools.build import cross_building
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, replace_in_file, rmdir, save
 from conan.tools.microsoft import is_msvc, is_msvc_static_runtime
-from conan.tools.scm import Version
 
 required_conan_version = ">=1.54.0"
 
@@ -115,11 +114,10 @@ class DCMTKConan(ConanFile):
         del self.info.options.external_dictionary
 
     def validate(self):
-        if self.settings.compiler.cppstd:
-            check_min_cppstd(self, 11)
-        if hasattr(self, "settings_build") and cross_building(self) and self.settings.os == "Macos":
+        if hasattr(self, "settings_build") and cross_building(self) and \
+           self.settings.os == "Macos" and self.settings.arch == "armv8":
             # FIXME: Probable issue with flags, build includes header 'mmintrin.h'
-            raise ConanInvalidConfiguration("Cross building on Macos is not supported (yet)")
+            raise ConanInvalidConfiguration("Cross building to Macos M1 is not supported (yet)")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -289,7 +287,7 @@ class DCMTKConan(ConanFile):
         def xml2():
             return ["libxml2::libxml2"] if self.options.with_libxml2 else []
 
-        components = {
+        return {
             "ofstd"   : charset_conversion(),
             "oflog"   : ["ofstd"],
             "dcmdata" : ["ofstd", "oflog"] + zlib(),
@@ -316,15 +314,7 @@ class DCMTKConan(ConanFile):
             "dcmseg"  : ["dcmfg", "dcmiod", "dcmdata", "ofstd", "oflog"],
             "dcmtract": ["dcmiod", "dcmdata", "ofstd", "oflog"],
             "dcmpmap" : ["dcmfg", "dcmiod", "dcmdata", "ofstd", "oflog"],
-            "dcmect"  : ["dcmfg", "dcmiod", "dcmdata", "ofstd", "oflog"],
         }
-        if Version(self.version) >= "3.6.8":
-            components["dcmxml"] = ["dcmdata", "ofstd", "oflog"] + zlib() + xml2()
-            components["oficonv"] = []
-            components["dcmpstat"] += ["dcmiod"]
-            components["i2d"] += ["dcmxml"]
-            components["ofstd"] += ["oficonv"]
-        return components
 
     @property
     def _dcm_datadictionary_path(self):
@@ -336,7 +326,7 @@ class DCMTKConan(ConanFile):
 
         for target_lib, requires in self._dcmtk_components.items():
             self.cpp_info.components[target_lib].set_property("cmake_target_name", f"DCMTK::{target_lib}")
-            # Before 3.6.7, targets were not namespaced, therefore they are also exposed for convenience
+            # Before 3.6.7, targets were not namespaced, therefore they are also exposed for conveniency
             self.cpp_info.components[target_lib].set_property("cmake_target_aliases", [target_lib])
 
             self.cpp_info.components[target_lib].libs = [target_lib]
@@ -347,24 +337,14 @@ class DCMTKConan(ConanFile):
             self.cpp_info.components[target_lib].build_modules["cmake_find_package"] = [self._module_file_rel_path]
             self.cpp_info.components[target_lib].build_modules["cmake_find_package_multi"] = [self._module_file_rel_path]
 
-            if is_msvc(self):
-                # Required for the __cplusplus check at
-                # https://github.com/DCMTK/dcmtk/blob/DCMTK-3.6.8/config/include/dcmtk/config/osconfig.h.in#L1489
-                self.cpp_info.components[target_lib].cxxflags.append("/Zc:__cplusplus")
-
-        system_libs = []
         if self.settings.os == "Windows":
-            system_libs = ["iphlpapi", "ws2_32", "netapi32", "wsock32"]
+            self.cpp_info.components["ofstd"].system_libs.extend([
+                "iphlpapi", "ws2_32", "netapi32", "wsock32"
+            ])
         elif self.settings.os in ["Linux", "FreeBSD"]:
-            system_libs = ["m", "nsl"]
+            self.cpp_info.components["ofstd"].system_libs.append("m")
             if self.options.with_multithreading:
-                system_libs.append("pthread")
-            if Version(self.version) >= "3.6.8":
-                system_libs.append("rt")
-        if Version(self.version) >= "3.6.8":
-            self.cpp_info.components["oficonv"].system_libs = system_libs
-        else:
-            self.cpp_info.components["ofstd"].system_libs = system_libs
+                self.cpp_info.components["ofstd"].system_libs.append("pthread")
 
         if self.options.default_dict == "external":
             dcmdictpath = os.path.join(self._dcm_datadictionary_path, "dcmtk", "dicom.dic")
