@@ -1,4 +1,7 @@
 sources:
+  "15.7":
+    url: "https://ftp.postgresql.org/pub/source/v15.7/postgresql-15.7.tar.bz2"
+    sha256: "a46fe49485ab6385e39dabbbb654f5d3049206f76cd695e224268729520998f7"
   "15.6":
     url: "https://ftp.postgresql.org/pub/source/v15.6/postgresql-15.6.tar.bz2"
     sha256: "8455146ed9c69c93a57de954aead0302cafad035c2b242175d6aa1e17ebcb2fb"
@@ -30,6 +33,10 @@ sources:
     url: "https://ftp.postgresql.org/pub/source/v9.6.24/postgresql-9.6.24.tar.gz"
     sha256: "52947ecc119846eace5164399d173576c0d4a47ec116ae58a46a8fd0c576c7c3"
 patches:
+  "15.7":
+    - patch_file: "patches/15/001-mingw-build-static-libraries.patch"
+      patch_description: "port MinGW: Enable building static libraries in MinGW."
+      patch_type: "portability"
   "15.6":
     - patch_file: "patches/15/001-mingw-build-static-libraries.patch"
       patch_description: "port MinGW: Enable building static libraries in MinGW."
