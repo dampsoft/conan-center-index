@@ -71,6 +71,7 @@ class DCMTKConan(ConanFile):
             self.options.default_dict = "builtin"
 
     def configure(self):
+        print("test")
         if self.options.shared:
             self.options.rm_safe("fPIC")
         # Deprecated options
