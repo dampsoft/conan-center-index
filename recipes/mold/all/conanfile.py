@@ -44,12 +44,11 @@ class MoldConan(ConanFile):
         if (not self.options.mold_mostly_static):
             self.requires("zlib/[>=1.2.11 <2]")
             self.requires("xxhash/0.8.2")
-            self.requires("onetbb/2021.10.0")
-            self.requires("zstd/1.5.5")
             if self.options.with_mimalloc:
                 self.requires("mimalloc/2.1.2")
-            if Version(self.version) < "2.2":
-                self.requires("openssl/[>=1.1 <4]")
+            if Version(self.version) < "2.2.0":
+                # Newer versions use vendored-in BLAKE3
+                self.requires("openssl/[>=1.1 <4]")   
 
     def package_id(self):
         del self.info.settings.compiler
@@ -83,7 +82,7 @@ class MoldConan(ConanFile):
             tc.variables["MOLD_MOSTLY_STATIC"] = True
         else:
             tc.variables["MOLD_USE_SYSTEM_MIMALLOC"] = True
-            tc.variables["MOLD_USE_SYSTEM_TBB"] = True
+            tc.variables["MOLD_USE_SYSTEM_TBB"] = False # see https://github.com/conan-io/conan-center-index/pull/23575#issuecomment-2059154281
         tc.variables["CMAKE_INSTALL_LIBEXECDIR"] = "libexec"
         tc.generate()
 

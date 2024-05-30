@@ -66,6 +66,7 @@ class QtConan(ConanFile):
         "with_gssapi": [True, False],
         "with_md4c": [True, False],
         "with_x11": [True, False],
+        "with_egl": [True, False],
 
         "gui": [True, False],
         "widgets": [True, False],
@@ -110,6 +111,7 @@ class QtConan(ConanFile):
         "with_gssapi": False,
         "with_md4c": True,
         "with_x11": True,
+        "with_egl": False,
 
         "gui": True,
         "widgets": True,
@@ -171,6 +173,7 @@ class QtConan(ConanFile):
             self.options.with_glib = False
             del self.options.with_libalsa
             del self.options.with_x11
+            del self.options.with_egl
 
         if self.settings.os == "Windows":
             self.options.opengl = "dynamic"
@@ -204,6 +207,7 @@ class QtConan(ConanFile):
             del self.options.with_libpng
             del self.options.with_md4c
             self.options.rm_safe("with_x11")
+            self.options.rm_safe("with_egl")
 
         if self.options.multiconfiguration:
             del self.settings.build_type
@@ -243,6 +247,11 @@ class QtConan(ConanFile):
                 self.options.with_fontconfig = True
 
     def validate(self):
+        if os.getenv('CONAN_CENTER_BUILD_SERVICE') is not None:
+            if self.info.settings.compiler == "gcc" and Version(self.info.settings.compiler.version) >= "11" or \
+                self.info.settings.compiler == "clang" and Version(self.info.settings.compiler.version) >= "12":
+                raise ConanInvalidConfiguration("qt is not supported on gcc11 and clang >= 12 on C3I until conan-io/conan-center-index#13472 is fixed")
+
         # C++ minimum standard required
         if self.settings.compiler.get_safe("cppstd"):
             check_min_cppstd(self, 17)
@@ -341,7 +350,7 @@ class QtConan(ConanFile):
             else:
                 self.requires("libjpeg/9e")
         if self.options.get_safe("with_libpng", False) and not self.options.multiconfiguration:
-            self.requires("libpng/1.6.40")
+            self.requires("libpng/1.6.42")
         if self.options.with_sqlite3 and not self.options.multiconfiguration:
             self.requires("sqlite3/3.45.0")
         if self.options.get_safe("with_mysql", False):
@@ -359,6 +368,8 @@ class QtConan(ConanFile):
             self.requires("xkbcommon/1.5.0")
         if self.options.get_safe("with_x11", False):
             self.requires("xorg/system")
+        if self.options.get_safe("with_egl"):
+            self.requires("egl/system")
         if self.settings.os != "Windows" and self.options.get_safe("opengl", "no") != "no":
             self.requires("opengl/system")
         if self.options.with_zstd:
@@ -368,13 +379,14 @@ class QtConan(ConanFile):
         if self.options.with_brotli:
             self.requires("brotli/1.1.0")
         if self.options.get_safe("qtwebengine") and self.settings.os == "Linux":
-            self.requires("expat/2.5.0")
+            self.requires("expat/2.6.0")
             self.requires("opus/1.4")
             self.requires("xorg-proto/2022.2")
             self.requires("libxshmfence/1.3")
             self.requires("nss/3.93")
             self.requires("libdrm/2.4.119")
         if self.options.get_safe("with_gstreamer", False):
+            self.requires("gstreamer/1.19.2")
             self.requires("gst-plugins-base/1.19.2")
         if self.options.get_safe("with_pulseaudio", False):
             self.requires("pulseaudio/14.2")
@@ -420,6 +432,16 @@ class QtConan(ConanFile):
         tc.set_property("wayland::wayland-server", "cmake_target_name", "Wayland::Server")
         tc.set_property("wayland::wayland-cursor", "cmake_target_name", "Wayland::Cursor")
         tc.set_property("wayland::wayland-egl", "cmake_target_name", "Wayland::Egl")
+
+        # override https://github.com/qt/qtbase/blob/dev/cmake/3rdparty/extra-cmake-modules/find-modules/FindEGL.cmake
+        tc.set_property("egl", "cmake_file_name", "EGL")
+        tc.set_property("egl", "cmake_find_mode", "module")
+        tc.set_property("egl::egl", "cmake_target_name", "EGL::EGL")
+
+        # don't override https://github.com/qt/qtmultimedia/blob/dev/cmake/FindGStreamer.cmake
+        tc.set_property("gstreamer", "cmake_file_name", "gstreamer_conan")
+        tc.set_property("gstreamer", "cmake_find_mode", "module")
+
         tc.generate()
 
         for f in glob.glob("*.cmake"):
@@ -454,6 +476,8 @@ class QtConan(ConanFile):
             env.define_path("BASH_ENV", os.path.abspath("bash_env"))
 
         tc = CMakeToolchain(self, generator="Ninja")
+
+        tc.absolute_paths = True
 
         package_folder = self.package_folder.replace('\\', '/')
         tc.variables["INSTALL_MKSPECSDIR"] = f"{package_folder}/res/archdatadir/mkspecs"
@@ -515,7 +539,9 @@ class QtConan(ConanFile):
                               ("with_zstd", "zstd"),
                               ("with_vulkan", "vulkan"),
                               ("with_brotli", "brotli"),
-                              ("with_gssapi", "gssapi")]:
+                              ("with_gssapi", "gssapi"),
+                              ("with_egl", "egl"),
+                              ("with_gstreamer", "gstreamer")]:
             tc.variables[f"FEATURE_{conf_arg}"] = ("ON" if self.options.get_safe(opt, False) else "OFF")
 
 
@@ -1041,6 +1067,8 @@ class QtConan(ConanFile):
                     gui_reqs.append("xkbcommon::xkbcommon")
                 if self.options.get_safe("with_x11", False):
                     gui_reqs.append("xorg::xorg")
+                if self.options.get_safe("with_egl"):
+                    gui_reqs.append("egl::egl")
             if self.settings.os != "Windows" and self.options.get_safe("opengl", "no") != "no":
                 gui_reqs.append("opengl::opengl")
             if self.options.get_safe("with_vulkan", False):
@@ -1076,6 +1104,7 @@ class QtConan(ConanFile):
                     # https://github.com/qt/qtbase/blob/v6.7.0-beta1/src/gui/CMakeLists.txt#L430
                     self.cpp_info.components["qtGui"].system_libs.append("uxtheme")
                 if self.settings.compiler == "gcc":
+                    # https://github.com/qt/qtbase/blob/v6.6.1/src/gui/CMakeLists.txt#L746
                     self.cpp_info.components["qtGui"].system_libs.append("uuid")
                 # https://github.com/qt/qtbase/blob/v6.6.1/src/plugins/platforms/direct2d/CMakeLists.txt#L60-L82
                 self.cpp_info.components["qtGui"].system_libs += [
@@ -1309,7 +1338,9 @@ class QtConan(ConanFile):
             if self.options.qtdeclarative and qt_quick_enabled:
                 _create_module("MultimediaQuick", ["Multimedia", "Quick"])
             if self.options.with_gstreamer:
-                _create_plugin("QGstreamerMediaPlugin", "gstreamermediaplugin", "multimedia", ["gst-plugins-base::gst-plugins-base"])
+                _create_plugin("QGstreamerMediaPlugin", "gstreamermediaplugin", "multimedia", [
+                    "gstreamer::gstreamer",
+                    "gst-plugins-base::gst-plugins-base"])
 
         if self.options.get_safe("qtpositioning"):
             _create_module("Positioning", [])
@@ -1509,10 +1540,8 @@ class QtConan(ConanFile):
                 component = "qt" + m[:m.find("_")]
                 if component not in self.cpp_info.components:
                     continue
-                submodules_dir = os.path.join(object_dir, m)
-                for sub_dir in os.listdir(submodules_dir):
-                    submodule_dir = os.path.join(submodules_dir, sub_dir)
-                    obj_files = [os.path.join(submodule_dir, file) for file in os.listdir(submodule_dir)]
+                for root, _, files in os.walk(os.path.join(object_dir, m)):
+                    obj_files = [os.path.join(root, file) for file in files]
                     self.cpp_info.components[component].exelinkflags.extend(obj_files)
                     self.cpp_info.components[component].sharedlinkflags.extend(obj_files)
 
