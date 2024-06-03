@@ -1,0 +1,198 @@
+From 54c7be14c8b0b16ea5b496149823ff769e3bfd05 Mon Sep 17 00:00:00 2001
+From: Marco Eichelberg <dicom@offis.de>
+Date: Mon, 11 Mar 2024 08:45:16 +0100
+Subject: [PATCH] Added initial support for compilation with C++20.
+
+Compilation with C++20 can now be enabled by compiling with
+CMAKE_CXX_STANDARD=20. This requires CMake 3.12 or newer.
+---
+ CMake/CTest/CTestCustomAndroid.cmake.in |  2 +-
+ CMake/dcmtkPrepare.cmake                |  2 +-
+ CMake/osconfig.h.in                     |  8 +++
+ CMakeLists.txt                          |  2 +-
+ config/tests/cxx20.cc                   | 70 +++++++++++++++++++++++++
+ dcmsr/tests/tsrdoctr.cc                 |  4 +-
+ ofstd/tests/toption.cc                  |  6 +--
+ 7 files changed, 86 insertions(+), 8 deletions(-)
+ create mode 100644 config/tests/cxx20.cc
+
+diff --git a/CMake/CTest/CTestCustomAndroid.cmake.in b/CMake/CTest/CTestCustomAndroid.cmake.in
+index 4e738fd72..087bb7aa3 100644
+--- a/CMake/CTest/CTestCustomAndroid.cmake.in
++++ b/CMake/CTest/CTestCustomAndroid.cmake.in
+@@ -5,7 +5,7 @@
+ #
+ 
+ # Restore the required settings of the CMake configuration step
+-cmake_minimum_required(VERSION 2.6)
++cmake_minimum_required(VERSION 3.1)
+ set(CMAKE_COMMAND "@CMAKE_COMMAND@")
+ set(CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@")
+ set(CMAKE_CURRENT_BINARY_DIR "@CMAKE_BINARY_DIR@")
+diff --git a/CMake/dcmtkPrepare.cmake b/CMake/dcmtkPrepare.cmake
+index 6d43c19ad..3ae65be69 100644
+--- a/CMake/dcmtkPrepare.cmake
++++ b/CMake/dcmtkPrepare.cmake
+@@ -588,7 +588,7 @@ define_property(GLOBAL PROPERTY DCMTK_MODERN_CXX_STANDARDS
+   BRIEF_DOCS "Modern C++ standards DCMTK knows about."
+   FULL_DOCS "The list of C++ standards since C++11 that DCMTK currently has configuration tests for. "
+ )
+-set_property(GLOBAL PROPERTY DCMTK_MODERN_CXX_STANDARDS 11 14 17)
++set_property(GLOBAL PROPERTY DCMTK_MODERN_CXX_STANDARDS 11 14 17 20)
+ 
+ #-----------------------------------------------------------------------------
+ # Enable various warnings by default
+diff --git a/CMake/osconfig.h.in b/CMake/osconfig.h.in
+index e964f798b..8c9fd47f3 100644
+--- a/CMake/osconfig.h.in
++++ b/CMake/osconfig.h.in
+@@ -1185,6 +1185,14 @@ DCMTK was configured to use C++14 features, but your compiler does not or was no
+ DCMTK was configured to use C++17 features, but your compiler does not or was not configured to provide them.
+ #endif
+ 
++/* Define if we can use C++20 */
++#cmakedefine HAVE_CXX20 @HAVE_CXX20@
++
++#if defined(HAVE_CXX20) && defined(__cplusplus) && __cplusplus < 202002L
++#error \
++DCMTK was configured to use C++20 features, but your compiler does not or was not configured to provide them.
++#endif
++
+ /* Define if the compiler supports __alignof__ */
+ #cmakedefine HAVE_GNU_ALIGNOF @HAVE_GNU_ALIGNOF@
+ 
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bef673fce..90c3ee610 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,5 @@
+ # Minimum CMake version required
+-cmake_minimum_required(VERSION 3.0.0...3.27.3 FATAL_ERROR)
++cmake_minimum_required(VERSION 3.1.0...3.27.9 FATAL_ERROR)
+ 
+ # Declare project
+ project(DCMTK)
+diff --git a/config/tests/cxx20.cc b/config/tests/cxx20.cc
+new file mode 100644
+index 000000000..fd5c22163
+--- /dev/null
++++ b/config/tests/cxx20.cc
+@@ -0,0 +1,70 @@
++/*
++ *  Copyright (C) 2024, OFFIS e.V.
++ *  All rights reserved.  See COPYRIGHT file for details.
++ *
++ *  This software and supporting documentation were developed by
++ *
++ *    OFFIS e.V.
++ *    R&D Division Health
++ *    Escherweg 2
++ *    D-26121 Oldenburg, Germany
++ *
++ *
++ *  Module:  config
++ *
++ *  Author:  Marco Eichelberg
++ *
++ *  Purpose: Presents constructs that every C++20 compliant
++ *           compiler should be able to compile.
++ *
++ *
++ *  This file is based on ax_cxx_compile_stdcxx from the GNU Autoconf project.
++ *  The original license is as follows:
++ *
++ *  LICENSE
++ *
++ *   Copyright (c) 2008 Benjamin Kosnik <bkoz@redhat.com>
++ *   Copyright (c) 2012 Zack Weinberg <zackw@panix.com>
++ *   Copyright (c) 2013 Roy Stogner <roystgnr@ices.utexas.edu>
++ *   Copyright (c) 2014, 2015 Google Inc.; contributed by Alexey Sokolov <sokolov@google.com>
++ *   Copyright (c) 2015 Paul Norman <penorman@mac.com>
++ *   Copyright (c) 2015 Moritz Klammler <moritz@klammler.eu>
++ *   Copyright (c) 2016 Krzesimir Nowak <qdlacz@gmail.com>
++ *   Copyright (c) 2019 Enji Cooper <yaneurabeya@gmail.com>
++ *   Copyright (c) 2020 Jason Merrill <jason@redhat.com>
++ *   Copyright (c) 2021 Joern Heusipp <osmanx@problemloesungsmaschine.de>
++ *
++ *   Copying and distribution of this file, with or without modification, are
++ *   permitted in any medium without royalty provided the copyright notice
++ *   and this notice are preserved.  This file is offered as-is, without any
++ *   warranty.
++ */
++
++// If the compiler admits that it is not ready for C++20, why torture it?
++// Hopefully, this will speed up the test.
++
++#ifndef __cplusplus
++
++#error "This is not a C++ compiler"
++
++#elif __cplusplus < 202002L
++
++#error "This is not a C++20 compiler"
++
++#else
++
++int main()
++{
++  return 0;
++}
++
++namespace cxx20
++{
++
++// As C++20 supports feature test macros in the standard, there is no
++// immediate need to actually test for feature availability on the
++// Autoconf side.
++
++}  // namespace cxx20
++
++#endif  // __cplusplus <= 202002L
+diff --git a/dcmsr/tests/tsrdoctr.cc b/dcmsr/tests/tsrdoctr.cc
+index b6e16ab0a..17998ebb1 100644
+--- a/dcmsr/tests/tsrdoctr.cc
++++ b/dcmsr/tests/tsrdoctr.cc
+@@ -1,6 +1,6 @@
+ /*
+  *
+- *  Copyright (C) 2014-2019, J. Riesmeier, Oldenburg, Germany
++ *  Copyright (C) 2014-2024, J. Riesmeier, Oldenburg, Germany
+  *  All rights reserved.  See COPYRIGHT file for details.
+  *
+  *  This software and supporting documentation are maintained by
+@@ -173,7 +173,7 @@ OFTEST(dcmsr_compareNodes)
+     /* create an "incompatible" node */
+     DSRNumTreeNode numNode(DSRTypes::RT_contains);
+     /* and compare it to the initial node */
+-    OFCHECK(numNode != node);
++    OFCHECK(numNode.operator!=(node)); // this resolves operator ambiguity in C++20
+     delete newNode;
+     /* try the same with an "included template" tree node */
+     DSRIncludedTemplateTreeNode templNode1(DSRSharedSubTemplate(NULL), DSRTypes::RT_contains);
+diff --git a/ofstd/tests/toption.cc b/ofstd/tests/toption.cc
+index 7e907ea29..05c5d67a8 100644
+--- a/ofstd/tests/toption.cc
++++ b/ofstd/tests/toption.cc
+@@ -1,6 +1,6 @@
+ /*
+  *
+- *  Copyright (C) 2014-2017, OFFIS e.V.
++ *  Copyright (C) 2014-2024, OFFIS e.V.
+  *  All rights reserved.  See COPYRIGHT file for details.
+  *
+  *  This software and supporting documentation were developed by
+@@ -53,9 +53,9 @@ OFTEST(ofstd_optional)
+     OFCHECK( o1 && o2 );
+     OFCHECK( *o1 == 7 && *o2 == 3 );
+     OFCHECK( o0 < o2 && o2 <= o1 );
+-    OFCHECK( o2 != o1 );
++    OFCHECK( o2.operator!=(o1) ); // this resolves operator ambiguity in C++20
+     o1 = o2;
+-    OFCHECK( o1 == o2 );
++    OFCHECK( o1.operator==(o2) ); // this resolves operator ambiguity in C++20
+     OFCHECK( o0 == OFnullopt );
+     OFCHECK( OFnullopt == o0 );
+     OFCHECK( o2 == 3 );
+-- 
+2.45.1
+

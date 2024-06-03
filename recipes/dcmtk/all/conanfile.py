@@ -8,6 +8,7 @@ from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, replace_in_file, rmdir, save
 from conan.tools.microsoft import is_msvc, is_msvc_static_runtime
 from conan.tools.scm import Version
+from conan.tools.files import patch
 
 required_conan_version = ">=1.54.0"
 
@@ -194,7 +195,11 @@ class DCMTKConan(ConanFile):
         }
 
     def _patch_sources(self):
-        apply_conandata_patches(self)
+        for p in self.conan_data["patches"][self.version]:
+            patch_file_name = os.path.basename(p["patch_file"])
+            if "cpp20-upstream-compat" in patch_file_name and self.settings.compiler.get_safe("cppstd") != "20":
+                continue
+            patch(self, **p)
 
         # Workaround for CMakeDeps bug with check_* like functions.
         # See https://github.com/conan-io/conan/issues/12012 & https://github.com/conan-io/conan/issues/12180
