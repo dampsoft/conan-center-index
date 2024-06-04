@@ -197,7 +197,7 @@ class DCMTKConan(ConanFile):
     def _patch_sources(self):
         for p in self.conan_data["patches"][self.version]:
             patch_file_name = os.path.basename(p["patch_file"])
-            if "cpp20-upstream-compat" in patch_file_name and self.settings.compiler.get_safe("cppstd") != "20":
+            if "cpp20" in patch_file_name and self.settings.compiler.get_safe("cppstd") != "20":
                 continue
             patch(self, **p)
 

@@ -16,6 +16,9 @@ patches:
     - patch_file: "patches/3.6.8-0003-cpp20-upstream-compat.patch"
       patch_description: "C++20: Add upstream compatibility for C++20 from master"
       patch_type: conan
+    - patch_file: "patches/3.6.8-0004-cpp20-wchar-msvc-compat.patch"
+      patch_description: "C++20: Add compatibility patch for C++20 when using wchar_t"
+      patch_type: conan
   "3.6.7":
     - patch_file: "patches/3.6.7-0001-cmake-robust-deps-handling.patch"
       patch_description: "CMake: robust discovery with find_package() and use imported targets"
