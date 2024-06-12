@@ -1,0 +1,29 @@
+diff --git a/ofstd/libsrc/ofcmdln.cc b/ofstd/libsrc/ofcmdln.cc
+index 27ab8b7d9..b9c15d1db 100644
+--- a/ofstd/libsrc/ofcmdln.cc
++++ b/ofstd/libsrc/ofcmdln.cc
+@@ -1159,6 +1159,9 @@ OFCommandLine::E_ParseStatus OFCommandLine::parseCommandFile(const char *argValu
+ 
+ #ifdef DCMTK_USE_WCHAR_T
+ 
++// Needed for wctomb
++#include <stdlib.h>
++
+ // Windows-specific version with wide character strings (UTF-16)
+ #ifdef DEBUG
+ OFCommandLine::E_ParseStatus OFCommandLine::parseCommandFile(const wchar_t *argValue,
+@@ -1243,8 +1246,12 @@ OFCommandLine::E_ParseStatus OFCommandLine::parseCommandFile(const wchar_t *argV
+ #ifdef DEBUG
+             if (block != 0)
+             {
+-                ofConsole.lockCerr() << "WARNING: closing quotation mark (" << block << ") missing in command file " << strValue << OFendl;
+-                ofConsole.unlockCerr();
++                char* blockAsChar = nullptr;
++                auto res = wctomb(blockAsChar, block);
++                if (res != -1 && blockAsChar != nullptr) {
++                    ofConsole.lockCerr() << "WARNING: closing quotation mark (" << blockAsChar << ") missing in command file " << strValue << OFendl;
++                    ofConsole.unlockCerr();
++                }
+             }
+ #endif
+             result = PS_Normal;
