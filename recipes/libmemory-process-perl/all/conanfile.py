@@ -15,14 +15,12 @@ class LibmemoryProcessPerlConan(ConanFile):
     url = "https://github.com/conan-io/conan-center-index"
     settings = "os"
     license: "BSD-2-Clause"
-    package_type = "library"
+    package_type = "unknown"
     options = {
         "prefix": ["ANY"],
-        "shared": [True, False]
     }
     default_options = {
         "prefix": "/usr/local",
-        "shared": True
     }
 
     def validate(self):
@@ -49,4 +47,4 @@ class LibmemoryProcessPerlConan(ConanFile):
 
     def package(self):
         autotools = Autotools(self)
-        autotools.install()
+        autotools.install(target="install_perl")
