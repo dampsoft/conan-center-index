@@ -29,7 +29,8 @@ class LcovConan(ConanFile):
             raise ConanInvalidConfiguration("Windows is not supported")
 
     def requirements(self):
-        self.requires("libmemory-process-perl/0.06", run=True, headers=False, libs=False)
+        if self.settings.os == "Linux":
+            self.requires("libmemory-process-perl/0.06", run=True, headers=False, libs=False)
 
     def layout(self):
         self.folders.build = self.folders.source
