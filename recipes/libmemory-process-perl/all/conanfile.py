@@ -18,9 +18,12 @@ class LibmemoryProcessPerlConan(ConanFile):
     package_type = "unknown"
     options = {
         "prefix": ["ANY"],
+        "install_variant": ["site", "perl", "vendor"]
     }
     default_options = {
         "prefix": "/usr/local",
+        # Default installation is site
+        "install_variant": "site"
     }
 
     def validate(self):
@@ -47,4 +50,4 @@ class LibmemoryProcessPerlConan(ConanFile):
 
     def package(self):
         autotools = Autotools(self)
-        autotools.install(target="install_perl")
+        autotools.install(target=f"install_{self.options.install_variant}")
