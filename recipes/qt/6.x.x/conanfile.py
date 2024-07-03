@@ -1,6 +1,7 @@
 import configparser
 import glob
 import os
+import platform
 import textwrap
 
 from conan import ConanFile
@@ -341,7 +342,7 @@ class QtConan(ConanFile):
         if self.options.get_safe("with_fontconfig", False):
             self.requires("fontconfig/2.15.0")
         if self.options.get_safe("with_icu", False):
-            self.requires("icu/74.2")
+            self.requires("icu/75.1")
         if self.options.get_safe("with_harfbuzz", False) and not self.options.multiconfiguration:
             self.requires("harfbuzz/8.3.0")
         if self.options.get_safe("with_libjpeg", False) and not self.options.multiconfiguration:
@@ -653,7 +654,7 @@ class QtConan(ConanFile):
 
     def source(self):
         destination = self.source_folder
-        if self.info.settings.os == "Windows":
+        if platform.system() == "Windows":
             # Don't use os.path.join, or it removes the \\?\ prefix, which enables long paths
             destination = rf"\\?\{self.source_folder}"
         get(self, **self.conan_data["sources"][self.version],
