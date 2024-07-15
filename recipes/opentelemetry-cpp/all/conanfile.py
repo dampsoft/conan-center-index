@@ -24,6 +24,7 @@ class OpenTelemetryCppConan(ConanFile):
         "fPIC": [True, False],
         "shared": [True, False],
         "with_no_deprecated_code": [True, False],
+        "with_deprecated_sdk_factory": [True, False],
         "with_stl": [True, False],
         "with_gsl": [True, False],
         "with_abseil": [True, False],
@@ -47,6 +48,7 @@ class OpenTelemetryCppConan(ConanFile):
         "fPIC": True,
         "shared": False,
         "with_no_deprecated_code": False,
+        "with_deprecated_sdk_factory": True,
         "with_stl": False,
         "with_gsl": False,
         "with_abseil": True,
@@ -154,6 +156,9 @@ class OpenTelemetryCppConan(ConanFile):
         if self.options.with_otlp != "deprecated":
             self.output.warning(f"{self.ref}:with_otlp option is deprecated, do not use anymore. "
                                 "Please, consider with_otlp_grpc or with_otlp_http instead.")
+        # Doesn't build when `with_no_deprecated_code` is enabled alongside `with_deprecated_sdk_factory`
+        if self.options.with_no_deprecated_code and self.options.with_deprecated_sdk_factory:
+            raise ConanInvalidConfiguration("with_no_deprecated_code and with_deprecated_sdk_factory can't be enabled at the same time")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -278,6 +283,10 @@ class OpenTelemetryCppConan(ConanFile):
         tc.cache_variables["WITH_ABSEIL"] = self.options.with_abseil
         if Version(self.version) < "1.10":
             tc.cache_variables["WITH_OTLP"] = self.options.with_otlp_grpc or self.options.with_otlp_http
+
+        # This option is scheduled to be removed in 1.17: https://github.com/open-telemetry/opentelemetry-cpp/issues/2716
+        if Version(self.version) >= "1.16" and Version(self.version) <= "1.17":
+            tc.cache_variables["WITH_DEPRECATED_SDK_FACTORY"] = self.options.with_deprecated_sdk_factory
 
         if self.options.with_otlp_grpc or self.options.with_otlp_http:
             tc.variables["OTELCPP_PROTO_PATH"] = self._proto_root
