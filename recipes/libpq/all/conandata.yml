@@ -1,4 +1,10 @@
 sources:
+  "16.2":
+    url: "https://ftp.postgresql.org/pub/source/v16.2/postgresql-16.2.tar.bz2"
+    sha256: "446e88294dbc2c9085ab4b7061a646fa604b4bec03521d5ea671c2e5ad9b2952"
+  "16.1":
+    url: "https://ftp.postgresql.org/pub/source/v16.1/postgresql-16.1.tar.bz2"
+    sha256: "ce3c4d85d19b0121fe0d3f8ef1fa601f71989e86f8a66f7dc3ad546dd5564fec"
   "15.7":
     url: "https://ftp.postgresql.org/pub/source/v15.7/postgresql-15.7.tar.bz2"
     sha256: "a46fe49485ab6385e39dabbbb654f5d3049206f76cd695e224268729520998f7"
@@ -33,6 +39,14 @@ sources:
     url: "https://ftp.postgresql.org/pub/source/v9.6.24/postgresql-9.6.24.tar.gz"
     sha256: "52947ecc119846eace5164399d173576c0d4a47ec116ae58a46a8fd0c576c7c3"
 patches:
+  "16.2":
+    - patch_file: "patches/16/001-mingw-build-static-libraries.patch"
+      patch_description: "port MinGW: Enable building static libraries in MinGW."
+      patch_type: "portability"
+  "16.1":
+    - patch_file: "patches/16/001-mingw-build-static-libraries.patch"
+      patch_description: "port MinGW: Enable building static libraries in MinGW."
+      patch_type: "portability"
   "15.7":
     - patch_file: "patches/15/001-mingw-build-static-libraries.patch"
       patch_description: "port MinGW: Enable building static libraries in MinGW."
@@ -76,13 +90,5 @@ patches:
       patch_type: "portability"
   "11.21":
     - patch_file: "patches/10/002-mingw-build-static-libraries.patch"
-      patch_description: "port MinGW: Enable building static libraries in MinGW."
-      patch_type: "portability"
-  "10.23":
-    - patch_file: "patches/10/002-mingw-build-static-libraries.patch"
-      patch_description: "port MinGW: Enable building static libraries in MinGW."
-      patch_type: "portability"
-  "9.6.24":
-    - patch_file: "patches/9.6/002-mingw-build-static-libraries.patch"
       patch_description: "port MinGW: Enable building static libraries in MinGW."
       patch_type: "portability"
