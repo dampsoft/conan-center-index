@@ -68,7 +68,7 @@ class SociConan(ConanFile):
         if self.options.with_mysql:
             self.requires("libmysqlclient/8.1.0")
         if self.options.with_postgresql:
-            self.requires("libpq/16.2")
+            self.requires("libpq/16.3")
         if self.options.with_boost:
             self.requires("boost/1.85.0")
 
