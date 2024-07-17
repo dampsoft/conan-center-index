@@ -196,7 +196,8 @@ class LibpqConan(ConanFile):
                 "-v __cxa_atexit",
                 "-v __cxa_atexit -e pthread_exit")
 
-        if Version(self.version) >= "15":
+        # Leads to build errors on MacOS
+        if Version(self.version) >= "15" and not is_apple_os(self):
             # Disable a check that gives false positives for statically linked builds
             # https://github.com/postgres/postgres/commit/e9bc0441f1446f6614fa6712841acec91890e089
             replace_in_file(self, os.path.join(self.source_folder, "src", "interfaces", "libpq", "Makefile"),
