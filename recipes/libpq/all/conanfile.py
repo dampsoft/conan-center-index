@@ -151,7 +151,7 @@ class LibpqConan(ConanFile):
                 system_libs.extend(dep.cpp_info.aggregated_components().system_libs)
 
             linked_system_libs = ", ".join(["'{}.lib'".format(lib) for lib in system_libs])
-            
+
             if Version(self) < "16":
                 replace_in_file(self,os.path.join(self.source_folder, "src", "tools", "msvc", "Project.pm"),
                                   "libraries             => [],",
@@ -186,8 +186,8 @@ class LibpqConan(ConanFile):
                                           "%s.lib" % crypto,
                                           "%s.lib" % openssl.cpp_info.components["crypto"].libs[0])
                 replace_in_file(self,config_default_pl,
-                                      "openssl   => undef",
-                                      "openssl   => '%s'" % openssl.package_folder.replace("\\", "/"))
+                                      "openssl => undef",
+                                      "openssl => '%s'" % openssl.package_folder.replace("\\", "/"))
         elif self.settings.os == "Windows":
             if self.settings.get_safe("compiler.threads") == "posix":
                 # Use MinGW pthread library
