@@ -2,7 +2,7 @@ diff --git a/bandit/controller.h b/bandit/controller.h
 index fefb248..8082158 100644
 --- a/bandit/controller.h
 +++ b/bandit/controller.h
-@@ -1,209 +1,220 @@
+@@ -1,209 +1,218 @@
  #ifndef BANDIT_CONTROLLER_H
  #define BANDIT_CONTROLLER_H
  
@@ -12,11 +12,11 @@ index fefb248..8082158 100644
  #include <bandit/failure_formatters/interface.h>
  #include <bandit/reporters/interface.h>
  #include <bandit/run_policies/interface.h>
++#include <deque>
 +#include <memory>
 +
 +namespace rapidassure::rt {
-+extern std::unordered_map<const void *, std::string> testFnDescMapping;
-+extern const void *currentTestFnAddr;
++extern std::deque<std::string> testFunctions;
 +extern std::atomic_bool callerIsTestFn;
 +} // namespace rapidassure::rt
  
@@ -231,9 +231,7 @@ index fefb248..8082158 100644
 -      static void register_controller(controller_t* controller) {
 -        if (controller == nullptr) {
 -          throw std::runtime_error("Invalid null controller passed to bandit::detail::register_controller()");
-+        const void *ptr = &func;
-+        rapidassure::rt::testFnDescMapping[ptr] = desc;
-+        rapidassure::rt::currentTestFnAddr = ptr;
++        rapidassure::rt::testFunctions.push_back(desc);
 +        rapidassure::rt::callerIsTestFn = true;
 +        func();
 +        success = true;
