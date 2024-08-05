@@ -51,7 +51,7 @@ sources:
     sha256: "1dae31b2a7c1fe269de99c0c31bb488346aab3459b5ffca909d6938249ae415f"
 patches:
   "8.9.1":
-    - patch_file: "patches/0001-Revert-connect-fix-connection-shutdown-for-event-bas.patch"
-      patch_description: "Revert broken SIGPIPE handling"
-      patch_type: "bugfix"
-      patch_source: "https://github.com/curl/curl/pull/14296#issuecomment-2262571055"
+    - patch_file: "patches/14390.patch"
+      patch_type: "upstream"
+      patch_description: "Ensure no SIGPIPE escapes libcurl, thus killing the program"
+      patch_source: "https://github.com/curl/curl/pull/14390"
