@@ -21,7 +21,7 @@ def install_patchelf(out: ConanOutput, deploy_folder: Path, conan_api: ConanAPI)
 
     enabled_remotes = conan_api.remotes.list()
     graph = conan_api.graph.load_graph_requires(
-        requires=["patchelf/0.13"],
+        requires=["patchelf/0.17.2"],
         tool_requires=None,
         lockfile=None,
         profile_build=conan_api.profiles.get_profile(
