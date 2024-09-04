@@ -216,6 +216,10 @@ class ProtobufConan(ConanFile):
             rm(self, "libprotobuf-lite*", os.path.join(self.package_folder, "lib"))
             rm(self, "libprotobuf-lite*", os.path.join(self.package_folder, "bin"))
 
+        if is_apple_os(self) and self.options.shared and self._protobuf_release >= "22.0":
+            abseil_folder = self.dependencies["abseil"].package_folder
+            self.run(f"install_name_tool -add_rpath {abseil_folder}/lib {self.package_folder}/bin/protoc")
+
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_module_file_name", "Protobuf")
