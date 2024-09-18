@@ -1,5 +1,6 @@
 from conan import ConanFile, conan_version
 from conan.errors import ConanInvalidConfiguration
+from conan.tools.apple import is_apple_os
 from conan.tools.files import get, copy, rmdir, replace_in_file, save, export_conandata_patches, apply_conandata_patches
 from conan.tools.build import check_min_cppstd
 from conan.tools.scm import Version
@@ -339,10 +340,25 @@ class OpenTelemetryCppConan(ConanFile):
         rmdir(self, os.path.join(self.source_folder, "api", "include", "opentelemetry", "nostd", "absl"))
 
     def build(self):
-        self._patch_sources()
-        cmake = CMake(self)
-        cmake.configure()
-        cmake.build()
+        # W/O this, protobuf isn't able to find the abseil library with SIP enabled
+        if is_apple_os(self):
+            abseil_folder = self.dependencies["abseil"].package_folder
+            protobuf_folder = self.dependencies["protobuf"].package_folder
+            self.run(f"install_name_tool -add_rpath {abseil_folder}/lib {protobuf_folder}/bin/protoc")
+
+        try:
+            self._patch_sources()
+            cmake = CMake(self)
+            cmake.configure()
+            cmake.build()
+        except Exception as e:
+            raise e
+        finally:
+            if is_apple_os(self):
+                abseil_folder = self.dependencies["abseil"].package_folder
+                protobuf_folder = self.dependencies["protobuf"].package_folder
+                self.run(f"install_name_tool -delete_rpath {abseil_folder}/lib {protobuf_folder}/bin/protoc")
+
 
     def package(self):
         copy(self, pattern="LICENSE", dst=os.path.join(self.package_folder, "licenses"), src=self.source_folder)
