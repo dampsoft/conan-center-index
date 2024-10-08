@@ -42,7 +42,7 @@ Co-authored-by: Bo Andreson <mail@boanderson.me>
  4 files changed, 6 insertions(+), 30 deletions(-)
 
 diff --git a/configure b/configure
-index d83a402..d55440c 100755
+index d83a402ea1..d55440cd6a 100755
 --- a/configure
 +++ b/configure
 @@ -13239,7 +13239,7 @@ done
@@ -55,7 +55,7 @@ index d83a402..d55440c 100755
    as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
  ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
 diff --git a/configure.ac b/configure.ac
-index 570dace..2bc752c 100644
+index 570daced81..2bc752ca1a 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -1347,7 +1347,7 @@ if test "$with_ssl" = openssl ; then
@@ -68,7 +68,7 @@ index 570dace..2bc752c 100644
    # thread-safety. In 1.1.0, it's no longer required, and CRYPTO_lock()
    # function was removed.
 diff --git a/src/backend/libpq/be-secure-openssl.c b/src/backend/libpq/be-secure-openssl.c
-index f5c5ed2..aed8a75 100644
+index f5c5ed210e..aed8a75345 100644
 --- a/src/backend/libpq/be-secure-openssl.c
 +++ b/src/backend/libpq/be-secure-openssl.c
 @@ -839,11 +839,6 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
@@ -111,7 +111,7 @@ index f5c5ed2..aed8a75 100644
  	BIO_set_fd(bio, fd, BIO_NOCLOSE);
  	SSL_set_bio(port->ssl, bio, bio);
 diff --git a/src/include/pg_config.h.in b/src/include/pg_config.h.in
-index d09e9f9..768e3d7 100644
+index d09e9f9a1c..768e3d719c 100644
 --- a/src/include/pg_config.h.in
 +++ b/src/include/pg_config.h.in
 @@ -77,9 +77,6 @@
@@ -125,7 +125,7 @@ index d09e9f9..768e3d7 100644
  #undef HAVE_BIO_METH_NEW
  
 diff --git a/src/interfaces/libpq/fe-secure-openssl.c b/src/interfaces/libpq/fe-secure-openssl.c
-index af59ff4..8d68d02 100644
+index af59ff49f7..8d68d023e9 100644
 --- a/src/interfaces/libpq/fe-secure-openssl.c
 +++ b/src/interfaces/libpq/fe-secure-openssl.c
 @@ -1800,11 +1800,6 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
@@ -168,7 +168,7 @@ index af59ff4..8d68d02 100644
  	SSL_set_bio(conn->ssl, bio, bio);
  	BIO_set_fd(bio, fd, BIO_NOCLOSE);
 diff --git a/src/tools/msvc/Solution.pm b/src/tools/msvc/Solution.pm
-index 790f03b..a53239f 100644
+index 790f03b05e..a53239fa28 100644
 --- a/src/tools/msvc/Solution.pm
 +++ b/src/tools/msvc/Solution.pm
 @@ -226,7 +226,6 @@ sub GenerateFiles
