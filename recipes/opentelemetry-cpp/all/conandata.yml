@@ -31,3 +31,7 @@ patches:
     - patch_file: "patches/2475.patch"
       patch_description: "Fix build w/ MSVC and cppstd=20"
       patch_type: "backport"
+  "1.16.1":
+    - patch_file: "patches/3055.patch"
+      patch_description: "Fix build w/ CLang 19"
+      patch_type: "backport"
