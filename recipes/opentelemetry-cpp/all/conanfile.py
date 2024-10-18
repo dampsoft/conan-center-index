@@ -189,7 +189,7 @@ class OpenTelemetryCppConan(ConanFile):
            self.options.with_elasticsearch or
            self.options.with_otlp_http
         ):
-            self.requires("libcurl/[>=7.78.0 <9]")
+            self.requires("libcurl/8.9.1")
 
         if self.options.with_prometheus:
             self.requires("prometheus-cpp/1.1.0")
