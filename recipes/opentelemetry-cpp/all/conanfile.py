@@ -246,7 +246,7 @@ class OpenTelemetryCppConan(ConanFile):
 
     def build_requirements(self):
         if self.options.with_otlp_grpc or self.options.with_otlp_http:
-            self.tool_requires("opentelemetry-proto/1.3.0")
+            self.tool_requires("opentelemetry-proto/1.3.2")
             self.tool_requires("protobuf/<host_version>")
 
         if self.options.with_otlp_grpc:
