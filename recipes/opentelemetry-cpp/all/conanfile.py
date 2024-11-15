@@ -221,9 +221,6 @@ class OpenTelemetryCppConan(ConanFile):
         ):
             self.requires("libcurl/[>=7.78.0 <9]")
 
-        if self.options.with_otlp_http and self._otlp_http_needs_zlib:
-            self.requires("zlib/[>=1.2.11 <2]")
-
         if self.options.with_prometheus:
             self.requires("prometheus-cpp/1.1.0")
 
@@ -232,7 +229,7 @@ class OpenTelemetryCppConan(ConanFile):
             self.requires("boost/1.85.0")
 
         if Version(self.version) >= "1.15" and (
-            self.options.with_otlp_http or
+            (self.options.with_otlp_http and self._otlp_http_needs_zlib) or
             self.options.with_elasticsearch or
             self.options.with_zipkin or 
             self.options.get_safe("with_otlp_http_compression", False)
@@ -380,7 +377,7 @@ class OpenTelemetryCppConan(ConanFile):
         apply_conandata_patches(self)
 
         protos_cmake_path = os.path.join(self.source_folder, "cmake", "opentelemetry-proto.cmake")
-        if (self._needs_proto and Version(self.version) < "1.8":
+        if self._needs_proto and Version(self.version) < "1.8":
             protos_path = self._proto_root
             replace_in_file(self, protos_cmake_path,
                             "if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/opentelemetry-proto/.git)",
