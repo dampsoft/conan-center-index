@@ -108,7 +108,7 @@ class PopplerConan(ConanFile):
         if self.options.with_openjpeg:
             self.requires("openjpeg/2.5.0")
         if self.options.with_lcms:
-            self.requires("lcms/2.14")
+            self.requires("lcms/2.16")
         if self.options.with_libjpeg == "libjpeg-turbo":
             self.requires("libjpeg-turbo/3.0.1")
         elif self.options.with_libjpeg == "libjpeg":
