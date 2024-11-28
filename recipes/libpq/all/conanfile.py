@@ -226,20 +226,20 @@ class LibpqConan(ConanFile):
                     self.run("perl build.pl libpgport")
         else:
             autotools = Autotools(self)
-            with chdir(self, os.path.join(self.source_folder)):
+            with chdir(self, os.path.join(self.build_folder)):
                 autotools.configure()
-            with chdir(self, os.path.join(self.source_folder, "src", "backend")):
+            with chdir(self, os.path.join(self.build_folder, "src", "backend")):
                 autotools.make(target="generated-headers")
-            with chdir(self, os.path.join(self.source_folder, "src", "common")):
+            with chdir(self, os.path.join(self.build_folder, "src", "common")):
                 autotools.make()
-            with chdir(self, os.path.join(self.source_folder, "src", "include")):
+            with chdir(self, os.path.join(self.build_folder, "src", "include")):
                 autotools.make()
-            with chdir(self, os.path.join(self.source_folder, "src", "interfaces", "libpq")):
+            with chdir(self, os.path.join(self.build_folder, "src", "interfaces", "libpq")):
                 autotools.make()
             if Version(self.version) >= 12:
-                with chdir(self, os.path.join(self.source_folder, "src", "port")):
+                with chdir(self, os.path.join(self.build_folder, "src", "port")):
                     autotools.make()
-            with chdir(self, os.path.join(self.source_folder, "src", "bin", "pg_config")):
+            with chdir(self, os.path.join(self.build_folder, "src", "bin", "pg_config")):
                 autotools.make()
 
     def _remove_unused_libraries_from_package(self):
@@ -276,16 +276,16 @@ class LibpqConan(ConanFile):
                 copy(self, pattern="*.lib", dst=os.path.join(self.package_folder, "lib"), src=self.source_folder, keep_path=False)
         else:
             autotools = Autotools(self)
-            with chdir(self, os.path.join(self.source_folder, "src", "common")):
+            with chdir(self, os.path.join(self.build_folder, "src", "common")):
                 autotools.install()
-            with chdir(self, os.path.join(self.source_folder, "src", "include")):
+            with chdir(self, os.path.join(self.build_folder, "src", "include")):
                 autotools.install()
-            with chdir(self, os.path.join(self.source_folder, "src", "interfaces", "libpq")):
+            with chdir(self, os.path.join(self.build_folder, "src", "interfaces", "libpq")):
                 autotools.install()
             if Version(self.version) >= 12:
-                with chdir(self, os.path.join(self.source_folder, "src", "port")):
+                with chdir(self, os.path.join(self.build_folder, "src", "port")):
                     autotools.install()
-            with chdir(self, os.path.join(self.source_folder, "src", "bin", "pg_config")):
+            with chdir(self, os.path.join(self.build_folder, "src", "bin", "pg_config")):
                 autotools.install()
             copy(self, "*.h", src=os.path.join(self.source_folder, "src", "include", "catalog"),
                               dst=os.path.join(self.package_folder, "include", "catalog"))
@@ -294,7 +294,7 @@ class LibpqConan(ConanFile):
             rmdir(self, os.path.join(self.package_folder, "include", "postgresql", "server"))
             self._remove_unused_libraries_from_package()
             fix_apple_shared_install_name(self)
-        copy(self, "*.h", src=os.path.join(self.build_folder, "src", "backend", "catalog"),
+        copy(self, "*.h", src=os.path.join(self.source_folder, "src", "backend", "catalog"),
                           dst=os.path.join(self.package_folder, "include", "catalog"))
 
     def package_info(self):
@@ -318,9 +318,8 @@ class LibpqConan(ConanFile):
             if is_msvc(self):
                 self.cpp_info.components["pgport"].libs = ["libpgport"]
                 self.cpp_info.components["pq"].requires.append("pgport")
-                if Version(self.version) >= "12":
-                    self.cpp_info.components["pgcommon"].libs = ["libpgcommon"]
-                    self.cpp_info.components["pq"].requires.append("pgcommon")
+                self.cpp_info.components["pgcommon"].libs = ["libpgcommon"]
+                self.cpp_info.components["pq"].requires.append("pgcommon")
             else:
                 self.cpp_info.components["pgcommon"].libs = ["pgcommon"]
                 self.cpp_info.components["pq"].requires.append("pgcommon")
