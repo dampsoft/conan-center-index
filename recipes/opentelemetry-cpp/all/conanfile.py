@@ -43,6 +43,7 @@ class OpenTelemetryCppConan(ConanFile):
         "with_logs_preview": [True, False],
         "with_async_export_preview": [True, False],
         "with_metrics_exemplar_preview": [True, False],
+        "with_skip_dynamically_loaded_libs": [True, False],
     }
     default_options = {
         "fPIC": True,
@@ -68,6 +69,7 @@ class OpenTelemetryCppConan(ConanFile):
         "with_logs_preview": False,
         "with_async_export_preview": False,
         "with_metrics_exemplar_preview": False,
+        "with_skip_dynamically_loaded_libs": False,
     }
     short_paths = True
 
@@ -184,6 +186,15 @@ class OpenTelemetryCppConan(ConanFile):
                 and (Version(self.version) < "1.17.1"
                      or self.options.with_otlp_http_compression))
 
+    @property
+    def _should_require_zlib(self):
+        return Version(self.version) >= "1.15" and (
+            (self.options.with_otlp_http and self._otlp_http_needs_zlib) or
+            self.options.with_elasticsearch or
+            self.options.with_zipkin or
+            self.options.get_safe("with_otlp_http_compression", False)
+        )
+
     def requirements(self):
         if self.options.with_gsl:
             self.requires("ms-gsl/4.0.0")
@@ -228,12 +239,7 @@ class OpenTelemetryCppConan(ConanFile):
             self.requires("thrift/0.17.0")
             self.requires("boost/1.85.0")
 
-        if Version(self.version) >= "1.15" and (
-            (self.options.with_otlp_http and self._otlp_http_needs_zlib) or
-            self.options.with_elasticsearch or
-            self.options.with_zipkin or 
-            self.options.get_safe("with_otlp_http_compression", False)
-        ):
+        if self._should_require_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
 
     @property
@@ -276,7 +282,7 @@ class OpenTelemetryCppConan(ConanFile):
 
     def build_requirements(self):
         if self._needs_proto:
-            self.tool_requires("opentelemetry-proto/1.3.2")
+            self.tool_requires("opentelemetry-proto/1.4.0")
             self.tool_requires("protobuf/<host_version>")
 
         if self.options.with_otlp_grpc:
@@ -364,6 +370,9 @@ class OpenTelemetryCppConan(ConanFile):
             tc.variables["WITH_OTLP_HTTP_SSL_PREVIEW"] = False
             tc.variables["WITH_OTLP_HTTP_SSL_TLS_PREVIEW"] = False
         tc.generate()
+
+        if Version(self.version) >= "1.18.0":
+            tc.variables["OPENTELEMETRY_SKIP_DYNAMIC_LOADING_TESTS"] = self.options.with_skip_dynamically_loaded_libs
 
         deps = CMakeDeps(self)
 
@@ -597,20 +606,7 @@ class OpenTelemetryCppConan(ConanFile):
             self.cpp_info.components[self._http_client_name].requires.append("libcurl::libcurl")
             self.cpp_info.components[self._http_client_name].requires.append("openssl::openssl")
 
-        if Version(self.version) >= "1.15" and (
-            self.options.with_otlp_http or
-            self.options.with_elasticsearch or
-            self.options.with_zipkin or 
-            self.options.get_safe("with_otlp_http_compression", False)
-        ):
-            self.cpp_info.components[self._http_client_name].requires.append("zlib::zlib")
-
-        if Version(self.version) >= "1.15" and (
-            self.options.with_otlp_http or
-            self.options.with_elasticsearch or
-            self.options.with_zipkin or
-            self.options.get_safe("with_otlp_http_compression", False)
-        ):
+        if self._should_require_zlib:
             self.cpp_info.components[self._http_client_name].requires.append("zlib::zlib")
 
         if self.options.with_otlp_http:
