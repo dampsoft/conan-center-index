@@ -10,6 +10,9 @@ patches:
     - patch_file: "patches/17.0/0001-strictly-require-enabled-deps.patch"
       patch_description: "Strictly require enabled dependencies is meson.build"
       patch_type: "conan"
+    - patch_file: "patches/17.2/0001-Hack-to-work-around-function-declaration-when.patch"
+      patch_description: "Fix detection of available functions when building on specific MacOS targets"
+      patch_type: "conan"
   "17.0":
     - patch_file: "patches/17.0/0001-strictly-require-enabled-deps.patch"
       patch_description: "Strictly require enabled dependencies is meson.build"

@@ -214,6 +214,12 @@ class LibpqConan(ConanFile):
         tc.project_options["uuid"] = "e2fs" if self.options.with_uuid else "none"
         tc.project_options["zlib"] = feature(self.options.with_zlib)
         tc.project_options["zstd"] = feature(self.options.with_zstd)
+
+        os_version = self.settings.get_safe("os.version")
+
+        if os_version and self.settings.get_safe("os") == "Macos":
+            tc.project_options["macos_min_version"] = os_version
+
         tc.generate()
 
         deps = PkgConfigDeps(self)
