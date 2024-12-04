@@ -1,0 +1,23 @@
+From d9f9418b6e6db037431b75144521bee06cbddbdd Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Wed, 4 Dec 2024 14:33:01 +0100
+Subject: [PATCH] cmake link openssl
+
+---
+ CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index edc8872..331fd00 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -136,4 +136,5 @@ if(AMQP-CPP_LINUX_TCP)
+     # Find OpenSSL and provide include dirs
+     find_package(OpenSSL REQUIRED)
+     target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
++    target_link_libraries(${PROJECT_NAME} OpenSSL::SSL)
+ endif()
+-- 
+2.47.1
+
