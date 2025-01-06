@@ -201,9 +201,9 @@ class LibcurlConan(ConanFile):
         if self.options.with_ssl == "openssl":
             openssl = self.dependencies["openssl"]
             if self.options.with_ntlm and openssl.options.no_des:
-                raise ConanInvalidConfiguration("option with_ntlm=True requires openssl:no_des=False")
+                raise ConanInvalidConfiguration("option with_ntlm=True requires openssl/*:no_des=False")
         if self.options.with_ssl == "wolfssl" and not self.dependencies["wolfssl"].options.with_curl:
-            raise ConanInvalidConfiguration("option with_ssl=wolfssl requires wolfssl:with_curl=True")
+            raise ConanInvalidConfiguration("option with_ssl=wolfssl requires wolfssl/*:with_curl=True")
 
     def build_requirements(self):
         if self._is_using_cmake_build:
@@ -640,6 +640,8 @@ class LibcurlConan(ConanFile):
         tc.generate()
 
         deps = CMakeDeps(self)
+        deps.set_property("wolfssl", "cmake_additional_variables_prefixes", ["WolfSSL", "WOLFSSL"])
+        deps.set_property("wolfssl", "cmake_file_name", "WolfSSL")
         deps.generate()
 
     def package(self):
@@ -729,3 +731,6 @@ class LibcurlConan(ConanFile):
             self.cpp_info.components["curl"].requires.append("c-ares::c-ares")
         if self.options.get_safe("with_libpsl"):
             self.cpp_info.components["curl"].requires.append("libpsl::libpsl")
+
+        self.cpp_info.components["curl"].set_property("cmake_target_name", "CURL::libcurl")
+        self.cpp_info.components["curl"].set_property("pkg_config_name", "libcurl")
