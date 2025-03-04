@@ -292,7 +292,7 @@ class LibcurlConan(ConanFile):
             replace_in_file(self, top_makefile, "SUBDIRS = lib docs src scripts", "SUBDIRS = lib")
 
         # `Makefile.inc` has been removed from 8.12.0 onwards
-        if self.version < Version("8.12.0"):
+        if Version(self.version) < "8.12.0":
             replace_in_file(self, top_makefile, "include src/Makefile.inc", "")
 
         # zlib naming is not always very consistent
@@ -399,6 +399,7 @@ class LibcurlConan(ConanFile):
             replace_in_file(self, cmakelists, "find_package(NGHTTP2 REQUIRED)", "find_package(libnghttp2 REQUIRED CONFIG)")
         else:
             replace_in_file(self, cmakelists, "find_package(NGHTTP2)", "find_package(libnghttp2 REQUIRED CONFIG)")
+            replace_in_file(self, cmakelists, "NGHTTP2_FOUND", "libnghttp2_FOUND")
         replace_in_file(self, cmakelists, "${NGHTTP2_INCLUDE_DIRS}", "${libnghttp2_INCLUDE_DIRS}")
         replace_in_file(self, cmakelists, "${NGHTTP2_LIBRARIES}", "libnghttp2::nghttp2")
 
