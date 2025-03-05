@@ -237,7 +237,7 @@ class OpenTelemetryCppConan(ConanFile):
 
         if self.options.get_safe("with_jaeger"):
             self.requires("thrift/0.17.0")
-            self.requires("boost/1.85.0")
+            self.requires("boost/1.87.0")
 
         if self._should_require_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
