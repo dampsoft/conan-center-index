@@ -201,7 +201,7 @@ class OpenTelemetryCppConan(ConanFile):
 
         if self.options.with_abseil:
             if self._supports_new_proto_grpc_abseil():
-                self.requires("abseil/20240116.2", transitive_headers=True)
+                self.requires("abseil/20240722.1", transitive_headers=True)
             else:
                 self.requires("abseil/[>=20230125.3 <=20240116.2]", transitive_headers=True)
 
