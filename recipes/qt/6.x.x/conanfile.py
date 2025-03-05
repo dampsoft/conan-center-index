@@ -338,7 +338,7 @@ class QtConan(ConanFile):
         if self.options.openssl:
             self.requires("openssl/[>=1.1 <4]")
         if self.options.with_pcre2:
-            self.requires("pcre2/10.42")
+            self.requires("pcre2/10.44")
         if self.options.get_safe("with_vulkan"):
             # Note: the versions of vulkan-loader and moltenvk
             #       must be exactly part of the same Vulkan SDK version
@@ -353,7 +353,7 @@ class QtConan(ConanFile):
         if self.options.with_doubleconversion and not self.options.multiconfiguration:
             self.requires("double-conversion/3.3.0")
         if self.options.get_safe("with_freetype", False) and not self.options.multiconfiguration:
-            self.requires("freetype/2.13.2")
+            self.requires("freetype/2.13.3")
         if self.options.get_safe("with_fontconfig", False):
             self.requires("fontconfig/2.15.0")
         if self.options.get_safe("with_icu", False):
@@ -372,7 +372,7 @@ class QtConan(ConanFile):
         if self.options.get_safe("with_mysql", False):
             self.requires("libmysqlclient/8.1.0")
         if self.options.with_pq:
-            self.requires("libpq/15.4")
+            self.requires("libpq/17.4")
         if self.options.with_odbc:
             if self.settings.os != "Windows":
                 self.requires("odbc/2.3.11")
@@ -389,7 +389,7 @@ class QtConan(ConanFile):
         if self.settings.os != "Windows" and self.options.get_safe("opengl", "no") != "no":
             self.requires("opengl/system")
         if self.options.with_zstd:
-            self.requires("zstd/1.5.5")
+            self.requires("zstd/1.5.6")
         if self.options.qtwayland:
             self.requires("wayland/1.22.0")
         if self.options.with_brotli:

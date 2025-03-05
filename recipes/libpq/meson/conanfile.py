@@ -142,7 +142,7 @@ class LibpqConan(ConanFile):
         if self.options.with_libxslt:
             self.requires("libxslt/1.1.42")
         if self.options.get_safe("with_lz4"):
-            self.requires("lz4/1.9.4")
+            self.requires("lz4/1.10.0")
         if self.options.with_nls:
             self.requires("libgettext/0.22")
         if self.options.with_openssl:
@@ -173,7 +173,7 @@ class LibpqConan(ConanFile):
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
             self.tool_requires("pkgconf/[>=2.2 <3]")
         if self._settings_build.os == "Windows":
-            self.tool_requires("winflexbison/2.5.24")
+            self.tool_requires("winflexbison/2.5.25")
             self.tool_requires("strawberryperl/5.32.1.1")
         else:
             self.tool_requires("flex/2.6.4")

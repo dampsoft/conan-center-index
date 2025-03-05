@@ -207,7 +207,7 @@ class OpenTelemetryCppConan(ConanFile):
 
         if self._needs_proto:
             if self._supports_new_proto_grpc_abseil():
-                self.requires("protobuf/5.27.0", transitive_headers=True, transitive_libs=True)
+                self.requires("protobuf/5.29.3", transitive_headers=True, transitive_libs=True)
             else:
                 self.requires("protobuf/3.21.12", transitive_headers=True, transitive_libs=True)
 

@@ -187,7 +187,7 @@ class LibcurlConan(ConanFile):
         if self.options.with_brotli:
             self.requires("brotli/1.1.0")
         if self.options.with_zstd:
-            self.requires("zstd/1.5.5")
+            self.requires("zstd/1.5.6")
         if self.options.with_c_ares:
             self.requires("c-ares/[>=1.27 <2]")
         if self.options.get_safe("with_libpsl"):
@@ -208,10 +208,10 @@ class LibcurlConan(ConanFile):
     def build_requirements(self):
         if self._is_using_cmake_build:
             if self._is_win_x_android:
-                self.tool_requires("ninja/1.11.1")
+                self.tool_requires("ninja/1.12.1")
         else:
             if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-                self.tool_requires("pkgconf/2.1.0")
+                self.tool_requires("pkgconf/2.2.0")
             if self.settings.os in [ "tvOS", "watchOS" ]:
                 self.tool_requires("gnu-config/cci.20210814")
             if self._settings_build.os == "Windows":

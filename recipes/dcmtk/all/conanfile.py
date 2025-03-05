@@ -107,7 +107,7 @@ class DCMTKConan(ConanFile):
         if self.options.with_libpng:
             self.requires("libpng/[>=1.6 <2]")
         if self.options.with_libtiff:
-            self.requires("libtiff/4.6.0")
+            self.requires("libtiff/4.7.0")
         if self.options.get_safe("with_tcpwrappers"):
             self.requires("tcp-wrappers/7.6")
 

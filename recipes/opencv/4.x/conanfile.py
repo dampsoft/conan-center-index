@@ -1114,7 +1114,7 @@ class OpenCVConan(ConanFile):
         # dnn module dependencies
         if self.options.get_safe("with_protobuf"):
             # Symbols are exposed https://github.com/conan-io/conan-center-index/pull/16678#issuecomment-1507811867
-            self.requires("protobuf/3.21.12", transitive_libs=True)
+            self.requires("protobuf/5.29.3", transitive_libs=True)
         if self.options.get_safe("with_vulkan"):
             self.requires("vulkan-headers/1.3.268.0")
         if self.options.get_safe("with_openvino"):
@@ -1126,7 +1126,7 @@ class OpenCVConan(ConanFile):
         if self.options.get_safe("with_gtk"):
             self.requires("gtk/system")
         if self.options.get_safe("with_qt"):
-            self.requires("qt/5.15.12")
+            self.requires("qt/6.7.3")
         if self.options.get_safe("with_wayland"):
             self.requires("xkbcommon/1.6.0")
             self.requires("wayland/1.22.0")
@@ -1136,21 +1136,21 @@ class OpenCVConan(ConanFile):
         if self.options.get_safe("with_jpeg") == "libjpeg":
             self.requires("libjpeg/9e")
         elif self.options.get_safe("with_jpeg") == "libjpeg-turbo":
-            self.requires("libjpeg-turbo/3.0.2")
+            self.requires("libjpeg-turbo/3.1.0")
         elif self.options.get_safe("with_jpeg") == "mozjpeg":
             self.requires("mozjpeg/4.1.5")
         if self.options.get_safe("with_jpeg2000") == "jasper":
             self.requires("jasper/4.2.0")
         elif self.options.get_safe("with_jpeg2000") == "openjpeg":
-            self.requires("openjpeg/2.5.2")
+            self.requires("openjpeg/2.5.3")
         if self.options.get_safe("with_png"):
             self.requires("libpng/[>=1.6 <2]")
         if self.options.get_safe("with_openexr"):
             self.requires("openexr/3.2.3")
         if self.options.get_safe("with_tiff"):
-            self.requires("libtiff/4.6.0")
+            self.requires("libtiff/4.7.0")
         if self.options.get_safe("with_webp"):
-            self.requires("libwebp/1.3.2")
+            self.requires("libwebp/1.5.0")
         if self.options.get_safe("with_gdal"):
             self.requires("gdal/3.8.3")
         if self.options.get_safe("with_gdcm"):
@@ -1164,7 +1164,7 @@ class OpenCVConan(ConanFile):
             self.requires("ffmpeg/4.4.4")
         # freetype module dependencies
         if self.options.freetype:
-            self.requires("freetype/2.13.2")
+            self.requires("freetype/2.13.3")
             self.requires("harfbuzz/8.3.0")
         # hdf module dependencies
         if self.options.hdf:
@@ -1242,7 +1242,7 @@ class OpenCVConan(ConanFile):
             if not self._is_legacy_one_profile:
                 self.tool_requires("wayland/<host_version>")
             if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-                self.tool_requires("pkgconf/2.1.0")
+                self.tool_requires("pkgconf/2.2.0")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version][0], strip_root=True)
