@@ -11,6 +11,10 @@ patches:
       patch_type: "portability"
       patch_description: "support gcc 12"
       patch_source: "https://github.com/zaphoyd/websocketpp/issues/991"
+    - patch_file: "patches/websocket_boost_support_1_87_0.patch"
+      patch_type: "backport"
+      patch_description: "Boost 1.87.0 support: Fix ASIO deprecations, backported for 0.8.2"
+      patch_source: "https://github.com/zaphoyd/websocketpp/pull/1164.patch"
   "0.8.1":
     - patch_file: "patches/websocket_boost_support_1_7_x.patch"
       patch_type: "conan"
