@@ -1150,7 +1150,7 @@ class OpenCVConan(ConanFile):
         if self.options.get_safe("with_tiff"):
             self.requires("libtiff/4.7.0")
         if self.options.get_safe("with_webp"):
-            self.requires("libwebp/1.5.0")
+            self.requires("libwebp/1.4.0")
         if self.options.get_safe("with_gdal"):
             self.requires("gdal/3.8.3")
         if self.options.get_safe("with_gdcm"):
