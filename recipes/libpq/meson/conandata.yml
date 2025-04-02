@@ -19,6 +19,9 @@ patches:
     - patch_file: "patches/17.4/0002-Hack-to-work-around-function-declaration-when-buildi.patch"
       patch_description: "Fix detection of available functions when building on specific MacOS targets"
       patch_type: "conan"
+    - patch_file: "patches/17.4/0003-Fixup-build-on-MacOS-15.4-with-lower-deployment.patch"
+      patch_description: "Fixup build on MacOS 15.4 when using lower deployment target"
+      patch_type: "conan"
   "17.3":
     - patch_file: "patches/17.3/0001-strictly-require-enabled-deps.patch"
       patch_description: "Strictly require enabled dependencies is meson.build"
