@@ -1565,6 +1565,12 @@ class OpenCVConan(ConanFile):
         if self.settings.os == "Android":
             tc.variables["BUILD_ANDROID_EXAMPLES"] = False
 
+        # Patching the rpath otherwise fails since Apple-CLang 17 XCode toolchain...
+        compiler_version = self.settings.get_safe("compiler.version")
+        if is_apple_os(self) and compiler_version and Version(compiler_version) >= "17":
+            tc.extra_sharedlinkflags += ["-headerpad_max_install_names"]
+            tc.extra_exelinkflags += ["-headerpad_max_install_names"]
+
         tc.generate()
 
         CMakeDeps(self).generate()
