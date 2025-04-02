@@ -1,20 +1,20 @@
-From fa34d7e2e652560cfe7c98b7c9e8bebaa0a0d134 Mon Sep 17 00:00:00 2001
+From e4a8ff71239dbdd3367f53dbf4611c85b8c0ce59 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
  <tim.brueggemann@dampsoft.de>
 Date: Wed, 2 Apr 2025 15:06:37 +0200
 Subject: [PATCH] Fixup-build-on-MacOS-15.4-with-lower-deployment target
 
 ---
- meson.build                | 11 +++++++++--
+ meson.build                | 14 ++++++++++++--
  src/include/pg_config.h.in |  7 ++++---
  src/port/snprintf.c        | 23 +++++++++--------------
- 3 files changed, 22 insertions(+), 19 deletions(-)
+ 3 files changed, 25 insertions(+), 19 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index df3f1a6a414..3d644392b88 100644
+index df3f1a6a414..258c3b3cac0 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -2467,7 +2467,11 @@ decl_checks = [
+@@ -2467,7 +2467,14 @@ decl_checks = [
  # checking for library symbols wouldn't handle deployment target
  # restrictions on macOS
  macos_min_version_option = get_option('macos_min_version')
@@ -22,12 +22,15 @@ index df3f1a6a414..3d644392b88 100644
 +if macos_min_version_option != ''
 +  macos_min_version_option_major = macos_min_version_option.split('.')[0].to_int()
 +  macos_min_version_option_minor = macos_min_version_option.split('.')[1].to_int()
++else
++  macos_min_version_option_major = 0
++  macos_min_version_option_minor = 0
 +endif
 +if macos_min_version_option != '' and macos_min_version_option_major <= 10
    decl_checks += [
      ['preadv', 'false'],
      ['pwritev', 'false'],
-@@ -2479,6 +2483,10 @@ else
+@@ -2479,6 +2486,10 @@ else
    ]
  endif
  
@@ -38,7 +41,7 @@ index df3f1a6a414..3d644392b88 100644
  # Check presence of some optional LLVM functions.
  if llvm.found()
    decl_checks += [
-@@ -2737,7 +2745,6 @@ func_checks = [
+@@ -2737,7 +2748,6 @@ func_checks = [
    ['shm_unlink', {'dependencies': [rt_dep], 'define': false}],
    ['shmget', {'dependencies': [cygipc_dep], 'define': false}],
    ['socket', {'dependencies': [socket_dep], 'define': false}],
