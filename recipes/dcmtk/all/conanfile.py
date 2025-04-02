@@ -27,7 +27,7 @@ class DCMTKConan(ConanFile):
         "fPIC": [True, False],
         "with_applications": [True, False],
         "with_multithreading": [True, False],
-        "charset_conversion": [None, "libiconv", "icu"],
+        "charset_conversion": [None, "libiconv", "icu", "oficonv"],
         "with_libxml2": [True, False],
         "with_zlib": [True, False],
         "with_openssl": [True, False],
@@ -47,7 +47,7 @@ class DCMTKConan(ConanFile):
         "fPIC": True,
         "with_applications": False,
         "with_multithreading": True,
-        "charset_conversion": "libiconv",
+        "charset_conversion": "oficonv",
         "with_libxml2": True,
         "with_zlib": True,
         "with_openssl": True,
@@ -158,8 +158,11 @@ class DCMTKConan(ConanFile):
         tc.variables["DCMTK_ENABLE_CXX11"] = True
         tc.variables["DCMTK_ENABLE_MANPAGE"] = False
         tc.cache_variables["DCMTK_DEFAULT_DICT"] = self.options.default_dict
+        if self.options.charset_conversion and self.options.charset_conversion == "icu" and Version(self.version) >= "3.6.9":
+            self.output.warning("DCMTK 3.6.9+ no longer supports ICU charset conversion. Using oficonv (default) instead.")
+            tc.cache_variables["DCMTK_ENABLE_CHARSET_CONVERSION"] = "oficonv"
         if self.options.charset_conversion and Version(self.version) >= "3.6.8":
-            charset_conversion = { "libiconv": "libiconv", "icu": "ICU" }
+            charset_conversion = { "libiconv": "libiconv", "icu": "ICU", "oficonv": "oficonv"}
             tc.cache_variables["DCMTK_ENABLE_CHARSET_CONVERSION"] = charset_conversion[str(self.options.charset_conversion)]
         tc.variables["DCMTK_USE_DCMDICTPATH"] = self.options.use_dcmdictpath
         if self.settings.os == "Windows":
@@ -303,7 +306,7 @@ class DCMTKConan(ConanFile):
     @property
     def _dcmtk_components(self):
         def charset_conversion():
-            if bool(self.options.charset_conversion):
+            if bool(self.options.charset_conversion) and self.options.charset_conversion != "oficonv":
                 return ["libiconv::libiconv"] if self.options.charset_conversion == "libiconv" else ["icu::icu"]
             return []
 
