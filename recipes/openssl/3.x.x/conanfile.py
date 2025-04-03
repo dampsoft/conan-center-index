@@ -427,7 +427,7 @@ class OpenSSLConan(ConanFile):
         compiler_version = self.settings.get_safe("compiler.version")
         if is_apple_os(self) and compiler_version and Version(compiler_version) >= "17":
             self.output.info("Apple-CLang >= 17 detected, patching rpath")
-            tc.extra_ldflags += ["-headerpad"]
+            tc.extra_ldflags += ["-Wl,-headerpad_max_install_names"]
 
 
         self._create_targets(tc.cflags, tc.cxxflags, tc.defines, tc.ldflags)
