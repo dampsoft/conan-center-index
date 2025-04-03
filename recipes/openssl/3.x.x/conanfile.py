@@ -423,6 +423,14 @@ class OpenSSLConan(ConanFile):
             env.define_path("CROSS_SDK", os.path.basename(xcrun.sdk_path))
             env.define_path("CROSS_TOP", os.path.dirname(os.path.dirname(xcrun.sdk_path)))
 
+        # Patching the rpath otherwise fails since Apple-CLang 17 XCode toolchain...
+        compiler_version = self.settings.get_safe("compiler.version")
+        if is_apple_os(self) and compiler_version and Version(compiler_version) >= "17":
+            self.output.info("Apple-CLang >= 17 detected, patching rpath")
+            tc.extra_sharedlinkflags += ["-headerpad"]
+            tc.extra_exelinkflags += ["-headerpad"]
+
+
         self._create_targets(tc.cflags, tc.cxxflags, tc.defines, tc.ldflags)
         tc.generate(env)
 
