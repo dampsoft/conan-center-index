@@ -44,7 +44,7 @@ class LibpqConan(ConanFile):
     def _is_clang8_x86(self):
         return self.settings.os == "Linux" and \
                self.settings.compiler == "clang" and \
-               self.settings.compiler.version == "8" and \
+               Version(self.settings.compiler.version) == "8" and \
                self.settings.arch == "x86"
 
     @property
@@ -94,6 +94,10 @@ class LibpqConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/cci.latest")
+        else:
+            if self.options.with_openssl or self.options.with_icu:
+                if not self.conf.get("tools.gnu:pkg_config", check_type=str):
+                    self.tool_requires("pkgconf/[>=2.2 <3]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -115,10 +119,10 @@ class LibpqConan(ConanFile):
                 env.generate(scope="build")
 
             tc = AutotoolsToolchain(self)
-            tc.configure_args.append("--without-readline")
-            tc.configure_args.append("--with-openssl" if self.options.get_safe("with_openssl") else "--without-openssl")
-            tc.configure_args.append("--with-icu" if self.options.get_safe("with_icu") else "--without-icu")
-            tc.configure_args.append("--with-zlib" if self.options.get_safe("with_zlib") else "--without-zlib")
+            tc.configure_args.append('--without-readline')
+            tc.configure_args.append('--with-zlib' if self.options.get_safe('with_zlib') else '--without-zlib')
+            tc.configure_args.append('--with-icu' if self.options.get_safe('with_icu') else '--without-icu')
+            tc.configure_args.append('--with-openssl' if self.options.get_safe('with_openssl') else '--without-openssl')
             if cross_building(self) and not self.options.with_openssl:
                 tc.configure_args.append("--disable-strong-random")
             if cross_building(self, skip_x64_x86=True):
@@ -132,11 +136,8 @@ class LibpqConan(ConanFile):
                 tc.make_args.append(f"MAKE_DLL={str(self.options.shared).lower()}")
             tc.generate()
 
-            deps = AutotoolsDeps(self)
-            deps.generate()
-
-            deps = PkgConfigDeps(self)
-            deps.generate()
+            AutotoolsDeps(self).generate()
+            PkgConfigDeps(self).generate()
 
     def _patch_sources(self):
         if is_msvc(self):
@@ -194,6 +195,14 @@ class LibpqConan(ConanFile):
                     replace_in_file(self,config_default_pl,
                                       "openssl => undef",
                                       "openssl => '%s'" % openssl.package_folder.replace("\\", "/"))
+            if self.options.with_icu:
+                libicu = self.dependencies["icu"]
+                iculibdir = libicu.cpp_info.components["icu"].libdirs[0]
+                replace_in_file(self, solution_pm, "\\lib64\\icu", f"\\{iculibdir}\\icu")
+                icu_undef = "icu => undef" if Version(self.version) >= "16.0" else "icu       => undef"
+                replace_in_file(self,config_default_pl,
+                                        icu_undef,
+                                       "icu => '%s'" % libicu.package_folder.replace("\\", "/"))
         elif self.settings.os == "Windows":
             if self.settings.get_safe("compiler.threads") == "posix":
                 # Use MinGW pthread library
@@ -335,6 +344,7 @@ class LibpqConan(ConanFile):
 
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["pq"].system_libs = ["pthread"]
+            self.cpp_info.components["pgcommon"].system_libs = ["m"]
         elif self.settings.os == "Windows":
             self.cpp_info.components["pq"].system_libs = ["ws2_32", "secur32", "advapi32", "shell32", "crypt32", "wldap32"]
 

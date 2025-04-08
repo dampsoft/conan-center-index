@@ -7,6 +7,8 @@ versions:
     folder: meson
   "17.0":
     folder: meson
+  "16.8":
+    folder: all
   "16.3":
     folder: all
   "16.2":
