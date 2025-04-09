@@ -120,7 +120,7 @@ class PopplerConan(ConanFile):
         if self.options.splash:
             self.requires("boost/1.87.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/8.12.1")
+            self.requires("libcurl/8.13.0")
         if self.options.with_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
 
