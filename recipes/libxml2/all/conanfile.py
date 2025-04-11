@@ -85,6 +85,8 @@ class Libxml2Conan(ConanFile):
             self.options.rm_safe("run-debug")
         if Version(self.version) >= "2.13.0":
             self.options.rm_safe("mem-debug")
+        if Version(self.version) >= "2.13.4":
+            self.options.rm_safe("ftp")
 
     def configure(self):
         if self.options.shared:
