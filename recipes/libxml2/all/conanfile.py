@@ -400,7 +400,7 @@ class Libxml2Conan(ConanFile):
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs.append("dl")
         elif self.settings.os == "Windows":
-            if self.options.ftp or self.options.http:
+            if self.options.get_safe("ftp") or self.options.http:
                 self.cpp_info.system_libs.extend(["ws2_32", "wsock32"])
             if Version(self.version) >= "2.13.4":
                 # https://gitlab.gnome.org/GNOME/libxml2/-/issues/791
