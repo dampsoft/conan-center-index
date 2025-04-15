@@ -1,0 +1,38 @@
+From e01add261f0e5cd25c4f6b3ccacf45cefacee373 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Fri, 4 Apr 2025 15:39:41 +0200
+Subject: [PATCH] fix crash when font families are empty
+
+---
+ src/gui/text/qfont.cpp | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/src/gui/text/qfont.cpp b/src/gui/text/qfont.cpp
+index 7fd590c3558..85c3177ee7a 100644
+--- a/src/gui/text/qfont.cpp
++++ b/src/gui/text/qfont.cpp
+@@ -2737,12 +2737,14 @@ void QFont::setFamilies(const QStringList &families)
+ */
+ QDataStream &operator<<(QDataStream &s, const QFont &font)
+ {
+-    if (s.version() == 1) {
+-        s << font.d->request.families.constFirst().toLatin1();
+-    } else {
+-        s << font.d->request.families.constFirst();
+-        if (s.version() >= QDataStream::Qt_5_4)
+-            s << font.d->request.styleName;
++    if (!font.d->request.families.isEmpty()) {
++        if (s.version() == 1) {
++            s << font.d->request.families.constFirst().toLatin1();
++        } else {
++            s << font.d->request.families.constFirst();
++            if (s.version() >= QDataStream::Qt_5_4)
++                s << font.d->request.styleName;
++        }
+     }
+ 
+     if (s.version() >= QDataStream::Qt_4_0) {
+-- 
+2.49.0
+
