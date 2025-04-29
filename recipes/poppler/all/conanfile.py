@@ -163,7 +163,7 @@ class PopplerConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("pkgconf/2.0.3")
-        self.tool_requires("cmake/3.27.7")
+        self.tool_requires("cmake/[>=3.27.7 <4]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
