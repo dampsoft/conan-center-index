@@ -1,4 +1,7 @@
 sources:
+  "2.39.0":
+    url: "https://github.com/rui314/mold/archive/refs/tags/v2.39.0.tar.gz"
+    sha256: "32a0917894b9bc9317ba5d6bdbcad8401513bcdfbbbcfc9de55423c46db8511c"
   "2.37.0":
     url: "https://github.com/rui314/mold/archive/refs/tags/v2.37.0.tar.gz"
     sha256: "28372bbc2ce069aa0362ba84ad5d1b0f2c0bcf84e95a0f533ecf79cb3aff232c"
