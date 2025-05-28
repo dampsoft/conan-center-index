@@ -6,4 +6,4 @@ class ValgrindTestConan(ConanFile):
         self.tool_requires(self.tested_reference_str)
 
     def test(self):
-        self.run("valgrind --version")
+        self.run("valgrind --version", env="conanrun")
