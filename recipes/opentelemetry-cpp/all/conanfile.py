@@ -24,6 +24,7 @@ class OpenTelemetryCppConan(ConanFile):
     options = {
         "fPIC": [True, False],
         "shared": [True, False],
+        "with_abi_v2": [True, False],
         "with_no_deprecated_code": [True, False],
         "with_deprecated_sdk_factory": [True, False],
         "with_stl": [True, False],
@@ -48,6 +49,7 @@ class OpenTelemetryCppConan(ConanFile):
     default_options = {
         "fPIC": True,
         "shared": False,
+        "with_abi_v2": False,
         "with_no_deprecated_code": False,
         "with_deprecated_sdk_factory": True,
         # Enabling this causes stack overflow in the test_package
@@ -153,6 +155,8 @@ class OpenTelemetryCppConan(ConanFile):
         if Version(self.version) < "1.16.0":
             del self.options.with_otlp_file
             del self.options.with_otlp_http_compression
+        if Version(self.version) < "1.18.0":
+            del self.options.with_abi_v2
 
     def configure(self):
         if self.options.shared:
@@ -282,7 +286,12 @@ class OpenTelemetryCppConan(ConanFile):
 
     def build_requirements(self):
         if self._needs_proto:
-            self.tool_requires("opentelemetry-proto/1.5.0")
+            if Version(self.version) >= "1.21.0":
+                self.tool_requires("opentelemetry-proto/1.5.0")
+            elif Version(self.version) >= "1.18.0":
+                self.tool_requires("opentelemetry-proto/1.4.0")
+            else:
+                self.tool_requires("opentelemetry-proto/1.3.2")
             self.tool_requires("protobuf/<host_version>")
 
         if self.options.with_otlp_grpc:
@@ -369,6 +378,10 @@ class OpenTelemetryCppConan(ConanFile):
         if Version(self.version) >= "1.13" and Version(self.version) < "1.14":
             tc.variables["WITH_OTLP_HTTP_SSL_PREVIEW"] = False
             tc.variables["WITH_OTLP_HTTP_SSL_TLS_PREVIEW"] = False
+
+        if self.options.get_safe("with_abi_v2"):
+            tc.variables["WITH_ABI_VERSION_1"] = False
+            tc.variables["WITH_ABI_VERSION_2"] = True
         tc.generate()
 
         if Version(self.version) >= "1.18.0":

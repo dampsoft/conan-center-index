@@ -423,10 +423,11 @@ class OpenSSLConan(ConanFile):
 
         # Patching the rpath otherwise fails since Apple-CLang 17 XCode toolchain...
         compiler_version = self.settings.get_safe("compiler.version")
-        if is_apple_os(self) and compiler_version and Version(compiler_version) >= "17":
+        if is_apple_os(self) and self.options.shared and compiler_version and Version(compiler_version) >= "17":
+            # Inject -headerpad_max_install_names for shared library, otherwise fix_apple_shared_install_name() may fail.
+            # See https://github.com/conan-io/conan-center-index/issues/27424
             self.output.info("Apple-CLang >= 17 detected, patching rpath")
-            tc.extra_ldflags += ["-Wl,-headerpad_max_install_names"]
-
+            tc.extra_ldflags.append("-headerpad_max_install_names")
 
         self._create_targets(tc.cflags, tc.cxxflags, tc.defines, tc.ldflags)
         tc.generate(env)
