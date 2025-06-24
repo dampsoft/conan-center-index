@@ -1114,7 +1114,7 @@ class OpenCVConan(ConanFile):
         # dnn module dependencies
         if self.options.get_safe("with_protobuf"):
             # Symbols are exposed https://github.com/conan-io/conan-center-index/pull/16678#issuecomment-1507811867
-            self.requires("protobuf/5.29.3", transitive_libs=True)
+            self.requires("protobuf/6.30.1", transitive_libs=True)
         if self.options.get_safe("with_vulkan"):
             self.requires("vulkan-headers/1.3.268.0")
         if self.options.get_safe("with_openvino"):
@@ -1136,7 +1136,7 @@ class OpenCVConan(ConanFile):
         if self.options.get_safe("with_jpeg") == "libjpeg":
             self.requires("libjpeg/9e")
         elif self.options.get_safe("with_jpeg") == "libjpeg-turbo":
-            self.requires("libjpeg-turbo/3.1.0")
+            self.requires("libjpeg-turbo/3.1.1")
         elif self.options.get_safe("with_jpeg") == "mozjpeg":
             self.requires("mozjpeg/4.1.5")
         if self.options.get_safe("with_jpeg2000") == "jasper":
@@ -1165,7 +1165,7 @@ class OpenCVConan(ConanFile):
         # freetype module dependencies
         if self.options.freetype:
             self.requires("freetype/2.13.3")
-            self.requires("harfbuzz/8.3.0")
+            self.requires("harfbuzz/11.2.1")
         # hdf module dependencies
         if self.options.hdf:
             self.requires("hdf5/1.14.3")

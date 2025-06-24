@@ -67,7 +67,7 @@ class LibMysqlClientCConan(ConanFile):
         else:
             self.requires("openssl/[>=1.1 <4]")
         self.requires("zlib/[>=1.2.11 <2]")
-        self.requires("zstd/1.5.6")
+        self.requires("zstd/1.5.7")
         self.requires("lz4/1.10.0")
         if self.settings.os == "FreeBSD":
             self.requires("libunwind/1.7.2")

@@ -205,13 +205,13 @@ class OpenTelemetryCppConan(ConanFile):
 
         if self.options.with_abseil:
             if self._supports_new_proto_grpc_abseil():
-                self.requires("abseil/20240722.1", transitive_headers=True)
+                self.requires("abseil/20250127.0", transitive_headers=True)
             else:
                 self.requires("abseil/[>=20230125.3 <=20240116.2]", transitive_headers=True)
 
         if self._needs_proto:
             if self._supports_new_proto_grpc_abseil():
-                self.requires("protobuf/5.29.3", transitive_headers=True, transitive_libs=True)
+                self.requires("protobuf/6.30.1", transitive_headers=True, transitive_libs=True)
             else:
                 self.requires("protobuf/3.21.12", transitive_headers=True, transitive_libs=True)
 
@@ -241,7 +241,7 @@ class OpenTelemetryCppConan(ConanFile):
 
         if self.options.get_safe("with_jaeger"):
             self.requires("thrift/0.17.0")
-            self.requires("boost/1.87.0")
+            self.requires("boost/1.88.0")
 
         if self._should_require_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
@@ -289,11 +289,11 @@ class OpenTelemetryCppConan(ConanFile):
             if Version(self.version) >= "1.21.0":
                 self.tool_requires("opentelemetry-proto/1.7.0")
             elif Version(self.version) >= "1.20.0":
-                self.tool_requires("opentelemetry-proto/1.5.0")
+                self.tool_requires("opentelemetry-proto/1.7.0")
             elif Version(self.version) >= "1.18.0":
-                self.tool_requires("opentelemetry-proto/1.4.0")
+                self.tool_requires("opentelemetry-proto/1.7.0")
             else:
-                self.tool_requires("opentelemetry-proto/1.3.2")
+                self.tool_requires("opentelemetry-proto/1.7.0")
             self.tool_requires("protobuf/<host_version>")
 
         if self.options.with_otlp_grpc:

@@ -73,7 +73,7 @@ class FreetypeConan(ConanFile):
             self.requires("brotli/1.1.0")
 
     def build_requirements(self):
-        self.tool_requires("meson/1.6.0")
+        self.tool_requires("meson/1.7.2")
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
             self.tool_requires("pkgconf/2.2.0")
 
