@@ -118,7 +118,7 @@ class PopplerConan(ConanFile):
         if self.options.with_tiff:
             self.requires("libtiff/4.7.0")
         if self.options.splash:
-            self.requires("boost/1.87.0")
+            self.requires("boost/1.88.0")
         if self.options.with_libcurl:
             self.requires("libcurl/8.13.0")
         if self.options.with_zlib:
