@@ -1,4 +1,7 @@
 sources:
+  "17.5":
+    url: "https://ftp.postgresql.org/pub/source/v17.5/postgresql-17.5.tar.bz2"
+    sha256: "fcb7ab38e23b264d1902cb25e6adafb4525a6ebcbd015434aeef9eda80f528d8"
   "17.4":
     url: "https://ftp.postgresql.org/pub/source/v17.4/postgresql-17.4.tar.bz2"
     sha256: "c4605b73fea11963406699f949b966e5d173a7ee0ccaef8938dec0ca8a995fe7"
@@ -12,6 +15,13 @@ sources:
     url: "https://ftp.postgresql.org/pub/source/v17.0/postgresql-17.0.tar.bz2"
     sha256: "7e276131c0fdd6b62588dbad9b3bb24b8c3498d5009328dba59af16e819109de"
 patches:
+  "17.5":
+    - patch_file: "patches/17.5/0001-strictly-require-enabled-deps.patch"
+      patch_description: "Strictly require enabled dependencies is meson.build"
+      patch_type: "conan"
+    - patch_file: "patches/17.5/0002-Hack-to-work-around-function-declaration-when-buildi.patch"
+      patch_description: "Fix detection of available functions when building on specific MacOS targets"
+      patch_type: "portability"
   "17.4":
     - patch_file: "patches/17.4/0001-strictly-require-enabled-deps.patch"
       patch_description: "Strictly require enabled dependencies is meson.build"
