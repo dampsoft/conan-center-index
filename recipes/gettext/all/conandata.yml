@@ -1,6 +1,8 @@
 sources:
   "0.22.5":
-    url: "https://ftp.gnu.org/pub/gnu/gettext/gettext-0.22.5.tar.gz"
+    url:
+      - "https://ftp.gnu.org/pub/gnu/gettext/gettext-0.22.5.tar.gz"
+      - "https://mirror.netcologne.de/gnu/gettext/gettext-0.25.tar.gz"
     sha256: "ec1705b1e969b83a9f073144ec806151db88127f5e40fe5a94cb6c8fa48996a0"
   "0.21":
     url: "https://ftp.gnu.org/pub/gnu/gettext/gettext-0.21.tar.gz"
