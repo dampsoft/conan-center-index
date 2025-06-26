@@ -1,0 +1,29 @@
+From fdefa62a4293ea60fda0e7c1e537178cd2cafbea Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Thu, 26 Jun 2025 13:37:03 +0200
+Subject: [PATCH] rowsAffectedBulk only when numberOfExecutions > 1
+
+---
+ src/backends/mysql/statement.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/backends/mysql/statement.cpp b/src/backends/mysql/statement.cpp
+index e96368ac..de2aceef 100644
+--- a/src/backends/mysql/statement.cpp
++++ b/src/backends/mysql/statement.cpp
+@@ -253,10 +253,10 @@ mysql_statement_backend::execute(int number)
+                     query.clear();
+                 }
+             }
+-            rowsAffectedBulk_ = rowsAffectedBulkTemp;
+             if (numberOfExecutions > 1)
+             {
+                 // bulk
++                rowsAffectedBulk_ = rowsAffectedBulkTemp;
+                 return ef_no_data;
+             }
+         }
+-- 
+2.25.1
+

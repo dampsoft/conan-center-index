@@ -1,0 +1,147 @@
+From 8661a00afaff1c0d211cf8612413b3da4b78fe92 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Thu, 26 Jun 2025 14:19:14 +0200
+Subject: [PATCH] FIELD_TYPE_DATETIME im MySQL-Backend als dt_string (nicht
+ dt_date) behandeln - damit wir nicht den Einschraenkungen von std::tm
+ unterliegen (nur   Sekundengenau).
+
+timestamp und timestampz im PostgreSQL-Backend als dt_string (nicht
+dt_date) behandeln
+- damit wir diese ohne Informationsverlust in den ds::Decimal konvertieren
+  koennen.
+---
+ include/soci/session.h                |  3 +++
+ src/backends/mysql/statement.cpp      |  2 +-
+ src/backends/postgresql/statement.cpp |  6 +++---
+ src/core/session.cpp                  | 17 +++++++++++------
+ 4 files changed, 18 insertions(+), 10 deletions(-)
+
+diff --git a/include/soci/session.h b/include/soci/session.h
+index 49ae2fee..0c647753 100644
+--- a/include/soci/session.h
++++ b/include/soci/session.h
+@@ -221,6 +221,9 @@ public:
+     details::rowid_backend * make_rowid_backend();
+     details::blob_backend * make_blob_backend();
+ 
++    bool isFromPool() { return isFromPool_; }
++    std::size_t getPoolPosition() const { return poolPosition_; }
++
+ private:
+     SOCI_NOT_COPYABLE(session)
+ 
+diff --git a/src/backends/mysql/statement.cpp b/src/backends/mysql/statement.cpp
+index de2aceef..d791491c 100644
+--- a/src/backends/mysql/statement.cpp
++++ b/src/backends/mysql/statement.cpp
+@@ -452,7 +452,6 @@ void mysql_statement_backend::describe_column(int colNum,
+     case FIELD_TYPE_TIMESTAMP:  //MYSQL_TYPE_TIMESTAMP:
+     case FIELD_TYPE_DATE:       //MYSQL_TYPE_DATE:
+     case FIELD_TYPE_TIME:       //MYSQL_TYPE_TIME:
+-    case FIELD_TYPE_DATETIME:   //MYSQL_TYPE_DATETIME:
+     case FIELD_TYPE_YEAR:       //MYSQL_TYPE_YEAR:
+     case FIELD_TYPE_NEWDATE:    //MYSQL_TYPE_NEWDATE:
+         dbtype = db_date;
+@@ -461,6 +460,7 @@ void mysql_statement_backend::describe_column(int colNum,
+     case 245:                   //MYSQL_TYPE_JSON:
+     case FIELD_TYPE_VAR_STRING: //MYSQL_TYPE_VAR_STRING:
+     case FIELD_TYPE_STRING:     //MYSQL_TYPE_STRING:
++    case FIELD_TYPE_DATETIME:   //MYSQL_TYPE_DATETIME:
+         dbtype = db_string;
+         break;
+     case FIELD_TYPE_BLOB:       // BLOB
+diff --git a/src/backends/postgresql/statement.cpp b/src/backends/postgresql/statement.cpp
+index 96935689..c6c45870 100644
+--- a/src/backends/postgresql/statement.cpp
++++ b/src/backends/postgresql/statement.cpp
+@@ -731,6 +731,9 @@ void postgresql_statement_backend::describe_column(int colNum,
+     case 869:  // inet
+     case 650:  // cidr
+     case 774:  // macaddr8
++    case 1700: // numeric
++    case 1114: // timestamp
++    case 1184: // timestamptz
+         dbtype = db_string;
+         break;
+ 
+@@ -738,15 +741,12 @@ void postgresql_statement_backend::describe_column(int colNum,
+     case 703:  // reltime
+     case 1082: // date
+     case 1083: // time
+-    case 1114: // timestamp
+-    case 1184: // timestamptz
+     case 1266: // timetz
+         dbtype = db_date;
+         break;
+ 
+     case 700:  // float4
+     case 701:  // float8
+-    case 1700: // numeric
+         dbtype = db_double;
+         break;
+ 
+diff --git a/src/core/session.cpp b/src/core/session.cpp
+index aba730e0..1b60857e 100644
+--- a/src/core/session.cpp
++++ b/src/core/session.cpp
+@@ -82,14 +82,16 @@ private:
+ 
+ session::session()
+     : once(this), prepare(this),
+-      logger_(new standard_logger_impl)
++      logger_(new standard_logger_impl),
++      poolPosition_(-1)
+ {
+ }
+ 
+ session::session(connection_parameters const & parameters)
+     : once(this), prepare(this),
+       logger_(new standard_logger_impl),
+-      lastConnectParameters_(parameters)
++      lastConnectParameters_(parameters),
++      poolPosition_(-1)
+ {
+     open(lastConnectParameters_);
+ }
+@@ -98,7 +100,8 @@ session::session(backend_factory const & factory,
+     std::string const & connectString)
+     : once(this), prepare(this),
+       logger_(new standard_logger_impl),
+-      lastConnectParameters_(factory, connectString)
++      lastConnectParameters_(factory, connectString),
++      poolPosition_(-1)
+ {
+     open(lastConnectParameters_);
+ }
+@@ -107,7 +110,8 @@ session::session(std::string const & backendName,
+     std::string const & connectString)
+     : once(this), prepare(this),
+       logger_(new standard_logger_impl),
+-      lastConnectParameters_(backendName, connectString)
++      lastConnectParameters_(backendName, connectString),
++      poolPosition_(-1)
+ {
+     open(lastConnectParameters_);
+ }
+@@ -115,14 +119,15 @@ session::session(std::string const & backendName,
+ session::session(std::string const & connectString)
+     : once(this), prepare(this),
+       logger_(new standard_logger_impl),
+-      lastConnectParameters_(connectString)
++      lastConnectParameters_(connectString),
++      poolPosition_(-1)
+ {
+     open(lastConnectParameters_);
+ }
+ 
+ session::session(connection_pool & pool)
+     : logger_(new standard_logger_impl),
+-      isFromPool_(true), pool_(&pool)
++      isFromPool_(true), poolPosition_(-1), pool_(&pool)
+ {
+     poolPosition_ = pool.lease();
+     session & pooledSession = pool.at(poolPosition_);
+-- 
+2.25.1
+
