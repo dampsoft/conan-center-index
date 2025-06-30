@@ -1,0 +1,26 @@
+From 710c0e9ae654f7cefc43196bf385d70cec369154 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Mon, 30 Jun 2025 13:46:59 +0200
+Subject: [PATCH] Explicitly require deps
+
+---
+ cmake/soci_define_backend_target.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmake/soci_define_backend_target.cmake b/cmake/soci_define_backend_target.cmake
+index 2337d17c..6e256918 100644
+--- a/cmake/soci_define_backend_target.cmake
++++ b/cmake/soci_define_backend_target.cmake
+@@ -81,7 +81,7 @@ function(soci_define_backend_target)
+ 
+     list(GET CURRENT_DEP_SEARCH 0 CURRENT_DEP)
+ 
+-    find_package(${CURRENT_DEP_SEARCH} ${REQUIRE_FLAG})
++    find_package(${CURRENT_DEP_SEARCH} CONFIG REQUIRED)
+ 
+     if (NOT ${CURRENT_DEP}_FOUND)
+       if (ERROR_ON_MISSING_DEPENDENCY)
+-- 
+2.50.0
+
