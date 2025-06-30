@@ -116,9 +116,17 @@ class SociConan(ConanFile):
         tc.generate()
 
         deps = CMakeDeps(self)
-        deps.set_property("libmysqlclient", "cmake_file_name", "MYSQL")
+
+        if Version(self.version) >= "4.1.0":
+            my_sql_package = "MySQL"
+            postgresql_package = "PostgreSQL"
+        else:
+            my_sql_package = "MYSQL"
+            postgresql_package = "POSTGRESQL"
+
+        deps.set_property("libmysqlclient", "cmake_file_name", my_sql_package)
         deps.set_property("libmysqlclient", "cmake_target_name", "MySQL::MySQL")
-        deps.set_property("libpq", "cmake_file_name", "POSTGRESQL")
+        deps.set_property("libpq", "cmake_file_name", postgresql_package)
         deps.set_property("sqlite3", "cmake_file_name", "SQLite3")
         deps.set_property("sqlite3", "cmake_additional_variables_prefixes", ["SQLITE3"])
         deps.generate()
