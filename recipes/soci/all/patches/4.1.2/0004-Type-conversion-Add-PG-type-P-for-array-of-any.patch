@@ -1,0 +1,25 @@
+From 2a68b4907eaa4730b2f1ee685b11f5f0643b3a52 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Wed, 2 Jul 2025 13:09:43 +0200
+Subject: [PATCH] Type conversion: Add PG type 'P' for array of any record
+
+---
+ src/backends/postgresql/statement.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/backends/postgresql/statement.cpp b/src/backends/postgresql/statement.cpp
+index c6c45870..4f392fe4 100644
+--- a/src/backends/postgresql/statement.cpp
++++ b/src/backends/postgresql/statement.cpp
+@@ -806,6 +806,7 @@ void postgresql_statement_backend::describe_column(int colNum,
+             case 'S': // string type
+             case 'U': // user type
+             case 'I': // network address type
++            case 'P': // array of any record
+                 dbtype = db_string;
+                 break;
+ 
+-- 
+2.25.1
+
