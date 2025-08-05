@@ -899,6 +899,15 @@ class QtConan(ConanFile):
                 assert False, f"Could not find executable {target}{extension} in {self.package_folder}"
             if not exe_path:
                 self.output.warning(f"Could not find path to {target}{extension}")
+
+            if is_apple_os(self) and target in ["moc", "rcc", "uic"]:
+                # On macOS, these executables need additional RPATH entries to find libs of deps
+                for dep in self.dependencies.values():
+                    dep_folder = dep.package_folder
+                    dep_lib_folder = os.path.join(dep_folder, "lib")
+                    if os.path.isdir(dep_lib_folder):
+                        self.run(f"install_name_tool -add_rpath {dep_lib_folder} {os.path.join(self.package_folder, exe_path)}")
+
             filecontents += textwrap.dedent(f"""\
                 if(NOT TARGET ${{QT_CMAKE_EXPORT_NAMESPACE}}::{target})
                     add_executable(${{QT_CMAKE_EXPORT_NAMESPACE}}::{target} IMPORTED)
