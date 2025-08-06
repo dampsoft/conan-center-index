@@ -1,4 +1,3 @@
-import glob
 import os
 from pathlib import Path
 
@@ -11,7 +10,7 @@ from conan.tools.layout import basic_layout
 from conan.tools.meson import MesonToolchain, Meson
 from conan.tools.microsoft import is_msvc
 
-required_conan_version = ">=1.54.0"
+required_conan_version = ">=2.18.0"
 
 
 class LibpqConan(ConanFile):

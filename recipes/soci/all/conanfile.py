@@ -86,7 +86,6 @@ class SociConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-
         # MacOS @rpath
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0042"] = "NEW"
         tc.cache_variables["SOCI_SHARED"] = self.options.shared
@@ -94,15 +93,15 @@ class SociConan(ConanFile):
         tc.cache_variables["SOCI_TESTS"] = False
         tc.cache_variables["SOCI_EMPTY"] = self.options.empty
 
-        features_prefix = "WITH" if Version(self.version) < "4.1.0" else "SOCI"
+        backend_prefix = "WITH" if Version(self.version) < "4.1.0" else "SOCI"
 
-        tc.cache_variables[f"{features_prefix}_SQLITE3"] = self.options.with_sqlite3
-        tc.cache_variables[f"{features_prefix}_DB2"] = False
-        tc.cache_variables[f"{features_prefix}_ODBC"] = self.options.with_odbc
-        tc.cache_variables[f"{features_prefix}_ORACLE"] = False
-        tc.cache_variables[f"{features_prefix}_FIREBIRD"] = False
-        tc.cache_variables[f"{features_prefix}_MYSQL"] = self.options.with_mysql
-        tc.cache_variables[f"{features_prefix}_POSTGRESQL"] = self.options.with_postgresql
+        tc.cache_variables["{}_SQLITE3".format(backend_prefix)] = self.options.with_sqlite3
+        tc.cache_variables["{}_DB2".format(backend_prefix)] = False
+        tc.cache_variables["{}_ODBC".format(backend_prefix)] = self.options.with_odbc
+        tc.cache_variables["{}_ORACLE".format(backend_prefix)] = False
+        tc.cache_variables["{}_FIREBIRD".format(backend_prefix)] = False
+        tc.cache_variables["{}_MYSQL".format(backend_prefix)] = self.options.with_mysql
+        tc.cache_variables["{}_POSTGRESQL".format(backend_prefix)] = self.options.with_postgresql
 
         if Version(self.version) < "4.1.0":
             tc.cache_variables["WITH_BOOST"] = self.options.with_boost
@@ -110,23 +109,18 @@ class SociConan(ConanFile):
             tc.cache_variables["WITH_BOOST"] = "REQUIRED" if self.options.with_boost else False
 
         if Version(self.version) < "4.1.0": # pylint: disable=conan-condition-evals-to-constant
-            tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
             tc.cache_variables["SOCI_CXX11"] = True
+            tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
 
         tc.generate()
 
         deps = CMakeDeps(self)
-
-        if Version(self.version) >= "4.1.0":
-            my_sql_package = "MySQL"
-            postgresql_package = "PostgreSQL"
-        else:
-            my_sql_package = "MYSQL"
-            postgresql_package = "POSTGRESQL"
-
-        deps.set_property("libmysqlclient", "cmake_file_name", my_sql_package)
+        # libmysqlclient: handle different target names in versions 4.0.3 and 4.1.0
+        deps.set_property("libmysqlclient", "cmake_file_name", "mysql")
+        deps.set_property("libmysqlclient", "cmake_additional_variables_prefixes", ["MySQL", "MYSQL"])
         deps.set_property("libmysqlclient", "cmake_target_name", "MySQL::MySQL")
-        deps.set_property("libpq", "cmake_file_name", postgresql_package)
+        deps.set_property("libpq", "cmake_file_name", "postgresql")
+        deps.set_property("libpq", "cmake_additional_variables_prefixes", ["POSTGRESQL", "PostgreSQL"])
         deps.set_property("sqlite3", "cmake_file_name", "SQLite3")
         deps.set_property("sqlite3", "cmake_additional_variables_prefixes", ["SQLITE3"])
         deps.generate()
