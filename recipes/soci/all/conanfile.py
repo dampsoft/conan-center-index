@@ -95,6 +95,7 @@ class SociConan(ConanFile):
 
         backend_prefix = "WITH" if Version(self.version) < "4.1.0" else "SOCI"
 
+        tc.cache_variables["SOCI_LTO"] = False
         tc.cache_variables["{}_SQLITE3".format(backend_prefix)] = self.options.with_sqlite3
         tc.cache_variables["{}_DB2".format(backend_prefix)] = False
         tc.cache_variables["{}_ODBC".format(backend_prefix)] = self.options.with_odbc
