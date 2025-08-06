@@ -3,12 +3,17 @@ import os
 from pathlib import Path
 from conan.api.conan_api import ConanAPI
 from conans.model.recipe_ref import RecipeReference
-from conans.util.files import rmdir, remove
 from conan.errors import ConanException
 from conan.cli.printers import ConanOutput
 import shutil
 import subprocess
 from conan.cli.printers.graph import print_graph_packages
+
+
+try:
+    from conan.tools.files import rmdir, rm as remove
+except ImportError:
+    from conans.util.files import rmdir, remove
 
 def patch_rpath(patchelf_path: str, target_rpath: str, bin_path: Path):
     command = [patchelf_path, "--force-rpath", "--set-rpath", target_rpath, bin_path]
@@ -55,8 +60,15 @@ def archive_hook(pkg: RecipeReference, deploy_folder: Path, conan_api: ConanAPI)
 
     patchelf_path = install_patchelf(out, deploy_folder, conan_api)
 
-    rmdir(deploy_folder / 'include')
-    remove(deploy_folder / 'bin' / 'xxhsum')
+    try:
+        rmdir(conanfile=None, path=deploy_folder)
+    except TypeError:
+        rmdir(deploy_folder / 'include')
+
+    try:
+        remove(conanfile=None, pattern=deploy_folder / 'bin' / 'xxhsum')
+    except TypeError:
+        remove(deploy_folder / 'bin' / 'xxhsum')
 
     shutil.move(deploy_folder / 'lib', deploy_folder / 'mold_lib')
     mkdir(deploy_folder / 'lib')
@@ -70,6 +82,9 @@ def archive_hook(pkg: RecipeReference, deploy_folder: Path, conan_api: ConanAPI)
     for x in (deploy_folder / 'bin').glob('*'):
         patch_rpath(patchelf_path, '$ORIGIN/../lib/ds-mold', x)
 
-    rmdir(deploy_folder / 'patchelf')
+    try:
+        rmdir(conanfile=None, path=deploy_folder / 'patchelf')
+    except TypeError:
+        rmdir(deploy_folder / 'patchelf')
 
     out.success("Done, will generate archive now!")
