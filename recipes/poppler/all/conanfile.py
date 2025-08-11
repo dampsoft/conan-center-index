@@ -94,7 +94,7 @@ class PopplerConan(ConanFile):
         self.requires("poppler-data/0.4.11")
         self.requires("freetype/2.13.3")
         if self.options.get_safe("with_libiconv"):
-            self.requires("libiconv/1.17")
+            self.requires("libiconv/1.18")
         if self.options.fontconfiguration == "fontconfig":
             self.requires("fontconfig/2.15.0")
         if self.options.with_cairo:
@@ -114,13 +114,13 @@ class PopplerConan(ConanFile):
         elif self.options.with_libjpeg == "libjpeg":
             self.requires("libjpeg/9e")
         if self.options.with_png:
-            self.requires("libpng/1.6.48")
+            self.requires("libpng/1.6.50")
         if self.options.with_tiff:
             self.requires("libtiff/4.7.0")
         if self.options.splash:
             self.requires("boost/1.88.0")
         if self.options.with_libcurl:
-            self.requires("libcurl/8.13.0")
+            self.requires("libcurl/8.15.0")
         if self.options.with_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
 

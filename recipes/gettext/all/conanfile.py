@@ -36,7 +36,7 @@ class GetTextConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libiconv/1.17")
+        self.requires("libiconv/1.18")
 
     def package_id(self):
         del self.info.settings.compiler
