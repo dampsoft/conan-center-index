@@ -1,0 +1,36 @@
+From 0027013bcf8e796e2bc786a8742a65e665af0f28 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Tue, 19 Aug 2025 12:13:48 +0200
+Subject: [PATCH] Don't error when no int128 support
+
+* Qt will error when the compiler has support for
+  int128, but the stdlib does not (i.e.
+  QT_COMPILER_SUPPORTS_INT128 is true, but
+  QT_SUPPORTS_INT128 is false).
+---
+ src/corelib/global/qtypes.cpp | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/src/corelib/global/qtypes.cpp b/src/corelib/global/qtypes.cpp
+index bd01498ce2d..9de3960e2fc 100644
+--- a/src/corelib/global/qtypes.cpp
++++ b/src/corelib/global/qtypes.cpp
+@@ -503,13 +503,6 @@ static_assert(sizeof(size_t) == sizeof(qsizetype)); // implied by the definition
+ static_assert((std::is_same<qsizetype, qptrdiff>::value));
+ static_assert(std::is_same_v<std::size_t, size_t>);
+ 
+-#ifdef QT_COMPILER_SUPPORTS_INT128
+-# ifndef QT_SUPPORTS_INT128
+-#  error Qt needs to be compiled in a mode that enables INT128 \
+-    if the compiler supports it in principle.
+-# endif
+-#endif
+-
+ // Check that our own typedefs are not broken.
+ static_assert(sizeof(qint8) == 1, "Internal error, qint8 is misdefined");
+ static_assert(sizeof(qint16)== 2, "Internal error, qint16 is misdefined");
+-- 
+2.50.1
+
+

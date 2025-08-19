@@ -150,6 +150,9 @@ patches:
     - "base_path": "qtwebengine"
       "patch_description": "Workaround for too long .rps file name"
       "patch_file": "patches/c72097e_6.9.1.diff"
+    - "base_path": "qtbase"
+      "patch_description": "Don't fail compilation if compiling in a mode that doesn't support int128 when the compiler has support for it in principle"
+      "patch_file": "patches/0002-Dont-error-when-no-int128-support.patch"
   "6.8.3":
     - "base_path": "qtwebengine"
       "patch_description": "Workaround for too long .rps file name"
