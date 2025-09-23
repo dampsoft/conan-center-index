@@ -24,7 +24,6 @@ class OpenTelemetryCppConan(ConanFile):
         "shared": [True, False],
         "with_abi_v2": [True, False],
         "with_no_deprecated_code": [True, False],
-        "with_deprecated_sdk_factory": [True, False],
         "with_stl": [True, False],
         "with_gsl": [True, False],
         "with_otlp_grpc": [True, False],
@@ -45,7 +44,6 @@ class OpenTelemetryCppConan(ConanFile):
         "shared": False,
         "with_abi_v2": False,
         "with_no_deprecated_code": False,
-        "with_deprecated_sdk_factory": True,
         # Enabling this causes stack overflow in the test_package
         "with_stl": False,
         "with_gsl": False,
@@ -66,55 +64,21 @@ class OpenTelemetryCppConan(ConanFile):
     short_paths = True
 
     @property
-    def _min_cppstd(self):
-        if self.options.with_abseil and Version(self.dependencies["abseil"].ref.version) >= "20230125":
-            return 14
-        return 11
-
-    @property
     def _compilers_minimum_version(self):
-        if self._min_cppstd == 14:
-            return {
-                "gcc": "6",
-                "clang": "5",
-                "apple-clang": "10",
-                "Visual Studio": "16",
-                "msvc": "192",
-            }
-        else:
-            return {
-                "Visual Studio": "16",
-                "msvc": "192",
-            }
+        return {
+            "gcc": "6",
+            "clang": "5",
+            "apple-clang": "10",
+            "Visual Studio": "16",
+            "msvc": "192",
+        }
 
     @property
     def _used_cppstd(self):
-        return self.settings.compiler.get_safe("cppstd") or self._min_cppstd
-
-    @property
-    def _with_stl_value(self):
-        if Version(self.version) >= "1.12":
-            if self.options.with_stl:
-                cppstd = self._used_cppstd
-                if "14" in cppstd:
-                    return "CXX14"
-                elif "17" in cppstd:
-                    return "CXX17"
-                elif "20" in cppstd:
-                    return "CXX20"
-                elif "23" in cppstd:
-                    return "CXX23"
-            else:
-                return "OFF"
-        else:
-            return self.options.with_stl
+        return self.settings.compiler.get_safe("cppstd")
 
     def export_sources(self):
         export_conandata_patches(self)
-
-    @property
-    def _used_cppstd(self):
-        return self.settings.compiler.get_safe("cppstd") or self._min_cppstd
 
     @property
     def _with_stl_value(self):
@@ -142,9 +106,6 @@ class OpenTelemetryCppConan(ConanFile):
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
-        # Doesn't build when `with_no_deprecated_code` is enabled alongside `with_deprecated_sdk_factory`
-        if self.options.with_no_deprecated_code and self.options.with_deprecated_sdk_factory:
-            raise ConanInvalidConfiguration("with_no_deprecated_code and with_deprecated_sdk_factory can't be enabled at the same time")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -154,18 +115,8 @@ class OpenTelemetryCppConan(ConanFile):
         return self.options.with_otlp_grpc or self.options.with_otlp_http or self.options.get_safe("with_otlp_file")
 
     @property
-    def _otlp_http_needs_zlib(self):
-        # Bug before 1.17.X meant that zib was needed even with compression off
-        return (Version(self.version) >= "1.16.0"
-                # Check if new version released with this fix
-                # It was fixed in https://github.com/open-telemetry/opentelemetry-cpp/pull/3120
-                and (Version(self.version) < "1.17.1"
-                     or self.options.with_otlp_http_compression))
-
-    @property
     def _should_require_zlib(self):
         return Version(self.version) >= "1.15" and (
-            (self.options.with_otlp_http and self._otlp_http_needs_zlib) or
             self.options.with_elasticsearch or
             self.options.with_zipkin or
             self.options.get_safe("with_otlp_http_compression", False)
@@ -175,17 +126,8 @@ class OpenTelemetryCppConan(ConanFile):
         if self.options.with_gsl:
             self.requires("ms-gsl/4.0.0")
 
-        if self.options.with_abseil:
-            if self._supports_new_proto_grpc_abseil():
-                self.requires("abseil/20250127.0", transitive_headers=True)
-            else:
-                self.requires("abseil/[>=20230125.3 <=20240116.2]", transitive_headers=True)
-
         if self._needs_proto:
-            if self._supports_new_proto_grpc_abseil():
-                self.requires("protobuf/6.30.1", transitive_headers=True, transitive_libs=True)
-            else:
-                self.requires("protobuf/3.21.12", transitive_headers=True, transitive_libs=True)
+            self.requires("protobuf/6.30.1", transitive_headers=True, transitive_libs=True)
 
         if self.options.with_otlp_grpc:
             self.requires("grpc/1.67.1", transitive_headers=True, transitive_libs=True)
@@ -208,16 +150,8 @@ class OpenTelemetryCppConan(ConanFile):
         if self.options.with_prometheus:
             self.requires("prometheus-cpp/1.1.0")
 
-        if self.options.get_safe("with_jaeger"):
-            self.requires("thrift/0.17.0")
-            self.requires("boost/1.88.0")
-
         if self._should_require_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
-
-    @property
-    def _required_boost_components(self):
-        return ["locale"] if self.options.get_safe("with_jaeger") else []
 
     @property
     def _proto_root(self):
@@ -246,10 +180,7 @@ class OpenTelemetryCppConan(ConanFile):
 
     @property
     def _stl_value(self):
-        if self.options.with_stl:
             return "CXX" + str(self.settings.compiler.cppstd).replace("gnu", "")
-        else:
-            return False
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -259,17 +190,8 @@ class OpenTelemetryCppConan(ConanFile):
         tc.cache_variables["WITH_NO_DEPRECATED_CODE"] = self.options.with_no_deprecated_code
         tc.cache_variables["WITH_STL"] = self._stl_value
         tc.cache_variables["WITH_GSL"] = self.options.with_gsl
-        tc.cache_variables["WITH_ABSEIL"] = self.options.with_abseil
-        if Version(self.version) < "1.10":
-            tc.cache_variables["WITH_OTLP"] = self.options.with_otlp_grpc or self.options.with_otlp_http
-
-        # This option is scheduled to be removed in 1.17: https://github.com/open-telemetry/opentelemetry-cpp/issues/2716
-        if Version(self.version) >= "1.16" and Version(self.version) <= "1.17":
-            tc.cache_variables["WITH_DEPRECATED_SDK_FACTORY"] = self.options.with_deprecated_sdk_factory
-
         if self.options.with_otlp_grpc or self.options.with_otlp_http:
             tc.variables["OTELCPP_PROTO_PATH"] = self._proto_root
-
         tc.cache_variables["WITH_OTLP_GRPC"] = self.options.with_otlp_grpc
         tc.cache_variables["WITH_OTLP_HTTP"] = self.options.with_otlp_http
         tc.cache_variables["WITH_OTLP_HTTP_COMPRESSION"] = self.options.with_otlp_http_compression
@@ -292,8 +214,6 @@ class OpenTelemetryCppConan(ConanFile):
         tc.cache_variables["WITH_ASYNC_EXPORT_PREVIEW"] = self.options.with_async_export_preview
         tc.cache_variables["WITH_METRICS_EXEMPLAR_PREVIEW"] = self.options.with_metrics_exemplar_preview
         tc.cache_variables["OPENTELEMETRY_INSTALL"] = True
-        if not self.settings.compiler.cppstd:
-            tc.variables["CMAKE_CXX_STANDARD"] = self._min_cppstd
         if Version(self.version) >= "1.15":
             tc.cache_variables["WITH_OTLP_HTTP_COMPRESSION"] = self.options.with_otlp_http_compression
             tc.cache_variables["WITH_OTLP_FILE"] = self.options.with_otlp_file
@@ -351,24 +271,10 @@ class OpenTelemetryCppConan(ConanFile):
         rmdir(self, os.path.join(self.source_folder, "api", "include", "opentelemetry", "nostd", "absl"))
 
     def build(self):
-        # W/O this, protobuf isn't able to find the abseil library with SIP enabled
-        if is_apple_os(self):
-            abseil_folder = self.dependencies["abseil"].package_folder
-            protobuf_folder = self.dependencies["protobuf"].package_folder
-            self.run(f"install_name_tool -add_rpath {abseil_folder}/lib {protobuf_folder}/bin/protoc")
-
-        try:
-            self._patch_sources()
-            cmake = CMake(self)
-            cmake.configure()
-            cmake.build()
-        except Exception as e:
-            raise e
-        finally:
-            if is_apple_os(self):
-                abseil_folder = self.dependencies["abseil"].package_folder
-                protobuf_folder = self.dependencies["protobuf"].package_folder
-                self.run(f"install_name_tool -delete_rpath {abseil_folder}/lib {protobuf_folder}/bin/protoc")
+        self._patch_sources()
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
 
 
     def package(self):
@@ -490,10 +396,6 @@ class OpenTelemetryCppConan(ConanFile):
         if self.options.with_gsl:
             self.cpp_info.components["opentelemetry_common"].defines.append("HAVE_GSL")
             self.cpp_info.components["opentelemetry_common"].requires.append("ms-gsl::_ms-gsl")
-
-        if self.options.with_abseil:
-            self.cpp_info.components["opentelemetry_common"].defines.append("HAVE_ABSEIL")
-            self.cpp_info.components["opentelemetry_common"].requires.append("abseil::abseil")
 
         if self.options.with_otlp_http or self.options.with_otlp_grpc or self.options.get_safe("with_otlp_file", False):
             self.cpp_info.components["opentelemetry_proto"].requires.append("protobuf::protobuf")
