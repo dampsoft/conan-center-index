@@ -157,8 +157,12 @@ class OpenTelemetryCppConan(ConanFile):
     def _proto_root(self):
         return self.dependencies.build["opentelemetry-proto"].conf_info.get("user.opentelemetry-proto:proto_root").replace("\\", "/")
 
+    @property
+    def _min_cppstd(self):
+        return 14
+
     def validate(self):
-        check_min_cppstd(self, 14)
+        check_min_cppstd(self, self._min_cppstd)
 
         if self.settings.os != "Linux" and self.options.shared:
             raise ConanInvalidConfiguration(f"{self.ref} supports building shared libraries only on Linux")
