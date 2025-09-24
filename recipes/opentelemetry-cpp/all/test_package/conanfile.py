@@ -1,7 +1,6 @@
 from conan import ConanFile
 from conan.tools.build import can_run
-from conan.tools.cmake import cmake_layout, CMake, CMakeToolchain, CMakeDeps
-from conan.tools.env import VirtualRunEnv
+from conan.tools.cmake import cmake_layout, CMake
 import os
 
 
@@ -15,17 +14,6 @@ class TestPackageConan(ConanFile):
 
     def layout(self):
         cmake_layout(self)
-
-    def generate(self):
-        VirtualRunEnv(self).generate(scope="build")
-        VirtualRunEnv(self).generate(scope="run")
-        tc = CMakeToolchain(self)
-        # Since opentelemetry-cpp may need a higher cppstd if built with abseil, we have ot set the CXX standard here.
-        if not self.settings.compiler.cppstd:
-            tc.variables["CMAKE_CXX_STANDARD"] = self.dependencies["opentelemetry-cpp"].conf_info.get("user.opentelemetry-cpp:min_cpp")
-        tc.generate()
-        deps = CMakeDeps(self)
-        deps.generate()
 
     def build(self):
         cmake = CMake(self)
