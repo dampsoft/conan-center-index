@@ -5,6 +5,7 @@ from conan.tools.apple import is_apple_os
 from conan.tools.cmake import CMake, CMakeDeps, cmake_layout, CMakeToolchain
 from conan.tools.files import copy, get, rmdir
 from conan.tools.microsoft import is_msvc
+from conan.tools.scm import Version
 
 class Libxml2Conan(ConanFile):
     name = "libxml2"
@@ -36,6 +37,12 @@ class Libxml2Conan(ConanFile):
     languages = "C"
     implements = ["auto_shared_fpic"]
 
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
+        if Version(self.version) >= "2.15.0":
+            del self.options.lzma
+
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
@@ -45,7 +52,7 @@ class Libxml2Conan(ConanFile):
     def requirements(self):
         if self.options.iconv:
             self.requires("libiconv/1.17")
-        if self.options.lzma:
+        if self.options.get_safe("lzma"):
             self.requires("xz_utils/[>=5.4.5 <6]")
         if self.options.icu:
             self.requires("icu/73.2")
@@ -65,7 +72,8 @@ class Libxml2Conan(ConanFile):
         tc.cache_variables["LIBXML2_WITH_ICU"] = self.options.icu
         tc.cache_variables["LIBXML2_WITH_ISO8859X"] = True
         tc.cache_variables["LIBXML2_WITH_LEGACY"] = False
-        tc.cache_variables["LIBXML2_WITH_LZMA"] = self.options.lzma
+        if "lzma" in self.options:  # removed since 2.15.0
+            tc.cache_variables["LIBXML2_WITH_LZMA"] = self.options.lzma
         tc.cache_variables["LIBXML2_WITH_MODULES"] = True
         tc.cache_variables["LIBXML2_WITH_OUTPUT"] = True
         tc.cache_variables["LIBXML2_WITH_PATTERN"] = True
@@ -120,13 +128,13 @@ class Libxml2Conan(ConanFile):
             static_postfix = "s" if not self.options.shared else ""
             debug_postfix = "d" if self.settings.build_type == "Debug" else ""
             postfix = f"{static_postfix}{debug_postfix}"
-            
+
         self.cpp_info.libs = [f"{prefix}xml2{postfix}"]
 
         # technically there should be a single include directory, but this
         # keeps compatibility with the .pc files generated upstream (and relied on by ffmpeg)
         self.cpp_info.includedirs.append(os.path.join("include", "libxml2"))
-        
+
         if not self.options.shared:
             self.cpp_info.defines.append("LIBXML_STATIC")
 
@@ -148,7 +156,7 @@ class Libxml2Conan(ConanFile):
             self.cpp_info.requires.extend(["icu::icu-uc", "icu::icu-data", "icu::icu-i18n"])
         if self.options.iconv:
             self.cpp_info.requires.append("libiconv::libiconv")
-        if self.options.lzma:
+        if self.options.get_safe("lzma"):
             self.cpp_info.requires.append("xz_utils::xz_utils")
         if self.options.zlib:
             self.cpp_info.requires.append("zlib::zlib")
