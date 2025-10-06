@@ -128,6 +128,7 @@ class OpenTelemetryCppConan(ConanFile):
 
         if self._needs_proto:
             self.requires("protobuf/6.30.1", transitive_headers=True, transitive_libs=True)
+            self.requires("abseil/[>=20230802.1 <=20250127.0]", transitive_headers=True)
 
         if self.options.with_otlp_grpc:
             self.requires("grpc/1.67.1", transitive_headers=True, transitive_libs=True)
@@ -401,6 +402,10 @@ class OpenTelemetryCppConan(ConanFile):
             self.cpp_info.components["opentelemetry_common"].defines.append("HAVE_GSL")
             self.cpp_info.components["opentelemetry_common"].requires.append("ms-gsl::_ms-gsl")
 
+        if self._needs_proto:
+            self.cpp_info.components["opentelemetry_common"].defines.append("HAVE_ABSEIL")
+            self.cpp_info.components["opentelemetry_common"].requires.append("abseil::abseil")
+
         if self.options.with_otlp_http or self.options.with_otlp_grpc or self.options.get_safe("with_otlp_file", False):
             self.cpp_info.components["opentelemetry_proto"].requires.append("protobuf::protobuf")
             self.cpp_info.components["opentelemetry_otlp_recordable"].requires.extend([
@@ -477,6 +482,9 @@ class OpenTelemetryCppConan(ConanFile):
                 "opentelemetry_proto",
                 "opentelemetry_common"
             ])
+
+            if self._needs_proto:
+                self.cpp_info.components["opentelemetry_exporter_otlp_file_client"].requires.append("abseil::absl_strings")
 
             self.cpp_info.components["opentelemetry_exporter_otlp_file"].requires.extend([
                 "opentelemetry_otlp_recordable",
