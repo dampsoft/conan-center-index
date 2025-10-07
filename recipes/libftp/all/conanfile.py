@@ -42,7 +42,7 @@ class LibFTPConan(ConanFile):
         version = Version(self.version)
 
         if version >= "1.5.0":
-            self.requires("boost/1.88.0", transitive_headers=True)
+            self.requires("boost/1.89.0", transitive_headers=True)
         else:
             self.requires("boost/1.86.0", transitive_headers=True)
 
