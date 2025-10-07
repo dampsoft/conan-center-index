@@ -16,7 +16,7 @@ index c89b82b..8a8e184 100644
      #include <type_traits>
  #else
      #include <boost/aligned_storage.hpp>
-+    #include <boost/type_trais/is_same.hpp>
++    #include <boost/type_traits/is_same.hpp>
  #endif
  
  
