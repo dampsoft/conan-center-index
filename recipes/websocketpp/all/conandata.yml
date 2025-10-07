@@ -15,6 +15,9 @@ patches:
       patch_type: "backport"
       patch_description: "Boost 1.87.0 support: Fix ASIO deprecations, backported for 0.8.2"
       patch_source: "https://github.com/zaphoyd/websocketpp/pull/1164.patch"
+    - patch_file: "patches/websocket_boost_support_1_89_0.patch"
+      patch_type: "conan"
+      patch_description: "Boost 1.89.0 support: Add missing type trait include"
   "0.8.1":
     - patch_file: "patches/websocket_boost_support_1_7_x.patch"
       patch_type: "conan"
