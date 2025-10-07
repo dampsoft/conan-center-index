@@ -1,0 +1,25 @@
+From 34a46822ced3fbb07ca56df4f96f4097212c6ed0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Tue, 7 Oct 2025 16:48:23 +0200
+Subject: [PATCH] Ensure compat with Boost 1.89.0+
+
+---
+ websocketpp/common/type_traits.hpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/websocketpp/common/type_traits.hpp b/websocketpp/common/type_traits.hpp
+index c89b82b..8a8e184 100644
+--- a/websocketpp/common/type_traits.hpp
++++ b/websocketpp/common/type_traits.hpp
+@@ -44,6 +44,7 @@
+     #include <type_traits>
+ #else
+     #include <boost/aligned_storage.hpp>
++    #include <boost/type_trais/is_same.hpp>
+ #endif
+ 
+ 
+-- 
+2.51.0
+
