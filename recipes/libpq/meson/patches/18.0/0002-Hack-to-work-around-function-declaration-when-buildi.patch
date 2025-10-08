@@ -1,0 +1,87 @@
+From 55cce0624bb7dccf3574d47dd184130a77439970 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Wed, 25 Jun 2025 13:48:26 +0200
+Subject: [PATCH] Hack to work around function declaration when building
+
+Conflicts:
+	meson.build
+---
+ meson.build       | 29 ++++++++++++++++++++++++++---
+ meson_options.txt |  3 +++
+ 2 files changed, 29 insertions(+), 3 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index 9beb6c40b6b..f235c60921a 100644
+--- a/meson.build
++++ b/meson.build
+@@ -2655,11 +2655,29 @@ decl_checks = [
+ # checking for library symbols wouldn't handle deployment target
+ # restrictions on macOS
+ decl_checks += [
+-  ['preadv', 'sys/uio.h'],
+-  ['pwritev', 'sys/uio.h'],
+   ['strchrnul', 'string.h'],
+   ['memset_s', 'string.h', '#define __STDC_WANT_LIB_EXT1__ 1'],
+ ]
++ macos_min_version_option = get_option('macos_min_version')
++
++if macos_min_version_option != ''
++  macos_min_version_option_major = macos_min_version_option.split('.')[0].to_int()
++  macos_min_version_option_minor = macos_min_version_option.split('.')[1].to_int()
++else
++  macos_min_version_option_major = 0
++  macos_min_version_option_minor = 0
++endif
++if macos_min_version_option != '' and macos_min_version_option_major <= 10
++  decl_checks += [
++    ['preadv', 'false'],
++    ['pwritev', 'false'],
++  ]
++else
++  decl_checks += [
++    ['preadv', 'sys/uio.h'],
++    ['pwritev', 'sys/uio.h'],
++  ]
++endif
+ 
+ # Check presence of some optional LLVM functions.
+ if llvm.found()
+@@ -2676,7 +2694,10 @@ foreach c : decl_checks
+   args = c.get(3, {})
+   varname = 'HAVE_DECL_' + func.underscorify().to_upper()
+ 
+-  found = cc.compiles('''
++  if header == 'false'
++    found = flase
++  else
++    found = cc.compiles('''
+ @0@
+ #include <@1@>
+ 
+@@ -2695,6 +2716,8 @@ return 0;
+     args: test_c_args + cflags_warn,
+     include_directories: postgres_inc,
+     kwargs: args)
++  endif
++
+   cdata.set10(varname, found, description:
+ '''Define to 1 if you have the declaration of `@0@', and to 0 if you
+    don't.'''.format(func))
+diff --git a/meson_options.txt b/meson_options.txt
+index 06bf5627d3c..abeab1a4a81 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -67,6 +67,9 @@ option('extra_version', type: 'string', value: '',
+ option('darwin_sysroot', type: 'string', value: '',
+   description: 'Select a non-default sysroot path')
+ 
++option('macos_min_version', type: 'string', value: '',
++  description: 'Set the minimum macOS version for the build')
++
+ option('rpath', type: 'boolean', value: true,
+   description: 'Embed shared library search path in executables')
+ 
+-- 
+2.51.0
+
