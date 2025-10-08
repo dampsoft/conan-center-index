@@ -1,4 +1,7 @@
 sources:
+  "18.0":
+    url: "https://ftp.postgresql.org/pub/source/v18.0/postgresql-18.0.tar.bz2"
+    sha256: "0d5b903b1e5fe361bca7aa9507519933773eb34266b1357c4e7780fdee6d6078"
   "17.5":
     url: "https://ftp.postgresql.org/pub/source/v17.5/postgresql-17.5.tar.bz2"
     sha256: "fcb7ab38e23b264d1902cb25e6adafb4525a6ebcbd015434aeef9eda80f528d8"
