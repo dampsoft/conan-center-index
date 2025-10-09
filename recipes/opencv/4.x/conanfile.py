@@ -1057,7 +1057,7 @@ class OpenCVConan(ConanFile):
         if self.options.get_safe("with_gtk"):
             self.requires("gtk/system")
         if self.options.get_safe("with_qt"):
-            self.requires("qt/6.9.1")
+            self.requires("qt/6.10.0")
         if self.options.get_safe("with_wayland"):
             self.requires("xkbcommon/1.6.0")
             self.requires("wayland/1.22.0")
