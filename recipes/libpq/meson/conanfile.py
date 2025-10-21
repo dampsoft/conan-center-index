@@ -263,7 +263,7 @@ class LibpqConan(ConanFile):
                 path.unlink()
             elif path.stem == "psql" and not self.options.build_psql:
                 path.unlink()
-            elif not self.options.build_tools:
+            elif not self.options.build_tools and path.stem not in ("postgres", "psql"):
                 path.unlink()
 
     def package(self):
