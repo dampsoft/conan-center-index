@@ -1,8 +1,14 @@
 sources:
+  "25.11.0":
+    url: "https://poppler.freedesktop.org/poppler-25.11.0.tar.xz"
+    sha256: "63f155142b77349e2bccaef148e754e7506ab1641e713b83af4f54a8f8b15369"
   "24.04.0":
     url: "https://poppler.freedesktop.org/poppler-24.04.0.tar.xz"
     sha256: "1e804ec565acf7126eb2e9bb3b56422ab2039f7e05863a5dfabdd1ffd1bb77a7"
 patches:
+  "25.11.0":
+    - patch_file: "patches/25.11.0-001-fix-cmake-usage.patch"
+    - patch_file: "patches/25.11.0-002-msvc-basetsd-int32.patch"
   "24.04.0":
     - patch_file: "patches/24/fix-qt-targets.patch"
       patch_type: "conan"

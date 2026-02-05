@@ -58,6 +58,9 @@ class LibpqConan(ConanFile):
         "with_gssapi": False,
         "with_ldap": False,
         "with_openssl": True,
+        # False to keep in line with old versions,
+        # but this is True by default in upstream
+        "with_icu": False,
         "with_zlib": True,
         "with_zstd": True,
         # module dependencies

@@ -599,6 +599,12 @@ class BoostConan(ConanFile):
             if Version(self.version) == "1.86.0" and is_msvc(self):
                 setattr(self.options, "without_process", True)
 
+        if Version(self.version) == "1.90.0":
+            # FIXME: boost.coroutine doesn't support Windows ARM64 due to missing context assembly
+            # See https://github.com/boostorg/context/issues/296
+            if self._is_windows_platform and "arm" in str(self.settings.arch):
+                self.options.without_coroutine = True
+
     @property
     def _configure_options(self):
         return self._dependencies["configure_options"]
@@ -1183,7 +1189,7 @@ class BoostConan(ConanFile):
 
     @property
     def _b2_address_model(self):
-        if self.settings.arch in ("x86_64", "ppc64", "ppc64le", "mips64", "armv8", "armv8.3", "sparcv9", "s390x", "riscv64"):
+        if self.settings.arch in ("x86_64", "ppc64", "ppc64le", "mips64", "armv8", "armv8.3", "sparcv9", "s390x", "riscv64", "wasm64"):
             return "64"
 
         return "32"
@@ -1643,7 +1649,7 @@ class BoostConan(ConanFile):
             return "clang-win" if self.settings.compiler.get_safe("toolset") == "ClangCL" else "msvc"
         if self.settings.os == "Windows" and self.settings.compiler == "clang":
             return "clang-win"
-        if self.settings.os == "Emscripten" and self.settings.compiler == "clang":
+        if self.settings.os == "Emscripten" and self.settings.compiler in ("clang", "emcc"):
             return "emscripten"
         if self.settings.compiler == "gcc" and is_apple_os(self):
             return "darwin"

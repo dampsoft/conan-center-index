@@ -7,6 +7,7 @@ from conan.tools.files import copy, get, rmdir
 from conan.tools.microsoft import is_msvc
 from conan.tools.scm import Version
 
+
 class Libxml2Conan(ConanFile):
     name = "libxml2"
     package_type = "library"

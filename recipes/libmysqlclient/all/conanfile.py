@@ -8,9 +8,10 @@ from conan.tools.files import rename, get, apply_conandata_patches, replace_in_f
 from conan.tools.gnu import PkgConfigDeps
 from conan.tools.microsoft import is_msvc, is_msvc_static_runtime
 from conan.tools.scm import Version
+
 import os
 
-required_conan_version = ">=1.55.0"
+required_conan_version = ">=2.1"
 
 
 class LibMysqlClientCConan(ConanFile):
@@ -34,19 +35,6 @@ class LibMysqlClientCConan(ConanFile):
     package_type = "library"
     short_paths = True
 
-    @property
-    def _min_cppstd(self):
-        return "17" if Version(self.version) >= "8.0.27" else "11"
-
-    @property
-    def _compilers_minimum_version(self):
-        return {
-            "Visual Studio": "16",
-            "msvc": "192",
-            "gcc": "7" if Version(self.version) >= "8.0.27" else "5.3",
-            "clang": "6",
-        }
-
     def export_sources(self):
         export_conandata_patches(self)
 
@@ -62,44 +50,24 @@ class LibMysqlClientCConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        if Version(self.version) < "8.0.30":
-            self.requires("openssl/1.1.1w")
-        else:
-            self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <4]")
         self.requires("zlib/[>=1.2.11 <2]")
-        self.requires("zstd/1.5.7")
-        self.requires("lz4/1.10.0")
+        self.requires("zstd/[~1.5]")
+        self.requires("lz4/1.9.4")
         if self.settings.os == "FreeBSD":
             self.requires("libunwind/1.7.2")
 
     def validate_build(self):
-        if self.settings.compiler.get_safe("cppstd"):
-            check_min_cppstd(self, self._min_cppstd)
+        check_min_cppstd(self, 17)
 
-        if hasattr(self, "settings_build") and cross_building(self, skip_x64_x86=True):
+        if cross_building(self, skip_x64_x86=True):
             raise ConanInvalidConfiguration("Cross compilation not yet supported by the recipe. Contributions are welcomed.")
-
-    def validate(self):
-        def loose_lt_semver(v1, v2):
-            lv1 = [int(v) for v in v1.split(".")]
-            lv2 = [int(v) for v in v2.split(".")]
-            min_length = min(len(lv1), len(lv2))
-            return lv1[:min_length] < lv2[:min_length]
-
-        minimum_version = self._compilers_minimum_version.get(str(self.settings.compiler), False)
-        if minimum_version and loose_lt_semver(str(self.settings.compiler.version), minimum_version):
-            raise ConanInvalidConfiguration(f"{self.ref} requires {self.settings.compiler} {minimum_version} or newer")
-
-        # mysql < 8.0.29 uses `requires` in source code. It is the reserved keyword in C++20.
-        # https://github.com/mysql/mysql-server/blob/mysql-8.0.0/include/mysql/components/services/dynamic_loader.h#L270
-        if self.settings.compiler.get_safe("cppstd") == "20" and Version(self.version) < "8.0.29":
-            raise ConanInvalidConfiguration(f"{self.ref} doesn't support C++20")
 
     def build_requirements(self):
         if is_apple_os(self):
-            self.tool_requires("cmake/[>=3.18 <4]")
+            self.tool_requires("cmake/[>=3.18]")
         if self.settings.os == "FreeBSD" and not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/2.2.0")
+            self.tool_requires("pkgconf/[>=2.0.3 <3]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -281,7 +249,3 @@ class LibMysqlClientCConan(ConanFile):
         if self.settings.os == "Windows":
             self.cpp_info.system_libs.extend(["dnsapi", "secur32"])
 
-        # TODO: There is no official FindMySQL.cmake, but it's a common Find files in many projects
-        #       do we want to support it in CMakeDeps?
-        self.cpp_info.names["cmake_find_package"] = "MySQL"
-        self.cpp_info.names["cmake_find_package_multi"] = "MySQL"

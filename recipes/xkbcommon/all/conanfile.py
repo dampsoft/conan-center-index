@@ -9,7 +9,7 @@ from conan.tools.meson import Meson, MesonToolchain
 from conan.tools.scm import Version
 from conan.errors import ConanInvalidConfiguration
 
-required_conan_version = ">=2.0.5"
+required_conan_version = ">=2.18"
 
 
 class XkbcommonConan(ConanFile):
@@ -57,23 +57,24 @@ class XkbcommonConan(ConanFile):
         self.requires("xkeyboard-config/system")
         if self.options.get_safe("with_x11"):
             self.requires("xorg/system")
-        if self.options.get_safe("xkbregistry"):
+        if self.options.xkbregistry:
             self.requires("libxml2/[>=2.12.5 <3]")
         if self.options.get_safe("with_wayland"):
-            self.requires("wayland/1.22.0")
+            self.requires("wayland/[^1.22]")
 
     def validate(self):
         if self.settings.os not in ["Linux", "FreeBSD", "Android"]:
             raise ConanInvalidConfiguration(f"{self.ref} is only compatible with Linux, FreeBSD and Android")
 
     def build_requirements(self):
-        self.tool_requires("meson/1.3.2")
-        self.tool_requires("bison/3.8.2")
+        self.tool_requires("meson/[>=1.3.2 <2]")
+        self.tool_requires("bison/[>=3.8.2 <4]")
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/2.1.0")
+            self.tool_requires("pkgconf/[>=2.1 <3]")
         if self.options.get_safe("with_wayland"):
+            # INFO: wayland is required due to wayland-scanner build tool
             self.tool_requires("wayland/<host_version>")
-            self.tool_requires("wayland-protocols/1.33")
+            self.tool_requires("wayland-protocols/[^1.33]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -88,7 +89,7 @@ class XkbcommonConan(ConanFile):
         tc.c = os.environ["CC"]
         tc.cpp = os.environ["CXX"]
         if self._has_xkbregistry_option:
-            tc.project_options["enable-xkbregistry"] = self.options.xkbregistry
+            tc.project_options["enable-xkbregistry"] = self.options.get_safe("xkbregistry", False)
         tc.project_options["build.pkg_config_path"] = self.generators_folder
         if self.settings.os == "Android":
             tc.project_options["enable-tools"] = False
@@ -97,19 +98,15 @@ class XkbcommonConan(ConanFile):
         pkg_config_deps = PkgConfigDeps(self)
         if self.options.get_safe("with_wayland"):
             pkg_config_deps.build_context_activated = ["wayland", "wayland-protocols"]
-            pkg_config_deps.build_context_suffix = {"wayland": "_BUILD"}
+            pkg_config_deps.build_context_folder = "_build"
         pkg_config_deps.generate()
 
     def _patch_sources(self):
         if self.options.get_safe("with_wayland"):
-            # Patch the build system to use the pkg-config files generated for the build context.
+            # INFO: Patch the build system to use the pkg-config files generated for the build context.
             meson_build_file = os.path.join(self.source_folder, "meson.build")
-            replace_in_file(
-                self,
-                meson_build_file,
-                "wayland_scanner_dep = dependency('wayland-scanner', required: false, native: true)",
-                "wayland_scanner_dep = dependency('wayland-scanner_BUILD', required: false, native: true)",
-            )
+            for dep in ["wayland-scanner", "wayland-protocols"]:
+                replace_in_file(self, meson_build_file, f"dependency('{dep}',", f"dependency('_build/{dep}',")
 
     def build(self):
         self._patch_sources()
@@ -144,6 +141,4 @@ class XkbcommonConan(ConanFile):
             self.cpp_info.components["xkbcli-interactive-wayland"].includedirs = []
             self.cpp_info.components["xkbcli-interactive-wayland"].requires = ["wayland::wayland-client"]
 
-        # unofficial, but required to avoid side effects (libxkbcommon component
-        # "steals" the default global pkg_config name)
-        self.cpp_info.set_property("pkg_config_name", "xkbcommon_all_do_not_use")
+        self.cpp_info.set_property("pkg_config_name", "none")
