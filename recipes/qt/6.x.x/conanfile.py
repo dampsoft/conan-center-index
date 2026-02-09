@@ -380,7 +380,7 @@ class QtConan(ConanFile):
         if self.options.get_safe("with_fontconfig", False):
             self.requires("fontconfig/2.15.0")
         if self.options.get_safe("with_icu", False):
-            self.requires("icu/77.1")
+            self.requires("icu/78.2")
         if self.options.get_safe("with_harfbuzz", False) and not self.options.multiconfiguration:
             self.requires("harfbuzz/[>=8.3.0]")
         if self.options.get_safe("with_libjpeg", False) and not self.options.multiconfiguration:

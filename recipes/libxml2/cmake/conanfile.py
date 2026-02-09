@@ -56,7 +56,7 @@ class Libxml2Conan(ConanFile):
         if self.options.get_safe("lzma"):
             self.requires("xz_utils/[>=5.4.5 <6]")
         if self.options.icu:
-            self.requires("icu/77.1")
+            self.requires("icu/78.2")
         if self.options.zlib:
             self.requires("zlib/[>=1.3.1 <2]")
 

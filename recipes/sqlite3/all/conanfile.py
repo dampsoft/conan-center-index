@@ -99,7 +99,7 @@ class Sqlite3Conan(ConanFile):
 
     def requirements(self):
         if self.options.enable_icu:
-            self.requires("icu/77.1")
+            self.requires("icu/78.2")
 
     def validate(self):
         if self.options.build_executable:

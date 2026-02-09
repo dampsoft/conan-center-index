@@ -74,7 +74,7 @@ class XercesCConan(ConanFile):
 
     def requirements(self):
         if "icu" in (self.options.transcoder, self.options.message_loader):
-            self.requires("icu/77.1")
+            self.requires("icu/78.2")
         if self.options.get_safe("network_accessor") == "curl":
             self.requires("libcurl/[>=7.78.0 <9]")
 
@@ -123,7 +123,7 @@ class XercesCConan(ConanFile):
 
         # Prevent linking against unused found library
         tc.cache_variables["NSL_LIBRARY"] = "NSL_LIBRARY-NOTFOUND"
-        
+
         # https://xerces.apache.org/xerces-c/build-3.html
         tc.variables["network"] =  self.options.network
         if self.options.network:

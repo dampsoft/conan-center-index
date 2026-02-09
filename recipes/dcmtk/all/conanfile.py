@@ -97,7 +97,7 @@ class DCMTKConan(ConanFile):
         if self.options.charset_conversion == "libiconv":
             self.requires("libiconv/1.18")
         elif self.options.charset_conversion == "icu":
-            self.requires("icu/77.1")
+            self.requires("icu/78.2")
         if self.options.with_libxml2:
             self.requires("libxml2/[>=2.12.5 <3]")
         if self.options.with_zlib:
@@ -196,7 +196,7 @@ class DCMTKConan(ConanFile):
                 arith_h = "arith_h_Macos_x86_64.h"
                 copy(self, arith_h, self.source_folder, dst_dir)
                 rename(self, os.path.join(dst_dir, arith_h), os.path.join(dst_dir, "arith.h"))
-           
+
         tc.generate()
 
         deps = CMakeDeps(self)
