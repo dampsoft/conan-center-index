@@ -76,6 +76,8 @@ class QtConan(ConanFile):
         "sysroot": [None, "ANY"],
         "multiconfiguration": [True, False],
         "disabled_features": [None, "ANY"],
+
+        "wants_int128": [True, False, None]
     }
     options.update({module: [True, False] for module in _submodules})
     options.update({f"{status}_modules": [True, False] for status in _module_statuses})
@@ -118,6 +120,8 @@ class QtConan(ConanFile):
         "sysroot": None,
         "multiconfiguration": False,
         "disabled_features": "",
+
+        "wants_int128": None
     }
     # essential_modules, addon_modules, deprecated_modules, preview_modules:
     #    these are only provided for convenience, set to False by default
@@ -133,6 +137,7 @@ class QtConan(ConanFile):
             return self._submodules_tree
         config = configparser.ConfigParser()
         # the reference https://code.qt.io/cgit/qt/qt5.git/tree/.gitmodules?h={self.version}
+        # alternative: https://raw.githubusercontent.com/qt/qt5/refs/tags/v{self.version}/.gitmodules
         config.read(os.path.join(self.recipe_folder, f"qtmodules{self.version}.conf"))
         self._submodules_tree = {}
         assert config.sections(), f"no qtmodules.conf file for version {self.version}"
@@ -154,6 +159,16 @@ class QtConan(ConanFile):
                     self._submodules_tree[modulename]["depends"] = [str(i) for i in config.get(section, "depends").split()]
 
         return self._submodules_tree
+
+    @property
+    def _wants_int128(self):
+        if self.settings.get_safe("wants_int128", None) is not None:
+            return self.options.wants_int128
+
+        if self.settings.compiler in ["gcc", "clang"] and str(self.settings.compiler.cppstd).startswith("gnu"):
+            return True
+
+        return False
 
     def export_sources(self):
         export_conandata_patches(self)
@@ -668,6 +683,11 @@ class QtConan(ConanFile):
 
         with_egl = self.options.get_safe("with_egl", False)
         tc.variables["CMAKE_DISABLE_FIND_PACKAGE_EGL"] = not with_egl
+
+        # Since Version 6.10.2, Qt respects explicitly disabling __int128 support, even if the compiler supports it in principle
+        # This is needed to build with e.g. gcc, but against a cppstd that does not include GNU extensions or other support for __int128
+        if Version(self.version) >= "6.10.2" and not self._wants_int128:
+                tc.preprocessor_definitions["QT_NO_INT128"] = True
 
         tc.generate()
 
