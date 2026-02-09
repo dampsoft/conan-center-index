@@ -152,7 +152,7 @@ class OpenTelemetryCppConan(ConanFile):
             self.requires("nlohmann_json/3.12.0")
 
         if self._with_http_client_curl:
-            self.requires("libcurl/8.16.0")
+            self.requires("libcurl/[>=7.78.0 <9]")
             if self._should_require_zlib:
                 self.requires("zlib/[>=1.2.11 <2]")
 
@@ -180,7 +180,7 @@ class OpenTelemetryCppConan(ConanFile):
 
     def build_requirements(self):
         if self._needs_proto:
-            self.tool_requires("opentelemetry-proto/1.8.0")
+            self.tool_requires("opentelemetry-proto/1.9.0")
             self.tool_requires("protobuf/<host_version>")
 
         if self.options.with_otlp_grpc:
