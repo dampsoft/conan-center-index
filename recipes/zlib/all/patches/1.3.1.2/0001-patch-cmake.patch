@@ -1,0 +1,203 @@
+From b962fe1632d896056a66c814fc7a5df9f7db2892 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Mon, 9 Feb 2026 16:30:13 +0100
+Subject: [PATCH] patch cmake
+
+---
+ CMakeLists.txt                              | 38 +++++++++++++--------
+ contrib/minizip/CMakeLists.txt              |  2 +-
+ test/CMakeLists.txt                         |  8 ++---
+ test/add_subdirectory_exclude_test.cmake.in |  2 +-
+ test/add_subdirectory_test.cmake.in         |  2 +-
+ test/find_package_test.cmake.in             |  2 +-
+ 6 files changed, 31 insertions(+), 23 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index aa73591..069d5cb 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -28,6 +28,13 @@ option(ZLIB_PREFIX "prefix for all types and library functions, see zconf.h.in"
+        OFF)
+ mark_as_advanced(ZLIB_PREFIX)
+ 
++# Conan-specific (we only want static or shared, never both)
++if(ZLIB_BUILD_SHARED AND ZLIB_BUILD_STATIC)
++  message(FATAL_ERROR "ZLIB_BUILD_SHARED and ZLIB_BUILD_STATIC cannot both be ON")
++elseif(NOT ZLIB_BUILD_SHARED AND NOT ZLIB_BUILD_STATIC)
++  message(FATAL_ERROR "ZLIB_BUILD_SHARED and ZLIB_BUILD_STATIC cannot both be OFF")
++endif()
++
+ if(WIN32)
+     option(ZLIB_INSTALL_COMPAT_DLL "Install a copy as zlib1.dll" ON)
+ endif(WIN32)
+@@ -154,11 +161,6 @@ set(ZLIB_SRCS
+     uncompr.c
+     zutil.c)
+ 
+-if(WIN32)
+-    set(zlib_static_suffix "s")
+-    set(CMAKE_DEBUG_POSTFIX "d")
+-endif(WIN32)
+-
+ if(ZLIB_BUILD_SHARED)
+     add_library(
+         zlib SHARED ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS}
+@@ -204,16 +206,16 @@ if(ZLIB_BUILD_SHARED)
+ endif(ZLIB_BUILD_SHARED)
+ 
+ if(ZLIB_BUILD_STATIC)
+-    add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS}
++    add_library(zlib STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS}
+                                   ${ZLIB_PRIVATE_HDRS})
+-    add_library(ZLIB::ZLIBSTATIC ALIAS zlibstatic)
++    add_library(ZLIB::ZLIB ALIAS zlib)
+     target_include_directories(
+-        zlibstatic
++        zlib
+         PUBLIC $<BUILD_INTERFACE:${zlib_BINARY_DIR}>
+                $<BUILD_INTERFACE:${zlib_SOURCE_DIR}>
+                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+     target_compile_definitions(
+-        zlibstatic
++        zlib
+         PRIVATE ZLIB_BUILD
+                 $<$<BOOL:NOT:${HAVE_FSEEKO}>:NO_FSEEKO>
+                 $<$<BOOL:${HAVE___ATTR__VIS_HIDDEN}>:HAVE_HIDDEN>
+@@ -221,10 +223,16 @@ if(ZLIB_BUILD_STATIC)
+                 $<$<BOOL:${MSVC}>:_CRT_NONSTDC_NO_DEPRECATE>
+         PUBLIC $<$<BOOL:${HAVE_OFF64_T}>:_LARGEFILE64_SOURCE=1>)
+     set_target_properties(
+-        zlibstatic PROPERTIES EXPORT_NAME ZLIBSTATIC OUTPUT_NAME
+-                                                     z${zlib_static_suffix})
++        zlib PROPERTIES EXPORT_NAME ZLIB OUTPUT_NAME
++                                                     z)
+ endif(ZLIB_BUILD_STATIC)
+ 
++if(WIN32 AND NOT MINGW)
++  if(ZLIB_BUILD_SHARED)
++    set_target_properties(zlib PROPERTIES ARCHIVE_OUTPUT_NAME zdll)
++  endif()
++endif()
++
+ if(ZLIB_INSTALL)
+     if(ZLIB_BUILD_SHARED)
+         install(
+@@ -259,21 +267,21 @@ if(ZLIB_INSTALL)
+ 
+     if(ZLIB_BUILD_STATIC)
+         install(
+-            TARGETS zlibstatic
++            TARGETS zlib
+             COMPONENT Development
+-            EXPORT zlibStaticExport
++            EXPORT zlibExport
+             RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+             LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+         install(
+-            EXPORT zlibStaticExport
++            EXPORT zlibExport
+             FILE ZLIB-static.cmake
+             NAMESPACE ZLIB::
+             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/zlib)
+ 
+         if(ZLIB_INSTALL_COMPAT_DLL AND MINGW)
+             install(
+-                FILES $<TARGET_FILE:zlibstatic>
++                FILES $<TARGET_FILE:zlib>
+                 COMPONENT Development
+                 RENAME libz.dll.a
+                 DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+diff --git a/contrib/minizip/CMakeLists.txt b/contrib/minizip/CMakeLists.txt
+index 1aaf4ac..f349a79 100644
+--- a/contrib/minizip/CMakeLists.txt
++++ b/contrib/minizip/CMakeLists.txt
+@@ -186,7 +186,7 @@ if(MINIZIP_BUILD_STATIC)
+         set_target_properties(libminizipstatic PROPERTIES SUFFIX ".dll.a")
+     endif(CYGWIN)
+ 
+-    target_link_libraries(libminizipstatic PUBLIC ZLIB::ZLIBSTATIC
++    target_link_libraries(libminizipstatic PUBLIC ZLIB::ZLIB
+         $<$<BOOL:${BZIP2_FOUND}>:BZip2::BZip2>)
+ 
+     add_executable(minizipstatic ${MINIZIP_SRCS} ${MINIZIP_HDRS})
+diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
+index fab91e4..a3a7aa0 100644
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -59,7 +59,7 @@ endif(ZLIB_BUILD_SHARED)
+ 
+ if(ZLIB_BUILD_STATIC)
+     add_executable(zlib_static_example example.c)
+-    target_link_libraries(zlib_static_example ZLIB::ZLIBSTATIC)
++    target_link_libraries(zlib_static_example ZLIB::ZLIB)
+     target_compile_definitions(
+         zlib_static_example
+         PRIVATE ZLIB_BUILD
+@@ -67,7 +67,7 @@ if(ZLIB_BUILD_STATIC)
+     add_test(NAME zlib_static_example COMMAND zlib_static_example)
+ 
+     add_executable(static_minigzip minigzip.c)
+-    target_link_libraries(static_minigzip ZLIB::ZLIBSTATIC)
++    target_link_libraries(static_minigzip ZLIB::ZLIB)
+ 
+     if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL
+                                                 "Clang")
+@@ -93,7 +93,7 @@ if(ZLIB_BUILD_STATIC)
+         endif(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+ 
+         add_executable(infcover infcover.c)
+-        target_link_libraries(infcover ZLIB::ZLIBSTATIC)
++	target_link_libraries(infcover ZLIB::ZLIB)
+         target_compile_options(infcover PRIVATE -coverage)
+         target_link_options(infcover PRIVATE -coverage)
+         target_compile_definitions(
+@@ -120,7 +120,7 @@ if(ZLIB_BUILD_STATIC)
+             zlib_static_example64
+             PRIVATE ZLIB_BUILD
+                     $<$<BOOL:${HAVE___ATTR__VIS_HIDDEN}>:HAVE_HIDDEN>)
+-        target_link_libraries(zlib_static_example64 ZLIB::ZLIBSTATIC)
++	target_link_libraries(zlib_static_example64 ZLIB::ZLIB)
+         add_test(NAME zlib_static_example64 COMMAND zlib_static_example64)
+     endif(HAVE_OFF64_T)
+ endif(ZLIB_BUILD_STATIC)
+diff --git a/test/add_subdirectory_exclude_test.cmake.in b/test/add_subdirectory_exclude_test.cmake.in
+index 9077ce5..dd68809 100644
+--- a/test/add_subdirectory_exclude_test.cmake.in
++++ b/test/add_subdirectory_exclude_test.cmake.in
+@@ -24,6 +24,6 @@ endif(ZLIB_BUILD_SHARED)
+ 
+ if(ZLIB_BUILD_STATIC)
+     add_executable(test_example_static @zlib_SOURCE_DIR@/test/example.c)
+-    target_link_libraries(test_example_static ZLIB::ZLIBSTATIC)
++    target_link_libraries(test_example_static ZLIB::ZLIB)
+     add_test(NAME zlib_test_example_static COMMAND test_example_static)
+ endif(ZLIB_BUILD_STATIC)
+diff --git a/test/add_subdirectory_test.cmake.in b/test/add_subdirectory_test.cmake.in
+index 4201af8..ef56cd1 100644
+--- a/test/add_subdirectory_test.cmake.in
++++ b/test/add_subdirectory_test.cmake.in
+@@ -23,6 +23,6 @@ endif(ZLIB_BUILD_SHARED)
+ 
+ if(ZLIB_BUILD_STATIC)
+     add_executable(test_example_static @zlib_SOURCE_DIR@/test/example.c)
+-    target_link_libraries(test_example_static ZLIB::ZLIBSTATIC)
++    target_link_libraries(test_example_static ZLIB::ZLIB)
+     add_test(NAME zlib_test_example_static COMMAND test_example_static)
+ endif(@ZLIB_BUILD_STATIC)
+diff --git a/test/find_package_test.cmake.in b/test/find_package_test.cmake.in
+index 0f77d49..95b7595 100644
+--- a/test/find_package_test.cmake.in
++++ b/test/find_package_test.cmake.in
+@@ -21,6 +21,6 @@ endif(ZLIB_BUILD_SHARED)
+ 
+ if(ZLIB_BUILD_STATIC)
+     add_executable(test_example_static @zlib_SOURCE_DIR@/test/example.c)
+-    target_link_libraries(test_example_static ZLIB::ZLIBSTATIC)
++    target_link_libraries(test_example_static ZLIB::ZLIB)
+     add_test(NAME zlib_test_example_static COMMAND test_example_static)
+ endif(ZLIB_BUILD_STATIC)
+-- 
+2.51.0
+

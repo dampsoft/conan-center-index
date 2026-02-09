@@ -57,21 +57,31 @@ class ZlibConan(ConanFile):
         tc.variables["INSTALL_LIB_DIR"] = "lib"
         tc.variables["INSTALL_INC_DIR"] = "include"
         tc.variables["ZLIB_BUILD_EXAMPLES"] = False
+
+        if Version(self.version) >= "1.3.1.2":
+            tc.variables["ZLIB_BUILD_SHARED"] = self.options.shared
+            tc.variables["ZLIB_BUILD_STATIC"] = not self.options.shared
+
         tc.generate()
 
     def _patch_sources(self):
         apply_conandata_patches(self)
 
+        unistd_h = Version(self.version) >= "1.3.1.2" and "#if HAVE_UNISTD_H-0     " or "#ifdef HAVE_UNISTD_H    "
+        stdarg_h = Version(self.version) >= "1.3.1.2" and "#if HAVE_STDARG_H-0     " or "#ifdef HAVE_STDARG_H    "
+
+        filelist = Version(self.version) >= "1.3.1.2" and ['zconf.h', 'zconf.h.in'] or ['zconf.h', 'zconf.h.cmakein', 'zconf.h.in']
+
         is_apple_clang12 = self.settings.compiler == "apple-clang" and Version(self.settings.compiler.version) >= "12.0"
         if not is_apple_clang12:
-            for filename in ['zconf.h', 'zconf.h.cmakein', 'zconf.h.in']:
+            for filename in filelist:
                 filepath = os.path.join(self.source_folder, filename)
                 replace_in_file(self, filepath,
-                                      '#ifdef HAVE_UNISTD_H    '
+                                      unistd_h +
                                       '/* may be set to #if 1 by ./configure */',
                                       '#if defined(HAVE_UNISTD_H) && (1-HAVE_UNISTD_H-1 != 0)')
                 replace_in_file(self, filepath,
-                                      '#ifdef HAVE_STDARG_H    '
+                                      stdarg_h +
                                       '/* may be set to #if 1 by ./configure */',
                                       '#if defined(HAVE_STDARG_H) && (1-HAVE_STDARG_H-1 != 0)')
 
