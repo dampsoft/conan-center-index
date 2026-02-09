@@ -29,7 +29,7 @@ class CoalConan(ConanFile):
 
     def requirements(self):
         self.requires("eigen/[>=3.4.0 <4]", transitive_headers=True)
-        self.requires("boost/1.89.0", transitive_headers=True)
+        self.requires("boost/1.90.0", transitive_headers=True)
         self.requires("assimp/5.4.3")
         if self.options.with_octomap:
             self.requires("octomap/1.10.0", transitive_headers=True)
