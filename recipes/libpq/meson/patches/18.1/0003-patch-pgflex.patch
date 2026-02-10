@@ -1,0 +1,32 @@
+From b0d6772b838edb3dbd579b152373a41abd53d886 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Tue, 10 Feb 2026 14:49:07 +0100
+Subject: [PATCH] patch pgflex
+
+---
+ src/tools/pgflex | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/src/tools/pgflex b/src/tools/pgflex
+index 3986b06874e..0d04636f326 100755
+--- a/src/tools/pgflex
++++ b/src/tools/pgflex
+@@ -48,7 +48,13 @@ os.chdir(args.privatedir)
+ # contents. Set FLEX_TMP_DIR to the target private directory to avoid
+ # that. That environment variable isn't consulted on other platforms, so we
+ # don't even need to make this conditional.
+-env = {'FLEX_TMP_DIR': args.privatedir}
++env = os.environ.copy()
++env['FLEX_TMP_DIR'] =  args.privatedir
++# When these are set on Windows, _tempnam(dir, prefix) ignores dir and uses the value of TMP instead...
++# This causes the above mentioned flex issues
++env.pop('TMP', None)
++env.pop('TEMP', None)
++env.pop('TMPDIR', None)
+ 
+ # build flex invocation
+ command = [args.flex, '-o', args.output_file]
+-- 
+2.51.0
+
