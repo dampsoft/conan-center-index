@@ -2,7 +2,10 @@ from os import mkdir
 import os
 from pathlib import Path
 from conan.api.conan_api import ConanAPI
-from conans.model.recipe_ref import RecipeReference
+try:
+    from conan.internal.model.recipe_ref import RecipeReference
+except ImportError:
+    from conans.model.recipe_ref import RecipeReference
 from conan.errors import ConanException
 from conan.cli.printers import ConanOutput
 import shutil
