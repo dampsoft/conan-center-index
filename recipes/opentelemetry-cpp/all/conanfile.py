@@ -171,7 +171,7 @@ class OpenTelemetryCppConan(ConanFile):
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)
 
-        if self.settings.os != "Linux" and self.options.shared:
+        if self.settings.os != "Linux" and self.options.get_safe("shared", False):
             raise ConanInvalidConfiguration(f"{self.ref} supports building shared libraries only on Linux")
 
         if self.options.with_otlp_grpc:
