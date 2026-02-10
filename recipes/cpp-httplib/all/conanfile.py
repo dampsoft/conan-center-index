@@ -80,6 +80,10 @@ class CpphttplibConan(ConanFile):
             self.cpp_info.defines.append("CPPHTTPLIB_ZSTD_SUPPORT")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["pthread"]
+            # See https://github.com/yhirose/cpp-httplib/blob/af7a69bcf631e29fa2be7edfe8f9a13b554844d3/meson.build#L76
+            # This commit exists since 0.23.0
+            if Version(self.version) >= "0.23.0":
+                self.cpp_info.system_libs.append("anl")
         elif self.settings.os == "Windows":
             self.cpp_info.system_libs = ["crypt32", "cryptui", "ws2_32"]
         elif self.settings.os == "Macos":
@@ -87,5 +91,5 @@ class CpphttplibConan(ConanFile):
                 self.cpp_info.frameworks.extend(["CFNetwork", "CoreFoundation", "Security"])
                 self.cpp_info.defines.append("CPPHTTPLIB_USE_CERTS_FROM_MACOSX_KEYCHAIN")
                 self.cpp_info.frameworks.extend(["CFNetwork", "CoreFoundation"])
-        
+
         self.cpp_info.defines.append("CPPHTTPLIB_USE_NON_BLOCKING_GETADDRINFO")
