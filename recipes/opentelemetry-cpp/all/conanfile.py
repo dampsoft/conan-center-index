@@ -258,12 +258,6 @@ class OpenTelemetryCppConan(ConanFile):
             protos_path = self.dependencies.build["opentelemetry-proto"].conf_info.get("user.opentelemetry-proto:proto_root").replace("\\", "/")
             protos_cmake_path = os.path.join(self.source_folder, "cmake", "opentelemetry-proto.cmake")
 
-            # W/O this, protobuf isn't able to find the abseil library with SIP enabled
-            if is_apple_os(self):
-                abseil_folder = self.dependencies["abseil"].package_folder
-                protobuf_folder = self.dependencies["protobuf"].package_folder
-                self.run(f"install_name_tool -add_rpath {abseil_folder}/lib {protobuf_folder}/bin/protoc")
-
             if Version(self.version) < "1.8":
                 protos_path = self._proto_root
                 replace_in_file(self, protos_cmake_path,
