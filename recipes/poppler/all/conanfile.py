@@ -123,7 +123,7 @@ class PopplerConan(ConanFile):
         if self.options.with_lcms:
             self.requires("lcms/[>=2.16 <3]")
         if self.options.with_libjpeg == "libjpeg-turbo":
-            self.requires("libjpeg-turbo/3.1.1")
+            self.requires("libjpeg-turbo/[>=3.0 <3.2]")
         elif self.options.with_libjpeg == "libjpeg":
             self.requires("libjpeg/[>=9e]")
         if self.options.with_png:
