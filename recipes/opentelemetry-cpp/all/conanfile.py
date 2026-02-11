@@ -110,6 +110,7 @@ class OpenTelemetryCppConan(ConanFile):
         if self._needs_proto:
             # This will resolve to the pinned version coming from grpc
             self.requires("protobuf/[>=4.25.3 <7]", transitive_headers=True, transitive_libs=True)
+            self.requires("abseil/[>=20230802.1 <=20250814.0]", transitive_headers=True)
 
         if (self.options.with_zipkin or
            self.options.with_elasticsearch or
@@ -413,6 +414,7 @@ index d1b5555b..b529c92a 100644
 
         if self.options.with_otlp_http or self.options.with_otlp_grpc or self.options.get_safe("with_otlp_file", False):
             self.cpp_info.components["opentelemetry_proto"].requires.append("protobuf::protobuf")
+            self.cpp_info.components["opentelemetry_proto"].requires.append("abseil::absl")
             self.cpp_info.components["opentelemetry_otlp_recordable"].requires.extend([
                 "opentelemetry_proto",
                 "opentelemetry_resources",
