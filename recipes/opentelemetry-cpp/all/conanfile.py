@@ -1,7 +1,7 @@
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
-from conan.tools.files import get, copy, rmdir, replace_in_file, save, export_conandata_patches, apply_conandata_patches
+from conan.tools.files import get, copy, rmdir, replace_in_file, save, export_conandata_patches, apply_conandata_patches, patch
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.scm import Version
@@ -219,6 +219,44 @@ class OpenTelemetryCppConan(ConanFile):
 
     def _patch_sources(self):
         apply_conandata_patches(self)
+
+        if Version(self.version) >= "1.23.0" and self.options.get_safe("with_stl", False):
+            patch(
+                self,
+                patch_string="""
+From 076370f0bfd47831381dfb2cd8e1f77839fa7250 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Wed, 8 Oct 2025 18:28:47 +0200
+Subject: [PATCH] don't use heterogeneous lookup
+
+---
+ sdk/include/opentelemetry/sdk/common/custom_hash_equality.h | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/sdk/include/opentelemetry/sdk/common/custom_hash_equality.h b/sdk/include/opentelemetry/sdk/common/custom_hash_equality.h
+index d1b5555b..b529c92a 100644
+--- a/sdk/include/opentelemetry/sdk/common/custom_hash_equality.h
++++ b/sdk/include/opentelemetry/sdk/common/custom_hash_equality.h
+@@ -144,13 +144,7 @@ struct StringViewEqual
+ template <typename MapType>
+ inline auto find_heterogeneous(MapType &&map, opentelemetry::nostd::string_view key)
+ {
+-#if defined(_LIBCPP_VERSION) || \\
+-    (!defined(OPENTELEMETRY_STL_VERSION) || OPENTELEMETRY_STL_VERSION < 2020)
+   return map.find(std::string(key));
+-#else
+-  // libstdc++ + C++20: heterogeneous lookup works
+-  return map.find(key);
+-#endif
+ }
+ }  // namespace common
+ }  // namespace sdk
+--
+2.51.0
+
+            """,
+            )
 
         if self._needs_proto:
             protos_path = self.dependencies.build["opentelemetry-proto"].conf_info.get("user.opentelemetry-proto:proto_root").replace("\\", "/")

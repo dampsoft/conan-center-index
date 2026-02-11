@@ -51,18 +51,6 @@ sources:
     url: "https://github.com/open-telemetry/opentelemetry-cpp/archive/v1.8.3.tar.gz"
     sha256: "b23d3c80d2e0012734ea343d2be69b2a7139ec5545453c503b13e629eb8fbe05"
 patches:
-  "1.25.0":
-    - patch_file: "patches/1.23.0-0001-don-t-use-heterogeneous-lookup.patch"
-      patch_description: "Heterogeneous lookup doesn't work correctly"
-      patch_type: "conan"
-  "1.24.0":
-    - patch_file: "patches/1.23.0-0001-don-t-use-heterogeneous-lookup.patch"
-      patch_description: "Heterogeneous lookup doesn't work correctly"
-      patch_type: "conan"
-  "1.23.0":
-    - patch_file: "patches/1.23.0-0001-don-t-use-heterogeneous-lookup.patch"
-      patch_description: "Heterogeneous lookup doesn't work correctly"
-      patch_type: "conan"
   "1.13.0":
     - patch_file: "patches/0b9371dcc5d26b2721482a7c0f89eb154dbe364f.patch"
       patch_description: "Fix build w/ MSVC and cppstd=20"
