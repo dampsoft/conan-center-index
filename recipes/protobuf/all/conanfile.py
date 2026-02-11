@@ -214,12 +214,6 @@ class ProtobufConan(ConanFile):
             rm(self, "libprotobuf-lite*", os.path.join(self.package_folder, "lib"))
             rm(self, "libprotobuf-lite*", os.path.join(self.package_folder, "bin"))
 
-        # W/O this, protobuf isn't able to find the abseil library with SIP enabled
-        if is_apple_os(self):
-            abseil_folder = self.dependencies["abseil"].package_folder
-            protobuf_folder = self.package_folder
-            self.run(f"install_name_tool -add_rpath {abseil_folder}/lib {protobuf_folder}/bin/protoc")
-
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_module_file_name", "Protobuf")
