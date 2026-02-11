@@ -64,40 +64,8 @@ class OpenTelemetryCppConan(ConanFile):
     }
     short_paths = True
 
-    @property
-    def _compilers_minimum_version(self):
-        return {
-            "gcc": "6",
-            "clang": "5",
-            "apple-clang": "10",
-            "Visual Studio": "16",
-            "msvc": "192",
-        }
-
-    @property
-    def _used_cppstd(self):
-        return self.settings.compiler.get_safe("cppstd")
-
     def export_sources(self):
         export_conandata_patches(self)
-
-    @property
-    def _with_stl_value(self):
-        if Version(self.version) >= "1.12":
-            if self.options.with_stl:
-                cppstd = self._used_cppstd
-                if "14" in cppstd:
-                    return "CXX14"
-                elif "17" in cppstd:
-                    return "CXX17"
-                elif "20" in cppstd:
-                    return "CXX20"
-                elif "23" in cppstd:
-                    return "CXX23"
-            else:
-                return "OFF"
-        else:
-            return self.options.with_stl
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -127,6 +95,7 @@ class OpenTelemetryCppConan(ConanFile):
             self.options.get_safe("with_otlp_http_compression", False)
         )
 
+    @property
     def _with_http_client_curl(self):
         return self.options.with_otlp_http or self.options.with_zipkin or self.options.with_elasticsearch
 
@@ -134,13 +103,13 @@ class OpenTelemetryCppConan(ConanFile):
         if self.options.with_gsl:
             self.requires("ms-gsl/4.0.0")
 
-        if self._needs_proto:
-            # This will resolve to the pinned version coming from grpc
-            self.requires("protobuf/[>=4.25.3 <7]", transitive_headers=True, transitive_libs=True)
-
         if self.options.with_otlp_grpc:
             # Version range matches arrow, which uses this as a dependency
             self.requires("grpc/[>=1.67.1 <2]", transitive_headers=True, transitive_libs=True)
+
+        if self._needs_proto:
+            # This will resolve to the pinned version coming from grpc
+            self.requires("protobuf/[>=4.25.3 <7]", transitive_headers=True, transitive_libs=True)
 
         if (self.options.with_zipkin or
            self.options.with_elasticsearch or
@@ -169,9 +138,6 @@ class OpenTelemetryCppConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)
-
-        if self.settings.os != "Linux" and self.options.get_safe("shared", False):
-            raise ConanInvalidConfiguration(f"{self.ref} supports building shared libraries only on Linux")
 
         if self.options.with_otlp_grpc:
             if not self.dependencies["grpc"].options.cpp_plugin:
@@ -285,14 +251,12 @@ class OpenTelemetryCppConan(ConanFile):
         if self.options.with_otlp_grpc and Version(self.version) < "1.9.1":
             save(self, protos_cmake_path, "\ntarget_link_libraries(opentelemetry_proto PUBLIC gRPC::grpc++)", append=True)
 
-        rmdir(self, os.path.join(self.source_folder, "api", "include", "opentelemetry", "nostd", "absl"))
 
     def build(self):
         self._patch_sources()
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
-
 
     def package(self):
         copy(self, pattern="LICENSE", dst=os.path.join(self.package_folder, "licenses"), src=self.source_folder)
@@ -402,13 +366,8 @@ class OpenTelemetryCppConan(ConanFile):
 
         if self.options.get_safe("with_otlp_http_compression"):
             self.cpp_info.components["opentelemetry_common"].defines.append("ENABLE_OTLP_COMPRESSION_PREVIEW")
-
         if self._stl_value:
-            if Version(self.version) >= "1.12.0":
-                cppstd = self._used_cppstd[-2:]
-                self.cpp_info.components["opentelemetry_common"].defines.append(f"OPENTELEMETRY_STL_VERSION=20{cppstd}")
-            else:
-                self.cpp_info.components["opentelemetry_common"].defines.append("HAVE_CPP_STDLIB")
+            self.cpp_info.components["opentelemetry_common"].defines.append("HAVE_CPP_STDLIB")
 
         if self.options.with_gsl:
             self.cpp_info.components["opentelemetry_common"].defines.append("HAVE_GSL")
