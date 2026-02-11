@@ -412,9 +412,10 @@ index d1b5555b..b529c92a 100644
             self.cpp_info.components["opentelemetry_common"].defines.append("HAVE_GSL")
             self.cpp_info.components["opentelemetry_common"].requires.append("ms-gsl::_ms-gsl")
 
-        if self.options.with_otlp_http or self.options.with_otlp_grpc or self.options.get_safe("with_otlp_file", False):
+        if self._needs_proto:
+            self.cpp_info.components["opentelemetry_common"].defines.append("HAVE_ABSEIL")
+            self.cpp_info.components["opentelemetry_common"].requires.append("abseil::abseil")
             self.cpp_info.components["opentelemetry_proto"].requires.append("protobuf::protobuf")
-            self.cpp_info.components["opentelemetry_proto"].requires.append("abseil::absl")
             self.cpp_info.components["opentelemetry_otlp_recordable"].requires.extend([
                 "opentelemetry_proto",
                 "opentelemetry_resources",
@@ -496,6 +497,9 @@ index d1b5555b..b529c92a 100644
                 "opentelemetry_otlp_recordable",
                 "opentelemetry_exporter_otlp_file_client",
             ])
+
+            if self._needs_proto:
+                self.cpp_info.components["opentelemetry_exporter_otlp_file_client"].requires.append("abseil::absl_strings")
 
         if self.options.with_zipkin:
             self.cpp_info.components["opentelemetry_exporter_zipkin_trace"].requires.extend([
