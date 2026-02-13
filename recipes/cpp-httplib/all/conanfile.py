@@ -92,4 +92,6 @@ class CpphttplibConan(ConanFile):
                 self.cpp_info.defines.append("CPPHTTPLIB_USE_CERTS_FROM_MACOSX_KEYCHAIN")
                 self.cpp_info.frameworks.extend(["CFNetwork", "CoreFoundation"])
 
-        self.cpp_info.defines.append("CPPHTTPLIB_USE_NON_BLOCKING_GETADDRINFO")
+        # This leads to missing symbols trying to link cpp-httplib's test package on Macos with Apple Clang and x86 architecture
+        if not (self.settings.os == "Macos" and self.settings.compiler == "apple-clang" and self.settings.arch in ["x86", "x86_64"]):
+            self.cpp_info.defines.append("CPPHTTPLIB_USE_NON_BLOCKING_GETADDRINFO")
