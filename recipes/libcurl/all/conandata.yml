@@ -105,6 +105,16 @@ sources:
       - "https://github.com/curl/curl/releases/download/curl-7_88_1/curl-7.88.1.tar.xz"
     sha256: "1dae31b2a7c1fe269de99c0c31bb488346aab3459b5ffca909d6938249ae415f"
 patches:
+  "8.18.0":
+    - patch_file: "patches/20613-8.18.0.patch"
+      patch_type: "backport"
+      patch_description: "Clears libcurl's error message buffer in case a connection attempt still proceeds after failf() was called"
+      patch_source: "https://github.com/curl/curl/pull/20613"
+  "8.17.0":
+    - patch_file: "patches/20613-8.17.0.patch"
+      patch_type: "backport"
+      patch_description: "Clears libcurl's error message buffer in case a connection attempt still proceeds after failf() was called"
+      patch_source: "https://github.com/curl/curl/pull/20613"
   "8.9.1":
     - patch_file: "patches/14390.patch"
       patch_type: "upstream"

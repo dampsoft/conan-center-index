@@ -1,0 +1,177 @@
+From c9ab4f51859dddf14ff921894488457a91073584 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Tue, 17 Feb 2026 17:00:58 +0100
+Subject: [PATCH] Backport #20613 for 8.18.0
+
+---
+ docs/libcurl/libcurl-env-dbg.md |  4 ++++
+ lib/cf-https-connect.c          |  2 ++
+ lib/cf-ip-happy.c               |  6 ++++++
+ lib/cf-socket.c                 |  6 ++++++
+ lib/curl_trc.c                  | 30 ++++++++++++++++++++++++++++++
+ lib/curl_trc.h                  |  5 +++++
+ tests/http/test_05_errors.py    | 17 +++++++++++++++++
+ 7 files changed, 70 insertions(+)
+
+diff --git a/docs/libcurl/libcurl-env-dbg.md b/docs/libcurl/libcurl-env-dbg.md
+index ce6b480ae3..c9e56c40cf 100644
+--- a/docs/libcurl/libcurl-env-dbg.md
++++ b/docs/libcurl/libcurl-env-dbg.md
+@@ -58,6 +58,10 @@ only send 800.
+ The percentage of send() calls that should be answered with EAGAIN at random.
+ QUIC only.
+ 
++## `CURL_DBG_SOCK_FAIL_IPV6`
++
++Fail opening of sockets for the IPv6 address family.
++
+ ## `CURL_DEBUG`
+ 
+ Trace logging behavior as an alternative to calling curl_global_trace(3).
+diff --git a/lib/cf-https-connect.c b/lib/cf-https-connect.c
+index d2a08d124f..5479c476e4 100644
+--- a/lib/cf-https-connect.c
++++ b/lib/cf-https-connect.c
+@@ -221,6 +221,8 @@ static CURLcode baller_connected(struct Curl_cfilter *cf,
+   /* install the winning filter below this one. */
+   cf->next = winner->cf;
+   winner->cf = NULL;
++  /* whatever errors where reported by ballers, clear our errorbuf */
++  Curl_reset_fail(data);
+ 
+ #ifdef USE_NGHTTP2
+   {
+diff --git a/lib/cf-ip-happy.c b/lib/cf-ip-happy.c
+index 05e9505e2a..b680d1b57b 100644
+--- a/lib/cf-ip-happy.c
++++ b/lib/cf-ip-happy.c
+@@ -425,6 +425,10 @@ evaluate:
+       addr = cf_ai_iter_next(&bs->addr_iter);
+       ai_family = bs->addr_iter.ai_family;
+     }
++    /* We are (re-)starting attempts. We are not interested in
++     * keeping old failure information. The new attempt will either
++     * succeed or persist new failure. */
++    Curl_reset_fail(data);
+ 
+     if(addr) {  /* try another address */
+       result = cf_ip_attempt_new(&a, cf, data, addr, ai_family,
+@@ -791,6 +795,8 @@ static CURLcode cf_ip_happy_connect(struct Curl_cfilter *cf,
+       ctx->ballers.winner->cf = NULL;
+       cf_ip_happy_ctx_clear(cf, data);
+       Curl_expire_done(data, EXPIRE_HAPPY_EYEBALLS);
++      /* whatever errors where reported by ballers, clear our errorbuf */
++      Curl_reset_fail(data);
+ 
+       if(cf->conn->handler->protocol & PROTO_FAMILY_SSH)
+         Curl_pgrsTime(data, TIMER_APPCONNECT); /* we are connected already */
+diff --git a/lib/cf-socket.c b/lib/cf-socket.c
+index ce728f5b3e..d29872fdbb 100644
+--- a/lib/cf-socket.c
++++ b/lib/cf-socket.c
+@@ -345,6 +345,12 @@ static CURLcode socket_open(struct Curl_easy *data,
+   }
+   else {
+     /* opensocket callback not set, so simply create the socket now */
++#ifdef DEBUGBUILD
++    if((addr->family == AF_INET6) && getenv("CURL_DBG_SOCK_FAIL_IPV6")) {
++      failf(data, "CURL_DBG_SOCK_FAIL_IPV6: failed to open socket");
++      return CURLE_COULDNT_CONNECT;
++    }
++#endif
+     *sockfd = CURL_SOCKET(addr->family, addr->socktype, addr->protocol);
+     if((*sockfd == CURL_SOCKET_BAD) && (SOCKERRNO == SOCKENOMEM))
+       return CURLE_OUT_OF_MEMORY;
+diff --git a/lib/curl_trc.c b/lib/curl_trc.c
+index 565d1b45f0..ed58de7ac7 100644
+--- a/lib/curl_trc.c
++++ b/lib/curl_trc.c
+@@ -194,6 +194,36 @@ void Curl_failf(struct Curl_easy *data, const char *fmt, ...)
+   }
+ }
+ 
++void Curl_reset_fail(struct Curl_easy *data)
++{
++  if(data->set.errorbuffer)
++    data->set.errorbuffer[0] = 0;
++  data->state.errorbuf = FALSE;
++}
++
++#ifdef CURLVERBOSE
++struct curl_trc_feat Curl_trc_feat_multi = {
++  "MULTI",
++  CURL_LOG_LVL_NONE,
++};
++struct curl_trc_feat Curl_trc_feat_read = {
++  "READ",
++  CURL_LOG_LVL_NONE,
++};
++struct curl_trc_feat Curl_trc_feat_write = {
++  "WRITE",
++  CURL_LOG_LVL_NONE,
++};
++struct curl_trc_feat Curl_trc_feat_dns = {
++  "DNS",
++  CURL_LOG_LVL_NONE,
++};
++struct curl_trc_feat Curl_trc_feat_timer = {
++  "TIMER",
++  CURL_LOG_LVL_NONE,
++};
++#endif
++
+ #ifndef CURL_DISABLE_VERBOSE_STRINGS
+ 
+ static void trc_infof(struct Curl_easy *data,
+diff --git a/lib/curl_trc.h b/lib/curl_trc.h
+index ff085d6a4e..aa08398762 100644
+--- a/lib/curl_trc.h
++++ b/lib/curl_trc.h
+@@ -61,6 +61,11 @@ void Curl_failf(struct Curl_easy *data,
+ 
+ #define failf Curl_failf
+ 
++/* In case failf() reported into the errorbuf, clear it again.
++ * This is used to clear information from happy eyeballing attempts
++ * when ultimately a successful attempt was made. */
++void Curl_reset_fail(struct Curl_easy *data);
++
+ #define CURL_LOG_LVL_NONE  0
+ #define CURL_LOG_LVL_INFO  1
+ 
+diff --git a/tests/http/test_05_errors.py b/tests/http/test_05_errors.py
+index 89a8acdebe..c1154ed2bb 100644
+--- a/tests/http/test_05_errors.py
++++ b/tests/http/test_05_errors.py
+@@ -25,6 +25,7 @@
+ ###########################################################################
+ #
+ import logging
++import os
+ import pytest
+ 
+ from testenv import Env, CurlClient
+@@ -125,3 +126,19 @@ class TestErrors:
+         else:
+             r.check_exit_code(0)
+             r.check_response(http_status=200, count=count)
++
++    # Make a connect with a fail for '::1' and wrong certificate for '127.0.0.1'
++    # The error message reported needs to be from the certificate.
++    # verifies issue #20608
++    @pytest.mark.parametrize("proto", Env.http_h1_h2_protos())
++    def test_05_05_failed_peer(self, env: Env, proto, httpd, nghttpx):
++        domain = f'invalid.{env.tld}'
++        url = f'https://{domain}:{env.port_for(proto)}/'
++        run_env = os.environ.copy()
++        run_env['CURL_DBG_SOCK_FAIL_IPV6'] = '1'
++        curl = CurlClient(env=env, run_env=run_env)
++        r = curl.http_download(urls=[url], alpn_proto=proto, extra_args=[
++            '--resolve', f'{domain}:{env.port_for(proto)}:::1,127.0.0.1',
++        ])
++        assert r.exit_code == 60, f'{r}'
++        assert r.stats[0]['errormsg'] != 'CURL_DBG_SOCK_FAIL_IPV6: failed to open socket'
+-- 
+2.51.0
+
