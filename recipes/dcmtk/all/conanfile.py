@@ -154,7 +154,11 @@ class DCMTKConan(ConanFile):
         tc.variables["DCMTK_WIDE_CHAR_MAIN_FUNCTION"] = self.options.wide_io
         # Upstream CMakeLists really expects ON value and no other value (like TRUE) in its internal logic
         # to enable STL features (see DCMTK_TEST_ENABLE_STL_FEATURE() function in CMake/GenerateDCMTKConfigure.cmake)
-        tc.variables["DCMTK_ENABLE_STL"] = "ON" if self.options.enable_stl else "OFF"
+        # Since version 3.6.8, DCMTK enables STL via True/False again
+        if Version(self.version) >= "3.6.8":
+            tc.variables["DCMTK_ENABLE_STL"] = self.options.enable_stl
+        else:
+            tc.variables["DCMTK_ENABLE_STL"] = "ON" if self.options.enable_stl else "OFF"
         tc.variables["DCMTK_ENABLE_CXX11"] = True
         tc.variables["DCMTK_ENABLE_MANPAGE"] = False
         tc.cache_variables["DCMTK_DEFAULT_DICT"] = self.options.default_dict
@@ -174,6 +178,10 @@ class DCMTKConan(ConanFile):
         # Prevent libnsl from the system (and not from Conan) from being picked up
         tc.cache_variables["HAVE_LIBNSL_MAIN"] = False
         tc.cache_variables["HAVE_LIBNSL"] = False
+
+        # Breaks build on some setups
+        if Version(self.version) >= "3.6.9":
+            tc.cache_variables["CMAKE_CXX_SCAN_FOR_MODULES"] = False
 
         if Version(self.version) >= "3.6.7" and cross_building(self):
             # See https://support.dcmtk.org/redmine/projects/dcmtk/wiki/Cross_Compiling
