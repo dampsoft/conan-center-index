@@ -1,0 +1,46 @@
+From 219af2f225ec92c3ed7a3052f87ddf6afcb7951a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Fri, 20 Feb 2026 15:53:32 +0100
+Subject: [PATCH] cpp20 wchar msvc compat
+
+---
+ ofstd/libsrc/ofcmdln.cc | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/ofstd/libsrc/ofcmdln.cc b/ofstd/libsrc/ofcmdln.cc
+index 25f18a5cf..41deaf53c 100644
+--- a/ofstd/libsrc/ofcmdln.cc
++++ b/ofstd/libsrc/ofcmdln.cc
+@@ -1159,6 +1159,9 @@ OFCommandLine::E_ParseStatus OFCommandLine::parseCommandFile(const char *argValu
+ 
+ #ifdef DCMTK_USE_WCHAR_T
+ 
++// Needed for wctomb
++#include <stdlib.h>
++
+ // Windows-specific version with wide character strings (UTF-16)
+ #ifdef DEBUG
+ OFCommandLine::E_ParseStatus OFCommandLine::parseCommandFile(const wchar_t *argValue,
+@@ -1243,11 +1246,14 @@ OFCommandLine::E_ParseStatus OFCommandLine::parseCommandFile(const wchar_t *argV
+ #ifdef DEBUG
+             if (block != 0)
+             {
+-                // Right now the code below prints the character code of the 'block' wchar_t character instead
+-                // of the character itself. This is an interim solution until a proper conversion function
+-                // is added in the future in order to print the original character.
+-                ofConsole.lockCerr() << "WARNING: closing quotation mark (" << OFstatic_cast(unsigned, block) << ") missing in command file " << strValue << OFendl;
++                ofConsole.lockCerr() << "WARNING: closing quotation mark (" << block << ") missing in command file " << strValue << OFendl;
+                 ofConsole.unlockCerr();
++                char* blockAsChar = nullptr;
++                auto res = wctomb(blockAsChar, block);
++                if (res != -1 && blockAsChar != nullptr) {
++                    ofConsole.lockCerr() << "WARNING: closing quotation mark (" << blockAsChar << ") missing in command file " << strValue << OFendl;
++                    ofConsole.unlockCerr();
++                }
+             }
+ #endif
+             result = PS_Normal;
+-- 
+2.51.0
+
