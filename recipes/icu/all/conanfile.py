@@ -68,16 +68,6 @@ class ICUConan(ConanFile):
     def _enable_icu_tools(self):
         return self.settings.os not in ["iOS", "tvOS", "watchOS", "Emscripten"]
 
-    @property
-    def _minimum_compilers_version(self):
-        return {
-            "Visual Studio": "16",
-            "msvc": "192",
-            "gcc": "8",
-            "clang": "9",
-            "apple-clang": "11"
-        }
-
     def export_sources(self):
         export_conandata_patches(self)
 
@@ -104,14 +94,6 @@ class ICUConan(ConanFile):
                 raise ConanInvalidConfiguration(
                     f"{self.ref} requires C++{self._min_cppstd}, which your compiler does not support."
                 )
-
-        if self.settings.compiler.get_safe("cppstd"):
-            check_min_cppstd(self, 17)
-        minimum_version = self._minimum_compilers_version.get(str(self.settings.compiler), False)
-        if not minimum_version:
-            self.output.warning("C++17 support required. Your compiler is unknown. Assuming it supports C++17.")
-        elif Version(self.settings.compiler.version) < minimum_version:
-            raise ConanInvalidConfiguration("C++17 support required, which your compiler does not support.")
 
     def layout(self):
         basic_layout(self, src_folder="src")

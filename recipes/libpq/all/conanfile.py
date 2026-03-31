@@ -56,14 +56,14 @@ class LibpqConan(ConanFile):
 
     def config_options(self):
         if self.settings.os == "Windows":
-            del self.options.fPIC
-            del self.options.disable_rpath
+            self.options.rm_safe("fPIC")
+            self.options.rm_safe("disable_rpath")
             # TODO: add Windows support for these
-            del self.options.with_icu
-            del self.options.with_zlib
+            self.options.rm_safe("with_icu")
+            self.options.rm_safe("with_zlib")
         if is_apple_os(self):
             # FIXME: not sure why this one fails to link on macOS
-            del self.options.with_zlib
+            self.options.rm_safe("with_zlib")
 
     def configure(self):
         if self.options.shared:
@@ -81,7 +81,7 @@ class LibpqConan(ConanFile):
             else:
                 self.requires("openssl/[>=1.1 <4]")
         if self.options.get_safe("with_icu"):
-            self.requires("icu/74.2")
+            self.requires("icu/75.1")
         if self.options.get_safe("with_zlib"):
             self.requires("zlib/[>=1.2.11 <2]")
 
@@ -105,7 +105,6 @@ class LibpqConan(ConanFile):
     def generate(self):
         env = VirtualBuildEnv(self)
         env.generate()
-
         if is_msvc(self):
             vcvars = VCVars(self)
             vcvars.generate()
@@ -117,7 +116,6 @@ class LibpqConan(ConanFile):
             if not cross_building(self):
                 env = VirtualRunEnv(self)
                 env.generate(scope="build")
-
             tc = AutotoolsToolchain(self)
             tc.configure_args.append('--without-readline')
             tc.configure_args.append('--with-zlib' if self.options.get_safe('with_zlib') else '--without-zlib')
@@ -133,9 +131,10 @@ class LibpqConan(ConanFile):
                 tc.extra_cflags.append("-msse2")
             tc.make_args.append(f"DESTDIR={unix_path(self, self.package_folder)}")
             if self.settings.os == "Windows":
-                tc.make_args.append(f"MAKE_DLL={str(self.options.shared).lower()}")
+                tc.make_args.append("MAKE_DLL={}".format(str(self.options.shared).lower()))
+            if is_apple_os(self):
+                tc.extra_ldflags.append("-headerpad_max_install_names")
             tc.generate()
-
             AutotoolsDeps(self).generate()
             PkgConfigDeps(self).generate()
 
@@ -182,7 +181,8 @@ class LibpqConan(ConanFile):
                 # Interim solution - recipes should move to using meson-based newer libpq
                 replace_in_file(self, solution_pm, "($output =~ /^\/favor:<.+AMD64/m) ? 'x64' : 'Win32';", "'ARM64';")
                 replace_in_file(self, msbuild_project_pm, "$self->{platform} eq 'Win32' ? 'MachineX86' : 'MachineX64';", "'MachineARM64';")
-                replace_in_file(self, msbuild_project_pm, "<RandomizedBaseAddress>false", "<RandomizedBaseAddress>true")
+                if Version(self.version) < '16':
+                    replace_in_file(self, msbuild_project_pm, "<RandomizedBaseAddress>false", "<RandomizedBaseAddress>true")
                 replace_in_file(self, os.path.join(self.source_folder, "src/port/pg_crc32c_sse42.c"), "nmmintrin.h", "intrin.h")
             if self.options.with_openssl:
                 openssl = self.dependencies["openssl"]
@@ -194,14 +194,10 @@ class LibpqConan(ConanFile):
                     replace_in_file(self,solution_pm,
                                           "%s.lib" % crypto,
                                           "%s.lib" % openssl.cpp_info.components["crypto"].libs[0])
-                if Version(self.version) < "16":
-                    replace_in_file(self,config_default_pl,
-                                      "openssl   => undef",
+                openssl_entry = "openssl => undef" if Version(self.version) >= "16.0" else "openssl   => undef"
+                replace_in_file(self,config_default_pl,
+                                      openssl_entry,
                                       "openssl   => '%s'" % openssl.package_folder.replace("\\", "/"))
-                else:
-                    replace_in_file(self,config_default_pl,
-                                      "openssl => undef",
-                                      "openssl => '%s'" % openssl.package_folder.replace("\\", "/"))
             if self.options.with_icu:
                 libicu = self.dependencies["icu"]
                 iculibdir = libicu.cpp_info.components["icu"].libdirs[0]

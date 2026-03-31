@@ -43,6 +43,7 @@ class OpenTelemetryCppConan(ConanFile):
     default_options = {
         "fPIC": True,
         "shared": False,
+
         "with_abi_v2": False,
         "with_no_deprecated_code": False,
         # Enabling this causes stack overflow in the test_package
@@ -128,14 +129,18 @@ class OpenTelemetryCppConan(ConanFile):
         if self.options.with_prometheus:
             self.requires("prometheus-cpp/1.1.0")
 
-
     @property
     def _proto_root(self):
         return self.dependencies.build["opentelemetry-proto"].conf_info.get("user.opentelemetry-proto:proto_root").replace("\\", "/")
 
     @property
     def _min_cppstd(self):
-        return 14
+        # opentelemetry-cpp itself requires C++14, but newer protobuf/grpc require the consumer to build with C++17
+
+        protobuf_requires_cppstd17 = self._needs_proto and Version(self.dependencies["protobuf"].ref.version) >= "6.30"
+        grpc_requires_cppstd17 = self.options.with_otlp_grpc and Version(self.dependencies["grpc"].ref.version) >= "1.70.0"
+        require_cppstd_17 = protobuf_requires_cppstd17 or grpc_requires_cppstd17
+        return 17 if require_cppstd_17 else 14
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)
@@ -296,7 +301,6 @@ index d1b5555b..b529c92a 100644
 
         if self.options.with_otlp_grpc and Version(self.version) < "1.9.1":
             save(self, protos_cmake_path, "\ntarget_link_libraries(opentelemetry_proto PUBLIC gRPC::grpc++)", append=True)
-
 
     def build(self):
         self._patch_sources()

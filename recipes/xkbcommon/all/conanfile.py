@@ -38,13 +38,7 @@ class XkbcommonConan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
-    @property
-    def _has_xkbregistry_option(self):
-        return Version(self.version) >= "1.0.0"
-
     def config_options(self):
-        if not self._has_xkbregistry_option:
-            del self.options.xkbregistry
         if self.settings.os not in ("Linux", "Android"):
             del self.options.with_wayland
         if self.settings.os == "Android":
@@ -84,12 +78,9 @@ class XkbcommonConan(ConanFile):
         if Version(self.version) >= "1.6":
             tc.project_options["enable-bash-completion"] = False
         tc.project_options["enable-docs"] = False
-        tc.project_options["enable-wayland"] = self.options.get_safe("with_wayland", False)
-        tc.project_options["enable-x11"] = self.options.get_safe("with_x11", False)
-        tc.c = os.environ["CC"]
-        tc.cpp = os.environ["CXX"]
-        if self._has_xkbregistry_option:
-            tc.project_options["enable-xkbregistry"] = self.options.get_safe("xkbregistry", False)
+        tc.project_options["enable-wayland"] = bool(self.options.get_safe("with_wayland", False))
+        tc.project_options["enable-x11"] = bool(self.options.get_safe("with_x11", False))
+        tc.project_options["enable-xkbregistry"] = bool(self.options.xkbregistry)
         tc.project_options["build.pkg_config_path"] = self.generators_folder
         if self.settings.os == "Android":
             tc.project_options["enable-tools"] = False
@@ -132,7 +123,7 @@ class XkbcommonConan(ConanFile):
             self.cpp_info.components["libxkbcommon-x11"].set_property("pkg_config_name", "xkbcommon-x11")
             self.cpp_info.components["libxkbcommon-x11"].libs = ["xkbcommon-x11"]
             self.cpp_info.components["libxkbcommon-x11"].requires = ["libxkbcommon", "xorg::xcb", "xorg::xcb-xkb"]
-        if self.options.get_safe("xkbregistry"):
+        if self.options.xkbregistry:
             self.cpp_info.components["libxkbregistry"].set_property("pkg_config_name", "xkbregistry")
             self.cpp_info.components["libxkbregistry"].libs = ["xkbregistry"]
             self.cpp_info.components["libxkbregistry"].requires = ["libxml2::libxml2"]

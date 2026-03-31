@@ -171,6 +171,8 @@ class LibcurlConan(ConanFile):
             self.requires("wolfssl/5.6.6")
         elif self.options.with_ssl == "mbedtls":
             self.requires("mbedtls/3.5.0")
+        if self.settings.os == "Linux" and self.options.with_ldap:
+            self.requires("openldap/[>=2.6 <3]")
         if self.options.with_nghttp2:
             self.requires("libnghttp2/[>=1.59.0 <2]")
         if self.options.with_libssh2:
@@ -206,6 +208,7 @@ class LibcurlConan(ConanFile):
             if self._is_win_x_android:
                 self.tool_requires("ninja/[>=1.10.2 <2]")
         else:
+            self.tool_requires("libtool/2.4.7")
             if not self.conf.get("tools.gnu:pkg_config", check_type=str):
                 self.tool_requires("pkgconf/[>=2.2 <3]")
             if self.settings.os in [ "tvOS", "watchOS" ]:
@@ -669,8 +672,6 @@ class LibcurlConan(ConanFile):
 
             if self.options.with_ssl == "wolfssl":
                 deps.set_property("wolfssl", "cmake_target_name", "CURL::wolfssl")
-            # Now the rest of the dependencies that don't use the imported target directly
-            # (openssl, zlib)
 
             if self.options.with_ssl == "mbedtls":
                 deps.set_property("mbedtls", "cmake_target_name", "CURL::mbedtls")
@@ -761,6 +762,8 @@ class LibcurlConan(ConanFile):
             self.cpp_info.components["curl"].requires.append("wolfssl::wolfssl")
         if self.options.with_ssl == "mbedtls":
             self.cpp_info.components["curl"].requires.append("mbedtls::mbedtls")
+        if self.settings.os == "Linux" and self.options.with_ldap:
+            self.cpp_info.components["curl"].requires.append("openldap::openldap")
         if self.options.with_nghttp2:
             self.cpp_info.components["curl"].requires.append("libnghttp2::libnghttp2")
         if self.options.with_libssh2:

@@ -90,7 +90,7 @@ class LibMysqlClientCConan(ConanFile):
                             f"# WARN_MISSING_SYSTEM_{lib.upper()}({lib.upper()}_WARN_GIVEN)",
                             strict=False)
 
-            if lib != "libevent" or Version(self.version) < "8.0.34":
+            if lib != "libevent":
                 replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
                                 f"SET({lib.upper()}_WARN_GIVEN)",
                                 f"# SET({lib.upper()}_WARN_GIVEN)",

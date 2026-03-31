@@ -1,7 +1,11 @@
 versions:
+  "6.33.5":
+    folder: all
   "6.32.1":
     folder: all
   "6.30.1":
+    folder: all
+  "5.29.6":
     folder: all
   "5.29.3":
     folder: all

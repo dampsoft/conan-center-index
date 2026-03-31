@@ -8,6 +8,7 @@ from conan.tools.env import VirtualBuildEnv, VirtualRunEnv
 from conan.tools.build import cross_building
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
 from conan.tools.scm import Version
+from conan.tools.gnu import PkgConfigDeps
 import os
 import functools
 
@@ -27,44 +28,35 @@ class PopplerConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "cpp": [True, False],
+        "with_libcurl": [True, False],
+        "with_zlib": [True, False],
+        "with_lcms": [True, False],
         "fontconfiguration": ["generic", "fontconfig", "win32", "android"],
-        "splash": [True, False],
-        "float": [True, False],
         "with_cairo": [True, False],
         "with_glib": [True, False],
+        "cpp": [True, False],
+        "splash": [True, False],
+        "float": [True, False],
         "with_gobject_introspection": [True, False],
         "with_qt": [True, False],
         "with_libiconv": [True, False],
         "with_openjpeg": [True, False],
-        "with_lcms": [True, False],
         "with_libjpeg": ["libjpeg", "libjpeg-turbo", False],
         "with_png": [True, False],
         "with_nss": [True, False],
         "with_tiff": [True, False],
-        "with_libcurl": [True, False],
-        "with_zlib": [True, False],
-        # "with_qt": [True, False],
-        # If you need control over these options, please open an issue
-        # "with_openjpeg": [True, False],
-        # "with_libjpeg": ["libjpeg", False],
-        # "with_png": [True, False],
-        # "with_gobject_introspection": [True, False],
-        # "with_gtk": [True, False],
-        # "with_nss": [True, False],
-        # "float": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
-        "cpp": True,
         "with_zlib": True,
         "with_libcurl": False,
-        "splash": True,
         "with_lcms": False,
         "fontconfiguration": "generic",
         "with_cairo": False,
         "with_glib": False,
+        "cpp": True,
+        "splash": True,
         "with_gobject_introspection": True,
         "with_qt": False,
         "with_libiconv": True,
@@ -106,44 +98,48 @@ class PopplerConan(ConanFile):
     def requirements(self):
         self.requires("poppler-data/0.4.11")
         self.requires("freetype/2.13.3")
-        if self.options.get_safe("with_libiconv"):
-            self.requires("libiconv/1.18")
-        if self.options.fontconfiguration == "fontconfig":
-            self.requires("fontconfig/2.15.0")
-        if self.options.with_cairo:
-            self.requires("cairo/1.18.0")
-        if self.options.get_safe("with_glib"):
-            self.requires("glib/2.78.3")
-        if self.options.get_safe("with_gobject_introspection"):
-            self.requires("gobject-introspection/1.72.0")
-        if self.options.with_qt:
-            self.requires("qt/6.10.2")
-        if self.options.with_openjpeg:
-            self.requires("openjpeg/2.5.3")
-        if self.options.with_lcms:
-            self.requires("lcms/[>=2.16 <3]")
-        if self.options.with_libjpeg == "libjpeg-turbo":
-            self.requires("libjpeg-turbo/[>=3.0 <3.2]")
-        elif self.options.with_libjpeg == "libjpeg":
-            self.requires("libjpeg/[>=9e]")
-        if self.options.with_png:
-            self.requires("libpng/[>=1.6 <2]")
-        if self.options.with_tiff:
-            self.requires("libtiff/[>=4.6.0 <5]")
         if self.options.splash:
             self.requires("boost/[>=1.81.0 <=1.90.0]")
         elif Version(self.version).major >= 25:
             self.requires("boost/[>=1.81.0 <=1.90.0]", options={"header_only": True})
-        if self.options.with_libcurl:
-            self.requires("libcurl/[>=7.78.0 <9]")
+        if self.options.get_safe("with_libiconv"):
+            self.requires("libiconv/1.18")
+        if self.options.with_png:
+            self.requires("libpng/[>=1.6 <2]")
+        if self.options.with_tiff:
+            self.requires("libtiff/[>=4.6.0 <5]")
+        if self.options.with_libjpeg == "libjpeg-turbo":
+            self.requires("libjpeg-turbo/[>=3.0 <3.2]")
+        elif self.options.with_libjpeg == "libjpeg":
+            self.requires("libjpeg/[>=9e]")
+        if self.options.with_openjpeg:
+            self.requires("openjpeg/[>=2.5.2 <3]")
         if self.options.with_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
+        if self.options.fontconfiguration == "fontconfig":
+            self.requires("fontconfig/2.15.0")
+        if self.options.with_libcurl:
+            self.requires("libcurl/[>=7.78.0 <9]")
+        if self.options.with_lcms:
+            self.requires("lcms/[>=2.16 <3]")
+        if self.options.with_cairo:
+            self.requires("cairo/1.18.0")
+        if self.options.get_safe("with_glib"):
+            self.requires("glib/2.78.3")
+
+        # Not upstream
+        if self.options.get_safe("with_gobject_introspection"):
+            self.requires("gobject-introspection/1.72.0")
+        if self.options.with_qt:
+            self.requires("qt/6.10.2")
 
     @property
     @functools.lru_cache(1)
     def _poppler_data_datadir(self):
         poppler_data_conf = self.dependencies["poppler-data"].conf_info
         return poppler_data_conf.get("user.poppler-data:datadir", check_type=str)
+
+
 
     def validate(self):
         if self.options.fontconfiguration == "win32" and self.settings.os != "Windows":
@@ -172,8 +168,7 @@ class PopplerConan(ConanFile):
             self.tool_requires("pkgconf/[>=2.2 <3]")
 
     def source(self):
-        get(self, **self.conan_data["sources"][self.version],
-                  destination=self.source_folder, strip_root=True)
+        get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
 
     @property
@@ -212,42 +207,49 @@ class PopplerConan(ConanFile):
         tc.cache_variables["BUILD_MANUAL_TESTS"] = False
         tc.cache_variables["ENABLE_UTILS"] = False
 
-        tc.cache_variables["ENABLE_CPP"] = self.options.cpp
-        tc.cache_variables["ENABLE_BOOST"] = self.options.splash
-        tc.cache_variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
-        tc.cache_variables["WITH_JPEG"] = bool(self.options.with_libjpeg)
-        tc.cache_variables["WITH_PNG"] = self.options.with_png
-        tc.cache_variables["ENABLE_LIBTIFF"] = self.options.with_tiff
-        tc.cache_variables["ENABLE_NSS3"] = self.options.with_nss
-        tc.cache_variables["WITH_Cairo"] = self.options.with_cairo
-        tc.cache_variables["CAIRO_FOUND"] = self.options.with_cairo
-        tc.cache_variables["ENABLE_GLIB"] = self.options.get_safe("with_glib", False)
-        tc.cache_variables["WITH_GTK"] = False
-        tc.cache_variables["ENABLE_GOBJECT_INTROSPECTION"] = self.options.get_safe("with_gobject_introspection", False)
-        tc.cache_variables["WITH_Iconv"] = self.options.get_safe("with_libiconv", False)
+        tc.cache_variables["ENABLE_ZLIB_UNCOMPRESS"] = self.options.with_zlib
         tc.cache_variables["ENABLE_ZLIB"] = self.options.with_zlib
-        tc.cache_variables["ENABLE_LIBOPENJPEG"] = "openjpeg2" if self.options.with_openjpeg else "none"
+
+        tc.cache_variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
         tc.cache_variables["ENABLE_LCMS"] = self.options.with_lcms
         tc.cache_variables["ENABLE_LIBCURL"] = self.options.with_libcurl
+        # One controls the option, the other the dependency. Cairo is needed for glib
+        tc.cache_variables["WITH_Cairo"] = self.options.with_cairo
+        tc.cache_variables["CAIRO_FOUND"] = self.options.with_cairo
+        tc.cache_variables["ENABLE_GLIB"] = self.options.with_glib
+        tc.cache_variables["WITH_GLIB"] = self.options.with_glib
 
-        tc.cache_variables["POPPLER_DATADIR"] = self._poppler_data_datadir.replace("\\", "/")
-        tc.cache_variables["FONT_CONFIGURATION"] = self.options.fontconfiguration
-        tc.cache_variables["BUILD_CPP_TESTS"] = False
+
+        tc.cache_variables["WITH_PNG"] = self.options.with_png
+        tc.cache_variables["WITH_GTK"] = False
+        tc.cache_variables["ENABLE_NSS3"] = self.options.with_nss
+        tc.cache_variables["ENABLE_GOBJECT_INTROSPECTION"] = self.options.get_safe("with_gobject_introspection", False)
         tc.cache_variables["ENABLE_GTK_DOC"] = False
+        tc.cache_variables["ENABLE_GPGME"] = False  # Not available in CCI
+        tc.cache_variables["POPPLER_DATADIR"] = self._poppler_data_datadir.replace("\\", "/")
+
         tc.cache_variables["ENABLE_QT5"] = self.options.with_qt and not self._uses_qt6
         tc.cache_variables["ENABLE_QT6"] = self.options.with_qt and self._uses_qt6
-
-        tc.cache_variables["ENABLE_DCTDECODER"] = self._dct_decoder
-        tc.cache_variables["USE_FLOAT"] = self.options.float
-        tc.cache_variables["RUN_GPERF_IF_PRESENT"] = False
-        if self.settings.os == "Windows":
-            tc.cache_variables["ENABLE_RELOCATABLE"] = self.options.shared
-        tc.cache_variables["EXTRA_WARN"] = False
 
         # TODO: Why?
         tc.cache_variables["RUN_GPERF_IF_PRESENT"] = False
 
-        tc.cache_variables["ENABLE_GPGME"] = False
+        # Not upstream
+        tc.cache_variables["ENABLE_CPP"] = self.options.cpp
+        tc.cache_variables["ENABLE_BOOST"] = self.options.splash
+        tc.cache_variables["WITH_JPEG"] = bool(self.options.with_libjpeg)
+        tc.cache_variables["ENABLE_LIBTIFF"] = self.options.with_tiff
+        tc.cache_variables["WITH_GTK"] = False
+        tc.cache_variables["ENABLE_GOBJECT_INTROSPECTION"] = self.options.get_safe("with_gobject_introspection", False)
+        tc.cache_variables["WITH_Iconv"] = self.options.get_safe("with_libiconv", False)
+        tc.cache_variables["ENABLE_LIBOPENJPEG"] = "openjpeg2" if self.options.with_openjpeg else "none"
+
+        tc.cache_variables["ENABLE_DCTDECODER"] = self._dct_decoder
+        tc.cache_variables["USE_FLOAT"] = self.options.float
+        if self.settings.os == "Windows":
+            tc.cache_variables["ENABLE_RELOCATABLE"] = self.options.shared
+        tc.cache_variables["EXTRA_WARN"] = False
+
 
         vbe = VirtualBuildEnv(self)
         vbe.generate()
@@ -258,8 +260,6 @@ class PopplerConan(ConanFile):
 
         deps = CMakeDeps(self)
         deps.set_property("freetype", "cmake_file_name", "FREETYPE")
-        # conan-io/conan#12600
-
         if self.options.fontconfiguration == "fontconfig":
             deps.set_property("fontconfig", "cmake_file_name", "FONTCONFIG")
         if self.options.with_lcms:
@@ -277,6 +277,8 @@ class PopplerConan(ConanFile):
             deps.set_property("libiconv", "cmake_find_mode", "module")
 
         deps.generate()
+        pkgdeps = PkgConfigDeps(self)
+        pkgdeps.generate()
 
     def build(self):
         # Use CMake's built-in version of FindIconv.cmake to fix the build on MacOS
@@ -324,11 +326,10 @@ class PopplerConan(ConanFile):
             self.cpp_info.components["libpoppler"].requires.append("nss::nss")
         if self.options.with_tiff:
             self.cpp_info.components["libpoppler"].requires.append("libtiff::libtiff")
-        if self.options.with_libcurl:
-            self.cpp_info.components["libpoppler"].requires.append("libcurl::libcurl")
         if self.options.with_zlib:
             self.cpp_info.components["libpoppler"].requires.append("zlib::zlib")
-
+        if self.options.with_libcurl:
+            self.cpp_info.components["libpoppler"].requires.append("libcurl::libcurl")
         if self.options.with_lcms:
             self.cpp_info.components["libpoppler"].requires.append("lcms::lcms")
 
@@ -340,18 +341,15 @@ class PopplerConan(ConanFile):
             if self.options.get_safe("with_libiconv"):
                 self.cpp_info.components["libpoppler-cpp"].requires.append("libiconv::libiconv")
 
-        if self.options.splash:
-            self.cpp_info.components["libpoppler-splash"].libs = []
-            self.cpp_info.components["libpoppler-splash"].names["pkg_config"] = "poppler-splash"
-            self.cpp_info.components["libpoppler-splash"].requires = ["libpoppler", "boost::boost"]  # FIXME: should be boost::headers, see https://github.com/conan-io/conan-center-index/pull/2097
+        self.cpp_info.components["libpoppler-cpp"].libs = ["poppler-cpp"]
+        self.cpp_info.components["libpoppler-cpp"].includedirs.append(os.path.join("include", "poppler", "cpp"))
+        self.cpp_info.components["libpoppler-cpp"].requires = ["libpoppler", "libiconv::libiconv"]
 
         if self.options.with_cairo:
             self.cpp_info.components["libpoppler-cairo"].libs = []
-            self.cpp_info.components["libpoppler-cairo"].names["pkg_config"] = "poppler-cairo"
             self.cpp_info.components["libpoppler-cairo"].requires = ["libpoppler", "cairo::cairo"]
         if self.options.get_safe("with_glib"):
             self.cpp_info.components["libpoppler-glib"].libs = ["poppler-glib"]
-            self.cpp_info.components["libpoppler-glib"].names["pkg_config"] = "poppler-glib"
             self.cpp_info.components["libpoppler-glib"].requires = ["libpoppler-cpp", "cairo::cairo", "glib::glib", "freetype::freetype"]
             if self.options.get_safe("with_gobject_introspection"):
                 self.cpp_info.components["libpoppler-glib"].requires.append("gobject-introspection::gobject-introspection")
@@ -359,7 +357,6 @@ class PopplerConan(ConanFile):
         if self.options.with_qt:
             qt_major = self._qt_major
             self.cpp_info.components["libpoppler-qt"].libs = [f"poppler-qt{qt_major}"]
-            self.cpp_info.components["libpoppler-qt"].names["pkg_config"] = f"poppler-qt{qt_major}"
             self.cpp_info.components["libpoppler-qt"].requires = ["libpoppler", "qt::qtCore", "qt::qtGui", "qt::qtWidgets"]
 
         datadir = self._poppler_data_datadir

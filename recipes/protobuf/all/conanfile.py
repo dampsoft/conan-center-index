@@ -9,7 +9,7 @@ from conan.tools.scm import Version
 
 import os
 
-required_conan_version = ">=1.53"
+required_conan_version = ">2.1"
 
 
 class ProtobufConan(ConanFile):
@@ -81,9 +81,11 @@ class ProtobufConan(ConanFile):
             self.requires("zlib/[>=1.2.11 <2]")
 
         if self._protobuf_release >= "30.1":
-            self.requires("abseil/[>=20230802.1 <=20250814.0]", transitive_headers=True)
-        elif self._protobuf_release >= "22.0":
-            self.requires("abseil/[>=20230802.1 <=20250127.0]", transitive_headers=True)
+            self.requires("abseil/[>=20230802.1 <=20260107.1]", transitive_headers=True, transitive_libs=True)
+        else:
+            # 5.29.x cannot use newer abseil than this, because newer abseil requires c++17 as minmum
+            # and it no longer has the `absl::if_constexpr` CMake target
+            self.requires("abseil/[>=20230802.1 <=20250127.0]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         if self.options.shared and is_msvc_static_runtime(self):
@@ -93,10 +95,9 @@ class ProtobufConan(ConanFile):
             not self.dependencies["abseil"].options.shared:
             raise ConanInvalidConfiguration("When building protobuf as a shared library on Windows, "
                                             "abseil needs to be a shared library too")
-        if self._protobuf_release >= "30.1":
-            check_min_cppstd(self, 17)
-        elif self._protobuf_release >= "22.0":
-            check_min_cppstd(self, 14)
+<<<<<<< HEAD
+        min_cppstd = 17 if self._protobuf_release >= "30.1" else 14
+        check_min_cppstd(self, min_cppstd)
 
         check_min_vs(self, "190")
 
@@ -111,10 +112,11 @@ class ProtobufConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        self._patch_sources()
 
     def build_requirements(self):
         if self._protobuf_release >= "30.1":
-            self.tool_requires("cmake/[>=3.16 <4]")
+            self.tool_requires("cmake/[>=3.16]")
 
     @property
     def _cmake_install_base_path(self):
@@ -135,8 +137,7 @@ class ProtobufConan(ConanFile):
         tc.cache_variables["protobuf_BUILD_LIBUPB"] = self.options.get_safe("upb")
         if self._protobuf_release >= "22.0":
             tc.cache_variables["protobuf_ABSL_PROVIDER"] = "package"
-            if not self.settings.compiler.get_safe("cppstd") and self._protobuf_release >= "22.0":
-                tc.variables["CMAKE_CXX_STANDARD"] = 14
+
         if is_msvc(self) or self._is_clang_cl:
             runtime = self.settings.get_safe("compiler.runtime")
             if runtime:
@@ -150,12 +151,8 @@ class ProtobufConan(ConanFile):
             # in the grpc recipe when grpc_cpp_plugin is run with protoc
             # in the same build. RPATH ensures that the rpath in the binary
             # is respected for transitive dependencies too
-            project_include = os.path.join(self.generators_folder, "protobuf_project_include.cmake")
-            save(self, project_include, "add_link_options(-Wl,--disable-new-dtags)")
-            tc.variables["CMAKE_PROJECT_INCLUDE"] = project_include
-            # Note: conan2 only could be:
-            # tc.extra_exelinkflags.append("-Wl,--disable-new-dtags")
-            # tc.extra_sharedlinkflags.append("-Wl,--disable-new-dtags")
+            tc.extra_exelinkflags.append("-Wl,--disable-new-dtags")
+            tc.extra_sharedlinkflags.append("-Wl,--disable-new-dtags")
 
         tc.generate()
 
@@ -189,7 +186,6 @@ class ProtobufConan(ConanFile):
         )
 
     def build(self):
-        self._patch_sources()
         cmake = CMake(self)
         cmake_root = "cmake" if Version(self.version) < "3.21" else None
         cmake.configure(build_script_folder=cmake_root)
@@ -230,7 +226,6 @@ class ProtobufConan(ConanFile):
 
         lib_prefix = "lib" if (is_msvc(self) or self._is_clang_cl) else ""
         lib_suffix = "d" if self.settings.build_type == "Debug" and self.options.debug_suffix else ""
-
         if self._protobuf_release >= "22.0":
             absl_deps = [f"abseil::{c}" for c in self.conan_data["absl_deps"][self.version]]
 

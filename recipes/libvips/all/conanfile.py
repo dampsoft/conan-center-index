@@ -288,6 +288,9 @@ class LibvipsConan(ConanFile):
         tc.generate()
 
         deps = PkgConfigDeps(self)
+        if self.options.with_pdfium:
+            pdfium_api_version = Version(self.dependencies["pdfium"].ref.version).patch
+            deps.set_property("pdfium", "system_package_version", pdfium_api_version)
         deps.generate()
 
     def _patch_sources(self):
