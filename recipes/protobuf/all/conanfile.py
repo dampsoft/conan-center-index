@@ -95,7 +95,6 @@ class ProtobufConan(ConanFile):
             not self.dependencies["abseil"].options.shared:
             raise ConanInvalidConfiguration("When building protobuf as a shared library on Windows, "
                                             "abseil needs to be a shared library too")
-<<<<<<< HEAD
         min_cppstd = 17 if self._protobuf_release >= "30.1" else 14
         check_min_cppstd(self, min_cppstd)
 
