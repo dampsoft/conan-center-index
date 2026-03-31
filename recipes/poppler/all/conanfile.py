@@ -216,9 +216,8 @@ class PopplerConan(ConanFile):
         # One controls the option, the other the dependency. Cairo is needed for glib
         tc.cache_variables["WITH_Cairo"] = self.options.with_cairo
         tc.cache_variables["CAIRO_FOUND"] = self.options.with_cairo
-        tc.cache_variables["ENABLE_GLIB"] = self.options.with_glib
-        tc.cache_variables["WITH_GLIB"] = self.options.with_glib
-
+        tc.cache_variables["ENABLE_GLIB"] = self.options.get_safe("with_glib", False)
+        tc.cache_variables["WITH_GLIB"] = self.options.get_safe("with_glib", False)
 
         tc.cache_variables["WITH_PNG"] = self.options.with_png
         tc.cache_variables["WITH_GTK"] = False
@@ -309,6 +308,9 @@ class PopplerConan(ConanFile):
 
         if Version(self.version).major >= 25:
             self.cpp_info.components["libpoppler"].requires.append("boost::headers")
+
+        if self.options.get_safe("splash", False):
+            self.cpp_info.components["libpoppler"].requires.append("boost::boost")
 
         if self.options.fontconfiguration == "fontconfig":
             self.cpp_info.components["libpoppler"].requires.append("fontconfig::fontconfig")
