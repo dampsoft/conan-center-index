@@ -249,6 +249,7 @@ class PopplerConan(ConanFile):
             tc.cache_variables["ENABLE_RELOCATABLE"] = self.options.shared
         tc.cache_variables["EXTRA_WARN"] = False
 
+        tc.cache_variables["CMAKE_BUILD_TYPE"] = str(self.settings.build_type)
 
         vbe = VirtualBuildEnv(self)
         vbe.generate()
