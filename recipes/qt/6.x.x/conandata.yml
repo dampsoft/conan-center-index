@@ -155,6 +155,10 @@ patches:
       "patch_description": "Workaround for crash when accessing first() on empty obj"
       "patch_file": "patches/0001-fix-crash-when-font-families-are-empty_6.10.2.patch"
       "patch_type": "conan"
+    - "base_path": "qtbase"
+      "patch_description": "Workaround for building with Apple Clang 21/SDK 26.4"
+      "patch_file": "patches/0001-qyieldcpu-Fix-compilation-with-macOS-26.4-SDK_6_10_2.patch"
+      "patch_type": "backport"
   "6.10.1":
     - "base_path": "qtwebengine"
       "patch_description": "Workaround for too long .rps file name"
