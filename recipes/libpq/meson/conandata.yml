@@ -1,4 +1,7 @@
 sources:
+  "18.3":
+    url: "https://ftp.postgresql.org/pub/source/v18.3/postgresql-18.3.tar.bz2"
+    sha256: "d95663fbbf3a80f81a9d98d895266bdcb74ba274bcc04ef6d76630a72dee016f"
   "18.1":
     url: "https://ftp.postgresql.org/pub/source/v18.1/postgresql-18.1.tar.bz2"
     sha256: "ff86675c336c46e98ac991ebb306d1b67621ece1d06787beaade312c2c915d54"
@@ -24,6 +27,15 @@ sources:
     url: "https://ftp.postgresql.org/pub/source/v17.0/postgresql-17.0.tar.bz2"
     sha256: "7e276131c0fdd6b62588dbad9b3bb24b8c3498d5009328dba59af16e819109de"
 patches:
+  "18.3":
+    - patch_file: "patches/18.3/0001-strictly-require-enabled-deps.patch"
+      patch_description: "Strictly require enabled dependencies is meson.build"
+      patch_type: "conan"
+    - patch_file: "patches/18.3/0002-Hack-to-work-around-function-declaration-when-buildi.patch"
+      patch_description: "Fix detection of available functions when building on specific MacOS targets"
+      patch_type: "portability"
+    - patch_file : "patches/18.3/0003-patch-pgflex.patch"
+      patch_description: "Preserves env and sets FLEX_TMP_DIR, also pops TMP, TEMP, TMPDIR from env for compat with Windows"
   "18.1":
     - patch_file: "patches/18.1/0001-strictly-require-enabled-deps.patch"
       patch_description: "Strictly require enabled dependencies is meson.build"
