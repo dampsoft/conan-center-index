@@ -1,0 +1,32 @@
+From d17b85cec42c15182b51fb4361d0c4fb4ab08eb0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Mon, 20 Apr 2026 16:21:01 +0200
+Subject: [PATCH] fix qt targets
+
+---
+ CMakeLists.txt | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bba3aa45..18db08ad 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -220,10 +220,10 @@ find_soft_mandatory_package(ENABLE_QT5 Qt5Test ${QT5_VERSION})
+ 
+ set(QT6_VERSION "6.2")
+ SET(QT_NO_CREATE_VERSIONLESS_TARGETS ON)
+-find_soft_mandatory_package(ENABLE_QT6 Qt6Core ${QT6_VERSION})
+-find_soft_mandatory_package(ENABLE_QT6 Qt6Gui ${QT6_VERSION})
+-find_soft_mandatory_package(ENABLE_QT6 Qt6Widgets ${QT6_VERSION})
+-find_soft_mandatory_package(ENABLE_QT6 Qt6Test ${QT6_VERSION})
++
++if (ENABLE_QT6)
++  find_package(Qt6 ${QT6_VERSION} COMPONENTS Core Gui Widgets Test REQUIRED)
++endif()
+ 
+ add_definitions(-DQT_NO_CAST_FROM_ASCII)
+ add_definitions(-DQT_NO_CAST_FROM_BYTEARRAY)
+-- 
+2.51.0
+

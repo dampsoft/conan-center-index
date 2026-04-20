@@ -1,0 +1,33 @@
+From 4254d01154b13c37cd13a2a455a8cbe1ef163589 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20Friedrich=20Br=C3=BCggemann?=
+ <tim.brueggemann@dampsoft.de>
+Date: Mon, 20 Apr 2026 16:12:43 +0200
+Subject: [PATCH] msvc basetsd int32
+
+---
+ poppler/ImageEmbeddingUtils.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/poppler/ImageEmbeddingUtils.cc b/poppler/ImageEmbeddingUtils.cc
+index 139125c0..d95ab873 100644
+--- a/poppler/ImageEmbeddingUtils.cc
++++ b/poppler/ImageEmbeddingUtils.cc
+@@ -15,6 +15,7 @@
+ #include <config.h>
+ 
+ #include <memory>
++#include "Error.h"
+ #if ENABLE_LIBJPEG
+ #    include <cstdio> // jpeglib.h is broken on purpose and needs cstdio include before it
+ extern "C" {
+@@ -30,7 +31,6 @@ extern "C" {
+ #include "goo/GooCheckedOps.h"
+ #include "Object.h"
+ #include "Array.h"
+-#include "Error.h"
+ #include "PDFDoc.h"
+ 
+ namespace ImageEmbeddingUtils {
+-- 
+2.51.0
+

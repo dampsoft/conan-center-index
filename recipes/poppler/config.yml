@@ -1,4 +1,6 @@
 versions:
+  "26.04.0":
+    folder: "all"
   "25.11.0":
     folder: "all"
   "24.04.0":
