@@ -83,7 +83,7 @@ class AprUtilConan(ConanFile):
             # are pulling it in - discovered in https://github.com/conan-io/conan-center-index/pull/16266
             self.requires("libiconv/1.17", transitive_libs=True)
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
         if self.options.with_mysql:
             self.requires("libmysqlclient/8.1.0")
         if self.options.with_sqlite3:

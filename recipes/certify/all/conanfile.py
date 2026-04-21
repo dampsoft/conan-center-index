@@ -39,7 +39,7 @@ class CertifyConan(ConanFile):
 
     def requirements(self):
         self.requires("boost/[>=1.83.0 <2]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
 
     def package_id(self):
         self.info.clear()

@@ -226,7 +226,7 @@ class LibwebsocketsConan(ConanFile):
             self.requires("sqlite3/3.44.2")
 
         if self.options.with_ssl == "openssl":
-            self.requires("openssl/[>=1.1.1w <4]", transitive_headers=True)
+            self.requires("openssl/[>=1.1.1w <5]", transitive_headers=True)
         elif self.options.with_ssl == "mbedtls":
             self.requires("mbedtls/3.5.0")
         elif self.options.with_ssl == "wolfssl":

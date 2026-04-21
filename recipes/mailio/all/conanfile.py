@@ -31,7 +31,7 @@ class MailioConan(ConanFile):
 
     def requirements(self):
         self.requires("boost/1.86.0", transitive_headers=True, transitive_libs=True)
-        self.requires("openssl/[>=1.1 <4]", transitive_headers=True, transitive_libs=True)
+        self.requires("openssl/[>=1.1 <5]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         check_min_cppstd(self, 17)

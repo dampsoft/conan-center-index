@@ -63,7 +63,7 @@ class LibniceConan(ConanFile):
     def requirements(self):
         self.requires("glib/[^2.78]", transitive_headers=True, transitive_libs=True)
         if self.options.crypto_library == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
         if self.options.with_gstreamer:
             self.requires("gstreamer/1.22.3")
 

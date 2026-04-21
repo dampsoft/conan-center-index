@@ -71,7 +71,7 @@ class LibZipConan(ConanFile):
             self.requires("xz_utils/[>=5.4.5 <6]")
 
         if self.options.crypto == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
         elif self.options.crypto == "mbedtls":
             self.requires("mbedtls/3.5.0")
         elif self.options.crypto == "gnutls":

@@ -51,7 +51,7 @@ class SioclientConan(ConanFile):
         self.requires("asio/1.30.2")
         self.requires("rapidjson/cci.20230929")
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.settings.compiler.cppstd:

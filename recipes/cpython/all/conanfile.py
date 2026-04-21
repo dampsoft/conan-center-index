@@ -109,7 +109,7 @@ class CPythonConan(ConanFile):
     def requirements(self):
         self.requires("zlib/[>=1.2.11 <2]")
         if self._supports_modules:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
             self.requires("expat/[>=2.6.2 <3]")
             self.requires("libffi/3.4.4")
             if Version(self.version) < "3.10" or is_apple_os(self):

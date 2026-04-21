@@ -64,7 +64,7 @@ class SentryCrashpadConan(ConanFile):
         if self.settings.os in ("Linux", "FreeBSD"):
             self.requires("libcurl/[>=7.78.0 <9]")
         if self.options.get_safe("with_tls"):
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.settings.compiler.get_safe("cppstd"):

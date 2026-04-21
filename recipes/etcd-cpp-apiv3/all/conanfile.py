@@ -39,7 +39,7 @@ class EtcdCppApiv3Conan(ConanFile):
     def requirements(self):
         self.requires("grpc/[>=1.54.3 <2]")
         self.requires("protobuf/[*]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
         self.requires("cpprestsdk/2.10.19", transitive_headers=True, transitive_libs=True)
 
     def build_requirements(self):

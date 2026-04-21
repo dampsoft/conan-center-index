@@ -60,7 +60,7 @@ class PulseAudioConan(ConanFile):
         if self.options.get_safe("with_x11"):
             self.requires("xorg/system")
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
         if self.options.with_dbus:
             self.requires("dbus/1.15.8")
 

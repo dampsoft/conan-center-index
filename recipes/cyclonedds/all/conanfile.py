@@ -79,7 +79,7 @@ class CycloneDDSConan(ConanFile):
         if self.options.with_shm:
             self.requires("iceoryx/2.0.5")
         if self.options.with_ssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.options.enable_security and not self.options.shared:

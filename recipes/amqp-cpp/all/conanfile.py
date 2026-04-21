@@ -46,7 +46,7 @@ class AmqpcppConan(ConanFile):
 
     def requirements(self):
         if self.options.get_safe("linux_tcp_module"):
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         check_min_cppstd(self, 11 if Version(self.version) < "4.3.20" else 17)

@@ -110,7 +110,7 @@ class TileDBConan(ConanFile):
         self.requires("zlib/[>=1.2.11 <2]")
         self.requires("zstd/[^1.5]")
         if self.settings.os != "Windows":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
         self.requires("libmagic/5.45")
         if self.options.azure:
             self.requires("azure-sdk-for-cpp/1.11.3")

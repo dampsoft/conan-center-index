@@ -119,7 +119,7 @@ class SentryNativeConan(ConanFile):
             else:
                 self.requires("zlib/[>=1.2.11 <2]")
                 if self.options.get_safe("crashpad_with_tls"):
-                    self.requires("openssl/[>=1.1 <4]")
+                    self.requires("openssl/[>=1.1 <5]")
         elif self.options.backend == "breakpad":
             if self.options.with_breakpad == "google":
                 self.requires("breakpad/cci.20210521")

@@ -63,7 +63,7 @@ class RestbedConan(ConanFile):
     def requirements(self):
         self.requires("asio/1.27.0")
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if getattr(self.info.settings.compiler, "cppstd"):

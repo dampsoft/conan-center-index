@@ -156,7 +156,7 @@ class GoogleCloudCppConan(ConanFile):
         self.requires("crc32c/1.1.2")
         # The rest require less pinning.
         self.requires("libcurl/[>=7.78 <9]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
         self.requires("zlib/[>=1.2.11 <2]")
 
     def build_requirements(self):

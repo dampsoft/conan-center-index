@@ -41,7 +41,7 @@ class OctoKeygenCPPConan(ConanFile):
         self.requires("octo-logger-cpp/1.1.0", transitive_headers=True)
         self.requires("octo-encryption-cpp/1.1.0", transitive_headers=True)
         self.requires("fmt/10.2.1")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.info.settings.compiler.get_safe("cppstd"):

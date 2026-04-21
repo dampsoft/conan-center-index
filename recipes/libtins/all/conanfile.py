@@ -68,7 +68,7 @@ class LibTinsConan(ConanFile):
             # - https://github.com/mfontanini/libtins/blob/v4.4/include/tins/tcp_ip/stream.h#L48
             self.requires("boost/1.83.0", transitive_headers=True)
         if self.options.with_wpa2:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.settings.compiler.cppstd:

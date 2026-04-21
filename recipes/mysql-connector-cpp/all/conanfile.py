@@ -38,7 +38,7 @@ class MysqlConnectorCppConan(ConanFile):
     def requirements(self):
         # None of the dependencies are used transitively
         self.requires("protobuf/3.21.12")  # v4 and newer are not supported as of v9.0.0
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
         self.requires("rapidjson/1.1.0")
         self.requires("zlib/[>=1.2.11 <2]")
         self.requires("lz4/1.9.4")

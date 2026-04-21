@@ -62,7 +62,7 @@ class OpenTDFConan(ConanFile):
     def requirements(self):
         # Uses openssl 3.x for 1.5.0 and newer
         if Version(self.version) >= "1.5.0":
-            self.requires("openssl/[>=3.1 <4]")
+            self.requires("openssl/[>=3.1 <5]")
         else:
             self.requires("openssl/1.1.1w")
         # Uses magic_enum for 1.4.0 and newer

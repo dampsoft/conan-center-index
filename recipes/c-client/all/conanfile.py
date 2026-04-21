@@ -43,7 +43,7 @@ class CclientConan(ConanFile):
 
     def requirements(self):
         if not is_msvc(self):
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.settings.os == "Windows" and not is_msvc(self):

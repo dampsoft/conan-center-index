@@ -60,7 +60,7 @@ class PodofoConan(ConanFile):
         self.requires("freetype/2.13.2")
         self.requires("zlib/[>=1.2.11 <2]")
         self.requires("libxml2/[>=2.12.5 <3]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
 
         # Unvendor 3rd party libraries
         self.requires("fmt/[>=11.0.2]")

@@ -37,7 +37,7 @@ class PackageConan(ConanFile):
         self.requires("apr/[>=1.3]", transitive_headers=True)
         self.requires("apr-util/[>=1.3]")
         self.requires("libuuid/[>=1.0.3]")
-        self.requires("openssl/[>=1.1 <4]", transitive_headers=True)
+        self.requires("openssl/[>=1.1 <5]", transitive_headers=True)
 
     def validate(self):
         check_min_cppstd(self, 11)

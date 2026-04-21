@@ -54,7 +54,7 @@ class NmosCppConan(ConanFile):
         # INFO: json_ops.h exposes cpprest/json.h
         self.requires("cpprestsdk/2.10.19", transitive_headers=True)
         self.requires("websocketpp/0.8.2")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
         self.requires("json-schema-validator/2.3.0")
         self.requires("nlohmann_json/3.11.3")
         if Version(self.version) >= "cci.20240222":

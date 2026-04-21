@@ -50,7 +50,7 @@ class CouchbaseCxxClientConan(ConanFile):
         self.requires("hdrhistogram-c/0.11.8")
         self.requires("taocpp-json/1.0.0-beta.14")
         self.requires("llhttp/[>=9.1.3 <10]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.19.0]")

@@ -51,7 +51,7 @@ class QuickfixConan(ConanFile):
 
     def requirements(self):
         if self.options.with_ssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
         if self.options.with_postgres:
             self.requires("libpq/[>=15.3 <18]")

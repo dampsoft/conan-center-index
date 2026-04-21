@@ -49,7 +49,7 @@ class PackageConan(ConanFile):
             self.requires("foobar/0.1.0")
         # A small number of dependencies on CCI are allowed to use version ranges.
         # See https://github.com/conan-io/conan-center-index/blob/master/docs/adding_packages/dependencies.md#version-ranges
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         # in case it does not work in another configuration, it should be validated here too

@@ -88,7 +88,7 @@ class Krb5Conan(ConanFile):
     def requirements(self):
         self.requires("libverto/0.3.2")
         if self.options.get_safe("with_tls") == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
         if self.options.get_safe("with_tcl"):
             self.requires("tcl/8.6.11")
 

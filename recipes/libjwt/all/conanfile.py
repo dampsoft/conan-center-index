@@ -27,7 +27,7 @@ class libjwtRecipe(ConanFile):
             "find_package(jansson REQUIRED CONFIG)")
 
     def requirements(self):
-        self.requires("openssl/[>=3 <4]")
+        self.requires("openssl/[>=3 <5]")
         self.requires("jansson/[>=2 <3]")
 
     def layout(self):

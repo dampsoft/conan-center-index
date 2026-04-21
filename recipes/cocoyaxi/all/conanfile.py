@@ -44,7 +44,7 @@ class CocoyaxiConan(ConanFile):
         if self.options.with_libcurl:
             self.requires("libcurl/[>=7.78.0 <9]")
         if self.options.with_libcurl or self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.info.settings.compiler.cppstd:

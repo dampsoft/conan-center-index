@@ -28,7 +28,7 @@ class QpidProtonConan(ConanFile):
 
     def requirements(self):
         if not is_msvc(self):
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
         if self.settings.os == "Macos":
             self.requires("libuv/[>=1 <2]")
         self.requires("jsoncpp/[>=1.9.6 <2]")

@@ -85,7 +85,7 @@ class CprConan(ConanFile):
     def requirements(self):
         self.requires("libcurl/[>=7.78.0 <9]", transitive_headers=True, transitive_libs=True)
         if self.options.with_ssl == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.settings.compiler.get_safe("cppstd"):

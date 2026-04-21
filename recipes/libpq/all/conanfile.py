@@ -79,7 +79,7 @@ class LibpqConan(ConanFile):
             if Version(self.version) < "13.5":
                 self.requires("openssl/1.1.1w")
             else:
-                self.requires("openssl/[>=1.1 <4]")
+                self.requires("openssl/[>=1.1 <5]")
         if self.options.get_safe("with_icu"):
             self.requires("icu/75.1")
         if self.options.get_safe("with_zlib"):

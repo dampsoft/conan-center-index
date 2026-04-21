@@ -50,7 +50,7 @@ class EasyhttpcppConan(ConanFile):
 
     def requirements(self):
         self.requires("poco/1.14.2", transitive_headers=True, transitive_libs=True)
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
 
     @property
     def _required_poco_components(self):

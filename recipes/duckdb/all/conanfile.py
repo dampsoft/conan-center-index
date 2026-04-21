@@ -77,7 +77,7 @@ class DuckdbConan(ConanFile):
 
     def requirements(self):
         if self.options.with_httpfs:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.settings.compiler.cppstd:

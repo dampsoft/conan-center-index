@@ -42,7 +42,7 @@ class HazelcastCppClient(ConanFile):
     def requirements(self):
         self.requires("boost/1.89.0", transitive_headers=True, transitive_libs=True)
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1 <5]")
 
     def validate(self):
         if self.settings.compiler.get_safe("cppstd"):

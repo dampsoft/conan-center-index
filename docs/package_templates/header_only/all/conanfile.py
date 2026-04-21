@@ -38,7 +38,7 @@ class PackageConan(ConanFile):
         self.requires("dependency/0.8.1")
         # Some dependencies on CCI are allowed to use version ranges.
         # See https://github.com/conan-io/conan-center-index/blob/master/docs/adding_packages/dependencies.md#version-ranges
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
 
     # same package ID for any package
     def package_id(self):

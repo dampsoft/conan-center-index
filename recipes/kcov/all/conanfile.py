@@ -34,7 +34,7 @@ class KcovConan(ConanFile):
     def requirements(self):
         self.requires("zlib/[>=1.2.11 <2]")
         self.requires("libcurl/[>=7.78 <9]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[>=1.1 <5]")
         if is_apple_os(self):
             self.requires("libdwarf/0.8.0")
         else:
