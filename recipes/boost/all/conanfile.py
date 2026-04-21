@@ -830,7 +830,7 @@ class BoostConan(ConanFile):
             self.requires("libbacktrace/cci.20210118", transitive_headers=True, transitive_libs=True)
 
         if self._with_icu:
-            self.requires("icu/78.2")
+            self.requires("icu/78.3")
         if self._with_iconv:
             self.requires("libiconv/1.18")
 

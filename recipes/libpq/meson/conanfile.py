@@ -131,7 +131,7 @@ class LibpqConan(ConanFile):
         if self.options.with_openssl:
             self.requires("openssl/[>=1.1 <4]")
         if self.options.get_safe("with_icu"):
-            self.requires("icu/78.2")
+            self.requires("icu/78.3")
         if self.options.with_libxml2:
             self.requires("libxml2/[>=2.12.5 <3]")
         if self.options.with_zstd:
