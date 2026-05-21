@@ -1,10 +1,11 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
-from conan.tools.files import apply_conandata_patches, export_conandata_patches, get, load, replace_in_file, save
+from conan.tools.files import apply_conandata_patches, export_conandata_patches, get, rmdir, copy, rm, replace_in_file, load, save
+
 from conan.tools.scm import Version
 import os
 
-required_conan_version = ">=1.53.0"
+required_conan_version = ">=2.0"
 
 
 class ZlibConan(ConanFile):
@@ -46,8 +47,11 @@ class ZlibConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version],
             destination=self.source_folder, strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
+        self._patch_sources()
+
         tc = CMakeToolchain(self)
         tc.variables["SKIP_INSTALL_ALL"] = False
         tc.variables["SKIP_INSTALL_LIBRARIES"] = False
@@ -57,16 +61,15 @@ class ZlibConan(ConanFile):
         tc.variables["INSTALL_LIB_DIR"] = "lib"
         tc.variables["INSTALL_INC_DIR"] = "include"
         tc.variables["ZLIB_BUILD_EXAMPLES"] = False
+        tc.cache_variables["ZLIB_BUILD_TESTING"] = False
 
         if Version(self.version) >= "1.3.1.2":
-            tc.variables["ZLIB_BUILD_SHARED"] = self.options.shared
-            tc.variables["ZLIB_BUILD_STATIC"] = not self.options.shared
+            tc.cache_variables["ZLIB_BUILD_SHARED"] = self.options.shared
+            tc.cache_variables["ZLIB_BUILD_STATIC"] = not self.options.shared
 
         tc.generate()
 
     def _patch_sources(self):
-        apply_conandata_patches(self)
-
         unistd_h = Version(self.version) >= "1.3.1.2" and "#if HAVE_UNISTD_H-0     " or "#ifdef HAVE_UNISTD_H    "
         stdarg_h = Version(self.version) >= "1.3.1.2" and "#if HAVE_STDARG_H-0     " or "#ifdef HAVE_STDARG_H    "
 
@@ -86,7 +89,6 @@ class ZlibConan(ConanFile):
                                       '#if defined(HAVE_STDARG_H) && (1-HAVE_STDARG_H-1 != 0)')
 
     def build(self):
-        self._patch_sources()
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
@@ -97,9 +99,17 @@ class ZlibConan(ConanFile):
         return license_contents
 
     def package(self):
-        save(self, os.path.join(self.package_folder, "licenses", "LICENSE"), self._extract_license())
+        if Version(self.version) <= "1.3.2":
+            copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        else:
+            save(self, os.path.join(self.package_folder, "licenses", "LICENSE"), self._extract_license())
         cmake = CMake(self)
         cmake.install()
+        rmdir(self, os.path.join(self.package_folder, "share"))
+        rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
+        rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
+        rm(self, "*.pdb", os.path.join(self.package_folder, "bin"))
+
 
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "both")
