@@ -368,12 +368,13 @@ class LibcurlConan(ConanFile):
     """ + location_fix_pattern
             )
         else:
-            replace_in_file(self, "CMakeLists.txt", "find_package(NGHTTP2 MODULE)", "find_package(NGHTTP2 CONFIG REQUIRED)")
-            replace_in_file(self, "CMakeLists.txt", "find_package(Cares MODULE REQUIRED)", "find_package(Cares CONFIG REQUIRED)")
-            replace_in_file(self, os.path.join("CMake", "Macros.cmake"), "find_package(${_find_name})", "find_package(${_find_name} CONFIG REQUIRED)")
-            replace_in_file(self, os.path.join("CMake", "Macros.cmake"), "find_package(${_find_name} MODULE)", "find_package(${_find_name} CONFIG REQUIRED)")
-            replace_in_file(self, os.path.join("CMake", "Macros.cmake"), "find_package(${_find_name} REQUIRED)", "find_package(${_find_name} CONFIG REQUIRED)")
-            replace_in_file(self, os.path.join("CMake", "Macros.cmake"), "find_package(${_find_name} MODULE REQUIRED)", "find_package(${_find_name} CONFIG REQUIRED)")
+            cmakemacros = os.path.join(self.source_folder, "CMake", "Macros.cmake")
+            replace_in_file(self, cmakelists, "find_package(NGHTTP2 MODULE)", "find_package(NGHTTP2 CONFIG REQUIRED)")
+            replace_in_file(self, cmakelists, "find_package(Cares MODULE REQUIRED)", "find_package(Cares CONFIG REQUIRED)")
+            replace_in_file(self, cmakemacros, "find_package(${_find_name})", "find_package(${_find_name} CONFIG REQUIRED)")
+            replace_in_file(self, cmakemacros, "find_package(${_find_name} MODULE)", "find_package(${_find_name} CONFIG REQUIRED)")
+            replace_in_file(self, cmakemacros, "find_package(${_find_name} REQUIRED)", "find_package(${_find_name} CONFIG REQUIRED)")
+            replace_in_file(self, cmakemacros, "find_package(${_find_name} MODULE REQUIRED)", "find_package(${_find_name} CONFIG REQUIRED)")
 
     def _yes_no(self, value):
         return "yes" if value else "no"
