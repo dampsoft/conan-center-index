@@ -942,6 +942,32 @@ class QtConan(ConanFile):
             targets.append("repc")
         if self.options.get_safe("qtscxml"):
             targets.append("qscxmlc")
+        # macOS: Qt's host tools (moc, rcc, uic, cmake_automoc_parser, ...) load the
+        # shared libs of Qt's dependencies via @rpath. CMake/ninja launch them through
+        # /bin/sh, which is SIP-protected, so the DYLD_LIBRARY_PATH provided by Conan's
+        # environment never reaches them and the dylibs aren't found. As a workaround,
+        # each tool is installed as a small shell shim that restores DYLD_LIBRARY_PATH
+        # from QT_CONAN_APPLE_DEP_LIBDIRS (a variable SIP leaves alone, defined in
+        # package_info()) and then execs the real binary next to it. This keeps the
+        # package free of absolute paths and thus relocatable.
+        def _make_apple_sip_safe_tool_wrapper(tool_relpath):
+            tool_abspath = os.path.join(self.package_folder, tool_relpath)
+            tool_dir, tool_name = os.path.split(tool_abspath)
+            real_name = f"{tool_name}-real"
+            os.rename(tool_abspath, os.path.join(tool_dir, real_name))
+            save(self, tool_abspath, textwrap.dedent(f"""\
+                #!/bin/sh
+                # SIP strips DYLD_* for tools launched via /bin/sh. Restore the dependency
+                # lib dirs from a variable SIP doesn't touch, then run the real tool.
+                here="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+                if [ -n "${{QT_CONAN_APPLE_DEP_LIBDIRS:-}}" ]; then
+                    DYLD_LIBRARY_PATH="${{QT_CONAN_APPLE_DEP_LIBDIRS}}${{DYLD_LIBRARY_PATH:+:${{DYLD_LIBRARY_PATH}}}}"
+                    export DYLD_LIBRARY_PATH
+                fi
+                exec "${{here}}/{real_name}" "$@"
+                """))
+            os.chmod(tool_abspath, 0o755)
+
         for target in targets:
             exe_path = None
             for path_ in [f"bin/{target}{extension}",
@@ -955,13 +981,8 @@ class QtConan(ConanFile):
             if not exe_path:
                 self.output.warning(f"Could not find path to {target}{extension}")
 
-            if is_apple_os(self) and target in ["moc", "rcc", "uic"]:
-                # On macOS, these executables need additional RPATH entries to find libs of deps
-                for dep in self.dependencies.values():
-                    dep_folder = dep.package_folder
-                    dep_lib_folder = os.path.join(dep_folder, "lib")
-                    if os.path.isdir(dep_lib_folder):
-                        self.run(f"install_name_tool -add_rpath {dep_lib_folder} {os.path.join(self.package_folder, exe_path)}")
+            if is_apple_os(self):
+                _make_apple_sip_safe_tool_wrapper(exe_path)
 
             filecontents += textwrap.dedent(f"""\
                 if(NOT TARGET ${{QT_CMAKE_EXPORT_NAMESPACE}}::{target})
@@ -1069,6 +1090,18 @@ class QtConan(ConanFile):
         self.buildenv_info.define("QT_PLUGIN_PATH", os.path.join(self.package_folder, "plugins"))
 
         self.buildenv_info.define("QT_HOST_PATH", self.package_folder)
+
+        if is_apple_os(self):
+            # Dependency lib dirs for the SIP-safe tool wrappers created in package().
+            # Uses a custom variable because SIP scrubs DYLD_*. Computed at install
+            # time, so it always points at the current package folders.
+            for dep in self.dependencies.host.values():
+                if dep.package_folder is None:
+                    continue  # binary marked "Skip" by Conan
+                for libdir in dep.cpp_info.aggregated_components().libdirs:
+                    if libdir and os.path.isdir(libdir):
+                        self.buildenv_info.append_path("QT_CONAN_APPLE_DEP_LIBDIRS", libdir)
+                        self.runenv_info.append_path("QT_CONAN_APPLE_DEP_LIBDIRS", libdir)
 
         build_modules = {}
         def _add_build_module(component, module):
