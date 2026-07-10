@@ -97,7 +97,7 @@ class PopplerConan(ConanFile):
 
     def requirements(self):
         self.requires("poppler-data/0.4.11")
-        self.requires("freetype/2.13.3")
+        self.requires("freetype/[>=2.13 <3]")
         if self.options.splash:
             self.requires("boost/[>=1.81.0 <=1.90.0]")
         elif Version(self.version).major >= 25:
