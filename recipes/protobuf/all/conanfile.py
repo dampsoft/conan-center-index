@@ -8,6 +8,7 @@ from conan.tools.microsoft import check_min_vs, is_msvc, is_msvc_static_runtime
 from conan.tools.scm import Version
 
 import os
+import textwrap
 
 required_conan_version = ">2.1"
 
@@ -209,11 +210,48 @@ class ProtobufConan(ConanFile):
             rm(self, "libprotobuf-lite*", os.path.join(self.package_folder, "lib"))
             rm(self, "libprotobuf-lite*", os.path.join(self.package_folder, "bin"))
 
+        # macOS: protoc loads the shared libs of protobuf's dependencies (abseil, ...)
+        # via @rpath. CMake/ninja launch it through /bin/sh, which is SIP-protected, so
+        # the DYLD_LIBRARY_PATH provided by Conan's environment never reaches it and
+        # the dylibs aren't found. As a workaround, protoc is installed as a small
+        # shell shim that restores DYLD_LIBRARY_PATH from
+        # PROTOBUF_CONAN_APPLE_DEP_LIBDIRS (a variable SIP leaves alone, defined in
+        # package_info()) and then execs the real binary next to it. This keeps the
+        # package free of absolute paths and thus relocatable.
+        if is_apple_os(self):
+            protoc_path = os.path.join(self.package_folder, "bin", "protoc")
+            if os.path.isfile(protoc_path):
+                os.rename(protoc_path, f"{protoc_path}-real")
+                save(self, protoc_path, textwrap.dedent("""\
+                    #!/bin/sh
+                    # SIP strips DYLD_* for tools launched via /bin/sh. Restore the dependency
+                    # lib dirs from a variable SIP doesn't touch, then run the real tool.
+                    here="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+                    if [ -n "${PROTOBUF_CONAN_APPLE_DEP_LIBDIRS:-}" ]; then
+                        DYLD_LIBRARY_PATH="${PROTOBUF_CONAN_APPLE_DEP_LIBDIRS}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
+                        export DYLD_LIBRARY_PATH
+                    fi
+                    exec "${here}/protoc-real" "$@"
+                    """))
+                os.chmod(protoc_path, 0o755)
+
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_module_file_name", "Protobuf")
         self.cpp_info.set_property("cmake_file_name", "protobuf")
         self.cpp_info.set_property("pkg_config_name", "protobuf_full_package") # unofficial, but required to avoid side effects (libprotobuf component "steals" the default global pkg_config name)
+
+        if is_apple_os(self):
+            # Dependency lib dirs for the SIP-safe protoc wrapper created in package().
+            # Uses a custom variable because SIP scrubs DYLD_*. Computed at install
+            # time, so it always points at the current package folders.
+            for dep in self.dependencies.host.values():
+                if dep.package_folder is None:
+                    continue  # binary marked "Skip" by Conan
+                for libdir in dep.cpp_info.aggregated_components().libdirs:
+                    if libdir and os.path.isdir(libdir):
+                        self.buildenv_info.append_path("PROTOBUF_CONAN_APPLE_DEP_LIBDIRS", libdir)
+                        self.runenv_info.append_path("PROTOBUF_CONAN_APPLE_DEP_LIBDIRS", libdir)
 
         build_modules = [
             os.path.join(self._cmake_install_base_path, "protobuf-generate.cmake"),
