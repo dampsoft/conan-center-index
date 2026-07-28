@@ -178,7 +178,15 @@ class QtConan(ConanFile):
 
     def config_options(self):
         if self.settings.os not in ["Linux", "FreeBSD"]:
-            del self.options.with_icu
+            # Note: keep with_icu available on Windows. Since Qt 6.10, qtbase on
+            # Windows links against ICU either way; without with_icu it uses the
+            # Windows SDK ICU (icuuc.dll/icu.dll, unversioned symbols). If the conan
+            # icu package (versioned symbols, e.g. ucnv_close_78) is elsewhere in the
+            # dependency graph and ends up on PATH, its DLLs shadow the system ones
+            # and Qt6Core.dll fails to load ("entry point ucnv_close not found").
+            # Building Qt against the conan icu avoids this mismatch.
+            if self.settings.os != "Windows":
+                del self.options.with_icu
             del self.options.with_fontconfig
             self.options.with_glib = False
             del self.options.with_libalsa
@@ -1629,8 +1637,11 @@ class QtConan(ConanFile):
                 self.cpp_info.components["qtCore"].system_libs.append("mpr")
                 self.cpp_info.components["qtCore"].system_libs.append("userenv")
                 if Version(self.version) >= "6.10":
-                    # https://github.com/qt/qtbase/blob/90b845d15ffb97693dba527385db83510ebd121a/src/corelib/CMakeLists.txt#L891-L895
-                    self.cpp_info.components["qtCore"].system_libs.extend(["icuuc", "icuin"])
+                    if not self.options.get_safe("with_icu", False):
+                        # https://github.com/qt/qtbase/blob/90b845d15ffb97693dba527385db83510ebd121a/src/corelib/CMakeLists.txt#L891-L895
+                        # Only without the conan icu package: qtbase falls back to the
+                        # Windows SDK ICU (icuuc.lib/icuin.lib -> system icuuc.dll/icu.dll)
+                        self.cpp_info.components["qtCore"].system_libs.extend(["icuuc", "icuin"])
                     # https://github.com/qt/qtbase/commit/09991b51a48aab7a5f7c5cbf2577ba5450d4cbb4
                     self.cpp_info.components["qtCore"].system_libs.append("ntdll")
                 # https://github.com/qt/qtbase/blob/v6.6.1/src/network/CMakeLists.txt#L196-L200
