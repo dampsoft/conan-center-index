@@ -761,7 +761,7 @@ class QtConan(ConanFile):
             if self.settings.compiler == "clang":
                 if self.settings.arch == "x86":
                     return "linux-clang-libc++-32" if self.settings.compiler.libcxx == "libc++" else "linux-clang-32"
-                if self.settings.arch == "x86_64":
+                if self.settings.arch in ["x86_64", "armv8"]:
                     return "linux-clang-libc++" if self.settings.compiler.libcxx == "libc++" else "linux-clang"
 
         elif self.settings.os == "Macos":
