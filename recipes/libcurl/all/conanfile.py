@@ -172,7 +172,7 @@ class LibcurlConan(ConanFile):
         elif self.options.with_ssl == "libressl":
             self.requires("libressl/[>=3.5 <4]")
         elif self.options.with_ssl == "wolfssl":
-            self.requires("wolfssl/5.6.6")
+            self.requires("wolfssl/[>=5.6.6 <6]")
         elif self.options.with_ssl == "mbedtls":
             self.requires("mbedtls/3.5.0")
         if self.settings.os == "Linux" and self.options.with_ldap:
@@ -180,7 +180,7 @@ class LibcurlConan(ConanFile):
         if self.options.with_nghttp2:
             self.requires("libnghttp2/[>=1.59.0 <2]")
         if self.options.with_libssh2:
-            self.requires("libssh2/1.11.0")
+            self.requires("libssh2/[>=1.11.0 <2]")
         if self.options.with_zlib:
             self.requires("zlib/[>=1.2.11 <2]")
         if self.options.with_brotli:
@@ -530,6 +530,13 @@ class LibcurlConan(ConanFile):
             elif self.settings.os == "Android":
                 pass # this just works, conan is great!
 
+        if self.settings.os == "Macos":
+            # Configure rpath for ./configure script runtime checks when not crossbuilding.
+            for dep in self.dependencies.host.values():
+                if dep.package_type == "shared-library":
+                    tc.extra_ldflags.extend(f"-Wl,-rpath,{libdir}" for libdir in
+                                             dep.cpp_info.aggregated_components().libdirs)
+
         env = tc.environment()
 
         # tweaks for mingw
@@ -550,8 +557,6 @@ class LibcurlConan(ConanFile):
 
         tc.generate(env)
         tc = PkgConfigDeps(self)
-        tc.generate()
-        tc = AutotoolsDeps(self)
         tc.generate()
 
     def _get_linux_arm_host(self):

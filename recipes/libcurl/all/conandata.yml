@@ -1,4 +1,9 @@
 sources:
+  "8.21.0":
+    url:
+      - "https://curl.se/download/curl-8.21.0.tar.xz"
+      - "https://github.com/curl/curl/releases/download/curl-8_21_0/curl-8.21.0.tar.xz"
+    sha256: "aa1b66a70eace83dc624508745646c08ae561de512ab403adffb93ac87fc72e6"
   "8.20.0":
     url:
       - "https://curl.se/download/curl-8.20.0.tar.xz"
@@ -115,6 +120,8 @@ sources:
       - "https://github.com/curl/curl/releases/download/curl-7_88_1/curl-7.88.1.tar.xz"
     sha256: "1dae31b2a7c1fe269de99c0c31bb488346aab3459b5ffca909d6938249ae415f"
 patches:
+  "8.21.0":
+    - patch_file: "patches/0002-fix-openssl-ldflags-multiple-l.patch"
   "8.18.0":
     - patch_file: "patches/20613-8.18.0.patch"
       patch_type: "backport"
@@ -130,3 +137,6 @@ patches:
       patch_type: "upstream"
       patch_description: "Ensure no SIGPIPE escapes libcurl, thus killing the program"
       patch_source: "https://github.com/curl/curl/pull/14390"
+      - "https://curl.se/download/curl-8.21.0.tar.xz"
+      - "https://github.com/curl/curl/releases/download/curl-8_21_0/curl-8.21.0.tar.xz"
+    sha256: "aa1b66a70eace83dc624508745646c08ae561de512ab403adffb93ac87fc72e6"
