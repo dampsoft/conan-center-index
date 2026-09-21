@@ -314,6 +314,12 @@ class OpenCVConan(ConanFile):
             self.options.cpu_baseline = "NEON"
             self.options.cpu_dispatch = ""
 
+        if self.settings.os == "Macos" and str(self.settings.arch) == "armv8|x86_64":
+            # CMake builds both slices in one invocation. NEON sources cannot be
+            # compiled for the x86_64 slice, so use OpenCV's portable code path.
+            self.options.cpu_baseline = ""
+            self.options.cpu_dispatch = ""
+
     @property
     def _opencv_modules(self):
         def imageformats_deps():
@@ -1472,6 +1478,10 @@ class OpenCVConan(ConanFile):
 
         tc.variables["ENABLE_PIC"] = self.options.get_safe("fPIC", True)
         tc.variables["ENABLE_CCACHE"] = False
+        if self.settings.os == "Macos" and str(self.settings.arch) == "armv8|x86_64":
+            # The DNN module force-generates NEON variants even with an empty
+            # CPU_DISPATCH. Disable explicit SIMD code for a single fat build.
+            tc.variables["CV_DISABLE_OPTIMIZATION"] = True
 
         if self._is_cl_like:
             tc.variables["BUILD_WITH_STATIC_CRT"] = self._is_cl_like_static_runtime
