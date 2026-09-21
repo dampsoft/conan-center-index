@@ -118,8 +118,8 @@ class DCMTKConan(ConanFile):
 
     def validate_build(self):
         if cross_building(self):
-            if self.settings.os == "Macos" and self.settings.arch != "x86_64":
-                raise ConanInvalidConfiguration("MacOS crossbuilding is only supported to target x86_64")
+            if self.settings.os == "Macos" and str(self.settings.arch) not in ("x86_64", "armv8|x86_64"):
+                raise ConanInvalidConfiguration("MacOS crossbuilding is only supported to target x86_64 or universal2")
             else:
                 # Note: other cross-building scenarios have not been tested and may also need to be marked as invalid
                 self.output.warning("Crossbuilding has not been tested and may not work. Please report to Conan Center Index if you find any issues.")
@@ -199,7 +199,7 @@ class DCMTKConan(ConanFile):
                              'HAVE_STL_TUPLE_TEST_RESULT', 'HAVE_STL_SYSTEM_ERROR_TEST_RESULT']
                 for var in variables:
                     tc.cache_variables[var] = True
-            if self.settings.os == "Macos" and self.settings.arch == "x86_64":
+            if self.settings.os == "Macos" and str(self.settings.arch) in ("x86_64", "armv8|x86_64"):
                 dst_dir = os.path.join(self.build_folder, "config", "include", "dcmtk", "config")
                 arith_h = "arith_h_Macos_x86_64.h"
                 copy(self, arith_h, self.source_folder, dst_dir)
