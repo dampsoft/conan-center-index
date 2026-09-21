@@ -1196,7 +1196,13 @@ class BoostConan(ConanFile):
         }.get(str(self.settings.os))
 
     @property
+    def _is_macos_universal2(self):
+        return self.settings.os == "Macos" and str(self.settings.arch) == "armv8|x86_64"
+
+    @property
     def _b2_address_model(self):
+        if self._is_macos_universal2:
+            return None
         if self.settings.arch in ("x86_64", "ppc64", "ppc64le", "mips64", "armv8", "armv8.3", "sparcv9", "s390x", "riscv64", "wasm64"):
             return "64"
 
@@ -1219,6 +1225,8 @@ class BoostConan(ConanFile):
 
     @property
     def _b2_architecture(self):
+        if self._is_macos_universal2:
+            return "arm+x86"
         if str(self.settings.arch).startswith("x86"):
             return "x86"
         if str(self.settings.arch).startswith("ppc"):
@@ -1240,6 +1248,8 @@ class BoostConan(ConanFile):
 
     @property
     def _b2_abi(self):
+        if self._is_macos_universal2:
+            return "sysv"
         if str(self.settings.arch).startswith("x86"):
             return "ms" if str(self.settings.os) in ["Windows", "WindowsStore"] else "sysv"
         if str(self.settings.arch).startswith("ppc"):
@@ -1592,7 +1602,10 @@ class BoostConan(ConanFile):
             if self.settings.compiler == "apple-clang":
                 contents += f" -isysroot {XCRun(self).sdk_path}"
             if self.settings.get_safe("arch"):
-                contents += f" -arch {to_apple_arch(self)}"
+                if self._is_macos_universal2:
+                    contents += " -arch arm64 -arch x86_64"
+                else:
+                    contents += f" -arch {to_apple_arch(self)}"
 
         contents += " : \n"
         if self._ar:
