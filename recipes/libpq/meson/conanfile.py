@@ -99,6 +99,9 @@ class LibpqConan(ConanFile):
 
     languages = "C"
     implements = ["auto_shared_fpic"]
+    # PGXS is PostgreSQL's extension build tree. It embeds the temporary build
+    # path and single-architecture compiler flags but is not part of libpq's API.
+    universal_meson_excludes = (os.path.join("lib", "postgresql", "pgxs"),)
 
     @property
     def _is_mingw(self):
