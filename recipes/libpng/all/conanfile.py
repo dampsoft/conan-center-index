@@ -42,6 +42,10 @@ class LibpngConan(ConanFile):
                self.settings.compiler.get_safe("runtime")
 
     @property
+    def _is_macos_universal(self):
+        return self.settings.os == "Macos" and "|" in str(self.settings.arch)
+
+    @property
     def _has_neon_support(self):
         return "arm" in self.settings.arch
 
@@ -68,7 +72,7 @@ class LibpngConan(ConanFile):
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
-        if not self._has_neon_support:
+        if self._is_macos_universal or not self._has_neon_support:
             del self.options.neon
         if not self._has_msa_support:
             del self.options.msa
@@ -102,7 +106,9 @@ class LibpngConan(ConanFile):
         tc.cache_variables["PNG_FRAMEWORK"] = False  # changed from False to True by default in PNG 1.6.41
         tc.cache_variables["PNG_TOOLS"] = False
         tc.cache_variables["CMAKE_MACOSX_BUNDLE"] = False
-        if self._has_neon_support:
+        if self._is_macos_universal:
+            tc.cache_variables["PNG_HARDWARE_OPTIMIZATIONS"] = False
+        elif self._has_neon_support:
             tc.cache_variables["PNG_ARM_NEON"] = self._neon_msa_sse_vsx_mapping[str(self.options.neon)]
         if self._has_msa_support:
             tc.cache_variables["PNG_MIPS_MSA"] = self._neon_msa_sse_vsx_mapping[str(self.options.msa)]
