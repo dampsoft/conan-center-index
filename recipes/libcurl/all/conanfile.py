@@ -642,6 +642,10 @@ class LibcurlConan(ConanFile):
         tc.variables["HAVE_SSL_SET0_WBIO"] = False
         tc.variables["HAVE_OPENSSL_SRP"] = True
         tc.variables["HAVE_SSL_CTX_SET_QUIC_METHOD"] = True
+        if self.settings.os == "Macos" and Version(self.settings.os.version) < "27":
+            # The current SDK declares pipe2(), but it is only available from
+            # macOS 27. CMake's declaration check ignores the deployment target.
+            tc.cache_variables["HAVE_PIPE2"] = False
 
         if is_msvc(self):
             tc.cache_variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)
