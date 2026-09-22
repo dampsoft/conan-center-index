@@ -6,6 +6,8 @@ from conan.tools.files import copy, get, replace_in_file, rm, rmdir, export_cona
 from conan.tools.microsoft import is_msvc, is_msvc_static_runtime
 from conan.tools.scm import Version
 import os
+import shutil
+import subprocess
 
 required_conan_version = ">=2.1"
 
@@ -47,16 +49,16 @@ class LibjpegTurboConan(ConanFile):
         "enable12bit": False,
     }
 
+    @property
+    def _is_macos_universal(self):
+        return self.settings.os == "Macos" and str(self.settings.arch) == "armv8|x86_64"
+
     def export_sources(self):
         export_conandata_patches(self)
 
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
-        if self.settings.os == "Macos" and str(self.settings.arch) == "armv8|x86_64":
-            # Upstream's SIMD implementation is assembly and cannot be compiled
-            # in CMake's single universal-architecture invocation.
-            self.options.SIMD = False
         if Version(self.version) >= "3.0.0":
             del self.options.enable12bit
             del self.options.mem_src_dst
@@ -93,7 +95,7 @@ class LibjpegTurboConan(ConanFile):
             raise ConanInvalidConfiguration(f"{self.ref} shared can't be built with static vc runtime")
 
     def build_requirements(self):
-        if self.options.get_safe("SIMD") and self.settings.arch in ["x86", "x86_64"]:
+        if self.options.get_safe("SIMD") and (self.settings.arch in ["x86", "x86_64"] or self._is_macos_universal):
             self.tool_requires("nasm/2.16.01")
 
     def source(self):
@@ -136,6 +138,11 @@ class LibjpegTurboConan(ConanFile):
             tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
         if self.options.get_safe("java", False):
             tc.cache_variables["CMAKE_INSTALL_JAVADIR"] = os.path.join(self.package_folder, "lib", "java")
+        if self._is_macos_universal:
+            tc.blocks["apple_system"].template = tc.blocks["apple_system"].template.replace(
+                'set(CMAKE_OSX_ARCHITECTURES {{ cmake_osx_architectures }} CACHE STRING "" FORCE)',
+                '# CMAKE_OSX_ARCHITECTURES set per-slice by recipe'
+            )
         tc.generate()
 
     def _patch_sources(self):
@@ -143,23 +150,65 @@ class LibjpegTurboConan(ConanFile):
         replace_in_file(self, os.path.join(self.source_folder, "sharedlib", "CMakeLists.txt"),
                               """string(REGEX REPLACE "/MT" "/MD" ${var} "${${var}}")""",
                               "")
-        if self.settings.os == "Macos" and str(self.settings.arch) == "armv8|x86_64":
-            # The upstream guard runs before WITH_SIMD is handled. The universal
-            # recipe disables SIMD above, leaving only portable C sources.
-            replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
-                            "if(COUNT GREATER 1)", "if(COUNT GREATER 1 AND WITH_SIMD)")
 
     def build(self):
         self._patch_sources()
-        cmake = CMake(self)
-        cmake.configure()
-        cmake.build()
+        if self._is_macos_universal:
+            for arch in ("arm64", "x86_64"):
+                cmake = CMake(self)
+                cmake.configure(variables={"CMAKE_OSX_ARCHITECTURES": arch}, subfolder=arch)
+                cmake.build(subfolder=arch)
+        else:
+            cmake = CMake(self)
+            cmake.configure()
+            cmake.build()
+
+    def _is_macho(self, path):
+        return subprocess.run(
+            ["lipo", "-archs", path], capture_output=True, text=True, check=False
+        ).returncode == 0
+
+    def _merge_slices(self, arm_dir, x86_dir, dst_dir):
+        for root, _, files in os.walk(arm_dir):
+            rel_dir = os.path.relpath(root, arm_dir)
+            target_dir = os.path.normpath(os.path.join(dst_dir, rel_dir))
+            os.makedirs(target_dir, exist_ok=True)
+
+            for file in files:
+                arm_path = os.path.join(root, file)
+                x86_path = os.path.join(x86_dir, rel_dir, file)
+                dst_path = os.path.join(target_dir, file)
+
+                if os.path.islink(arm_path):
+                    target = os.readlink(arm_path)
+                    if os.path.lexists(dst_path):
+                        os.remove(dst_path)
+                    os.symlink(target, dst_path)
+                    continue
+
+                if self._is_macho(arm_path) and os.path.exists(x86_path) and self._is_macho(x86_path):
+                    self.run(f'lipo -create "{arm_path}" "{x86_path}" -output "{dst_path}"')
+                    self.run(f'lipo "{dst_path}" -verify_arch arm64')
+                    self.run(f'lipo "{dst_path}" -verify_arch x86_64')
+                else:
+                    if dst_path != arm_path:
+                        shutil.copy2(arm_path, dst_path)
 
     def package(self):
         copy(self, "LICENSE.md", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
         copy(self, "README.ijg", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
-        cmake = CMake(self)
-        cmake.install()
+        if self._is_macos_universal:
+            cmake = CMake(self)
+            cmake.install(subfolder="arm64")
+            cmake.install(subfolder="x86_64")
+            arm_pkg = os.path.join(self.package_folder, "arm64")
+            x86_pkg = os.path.join(self.package_folder, "x86_64")
+            self._merge_slices(arm_pkg, x86_pkg, self.package_folder)
+            shutil.rmtree(arm_pkg)
+            shutil.rmtree(x86_pkg)
+        else:
+            cmake = CMake(self)
+            cmake.install()
         # remove unneeded directories
         rmdir(self, os.path.join(self.package_folder, "share"))
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
