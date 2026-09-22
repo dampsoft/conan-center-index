@@ -53,6 +53,10 @@ class LibjpegTurboConan(ConanFile):
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
+        if self.settings.os == "Macos" and str(self.settings.arch) == "armv8|x86_64":
+            # Upstream's SIMD implementation is assembly and cannot be compiled
+            # in CMake's single universal-architecture invocation.
+            self.options.SIMD = False
         if Version(self.version) >= "3.0.0":
             del self.options.enable12bit
             del self.options.mem_src_dst
@@ -139,6 +143,11 @@ class LibjpegTurboConan(ConanFile):
         replace_in_file(self, os.path.join(self.source_folder, "sharedlib", "CMakeLists.txt"),
                               """string(REGEX REPLACE "/MT" "/MD" ${var} "${${var}}")""",
                               "")
+        if self.settings.os == "Macos" and str(self.settings.arch) == "armv8|x86_64":
+            # The upstream guard runs before WITH_SIMD is handled. The universal
+            # recipe disables SIMD above, leaving only portable C sources.
+            replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
+                            "if(COUNT GREATER 1)", "if(COUNT GREATER 1 AND WITH_SIMD)")
 
     def build(self):
         self._patch_sources()
