@@ -165,7 +165,7 @@ class DCMTKConan(ConanFile):
         if self.options.charset_conversion and self.options.charset_conversion == "icu" and Version(self.version) >= "3.6.9":
             self.output.warning("DCMTK 3.6.9+ no longer supports ICU charset conversion. Using oficonv (default) instead.")
             tc.cache_variables["DCMTK_ENABLE_CHARSET_CONVERSION"] = "oficonv"
-        if self.options.charset_conversion and Version(self.version) >= "3.6.8":
+        if self.options.charset_conversion and Version(self.version) == "3.6.8":
             charset_conversion = { "libiconv": "libiconv", "icu": "ICU", "oficonv": "oficonv"}
             tc.cache_variables["DCMTK_ENABLE_CHARSET_CONVERSION"] = charset_conversion[str(self.options.charset_conversion)]
         tc.variables["DCMTK_USE_DCMDICTPATH"] = self.options.use_dcmdictpath
