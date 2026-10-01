@@ -39,12 +39,16 @@ class GitConan(ConanFile):
         at = Autotools(self)
         at.configure()
         optimizations = self.options.optimizations
+        # Git's Rust components are optional and require Cargo, which is not part of the build environment.
+        args = ['NO_RUST=1']
         if optimizations == None:
-            at.make()
+            at.make(args=args)
         else:
-            at.make(str(optimizations))
+            at.make(str(optimizations), args=args)
 
     def package(self):
         at = Autotools(self)
-        args = ['PROFILE=USE'] if self.options.optimizations != None else None
+        args = ['NO_RUST=1']
+        if self.options.optimizations != None:
+            args.append('PROFILE=USE')
         at.install(args=args)
