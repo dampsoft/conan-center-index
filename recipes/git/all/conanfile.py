@@ -1,4 +1,5 @@
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import get
 from conan.tools.gnu import Autotools, AutotoolsToolchain
 from conan.tools.layout import basic_layout
@@ -25,7 +26,8 @@ class GitConan(ConanFile):
     def configure(self):
         # Optimizations are not compatible with non-gcc builds since we can't profile tests properly
         if self.settings.compiler != 'gcc':
-            self.options.optimizations = None
+            raise ConanInvalidConfiguration("Building with optimizations is only supported when using GCC")
+
 
     def source(self):
         get(self, **self.conan_data['sources'][self.version], strip_root=True)
