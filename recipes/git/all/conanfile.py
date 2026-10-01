@@ -17,15 +17,14 @@ class GitConan(ConanFile):
     package_type = 'application'
     settings = 'os', 'arch', 'compiler', 'build_type'
     options = {'prefix': ['ANY'], 'optimizations': ['profile', 'profile-fast', None]}
-    default_options = {'prefix': '/usr/local/', 'optimizations': 'profile'}
+    default_options = {'prefix': '/usr/local/', 'optimizations': None}
 
     def layout(self):
         basic_layout(self)
         self.folders.build = self.folders.source
 
     def configure(self):
-        # Optimizations are not compatible with non-gcc builds since we can't profile tests properly
-        if self.settings.compiler != 'gcc':
+        if self.options.optimizations != None and self.settings.compiler != 'gcc':
             raise ConanInvalidConfiguration("Building with optimizations is only supported when using GCC")
 
 
@@ -40,12 +39,12 @@ class GitConan(ConanFile):
         at = Autotools(self)
         at.configure()
         optimizations = self.options.optimizations
-        if optimizations is None:
+        if optimizations == None:
             at.make()
         else:
             at.make(str(optimizations))
 
     def package(self):
         at = Autotools(self)
-        args = ['PROFILE=USE'] if self.options.optimizations is not None else None
+        args = ['PROFILE=USE'] if self.options.optimizations != None else None
         at.install(args=args)
