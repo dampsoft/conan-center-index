@@ -17,7 +17,7 @@ class GitConan(ConanFile):
     package_type = 'application'
     settings = 'os', 'arch', 'compiler', 'build_type'
     options = {'prefix': ['ANY'], 'optimizations': ['profile', 'profile-fast', None]}
-    default_options = {'prefix': '/usr/local/', 'optimizations': None}
+    default_options = {'prefix': '/', 'optimizations': None}
 
     def layout(self):
         basic_layout(self)
