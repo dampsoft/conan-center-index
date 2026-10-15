@@ -158,6 +158,8 @@ class LibcurlConan(ConanFile):
             self.options.rm_safe("fPIC")
         self.settings.rm_safe("compiler.libcxx")
         self.settings.rm_safe("compiler.cppstd")
+        if Version(self.version) >= "8.23.0":
+            self.settings.rm_safe("with_smb")
 
     def layout(self):
         if self._is_using_cmake_build:
@@ -404,7 +406,6 @@ class LibcurlConan(ConanFile):
             f"--enable-mqtt={self._yes_no(self.options.with_mqtt)}",
             f"--enable-pop3={self._yes_no(self.options.with_pop3)}",
             f"--enable-rtsp={self._yes_no(self.options.with_rtsp)}",
-            f"--enable-smb={self._yes_no(self.options.with_smb)}",
             f"--enable-smtp={self._yes_no(self.options.with_smtp)}",
             f"--enable-telnet={self._yes_no(self.options.with_telnet)}",
             f"--enable-tftp={self._yes_no(self.options.with_tftp)}",
@@ -420,6 +421,9 @@ class LibcurlConan(ConanFile):
             f"--enable-ntlm={self._yes_no(self.options.with_ntlm)}",
             f"--with-zstd={self._yes_no(self.options.with_zstd)}",
         ])
+
+        if Version(self.version) < "8.23.0"
+            tc.configure_args.append(f"--enable-smb={self._yes_no(self.options.with_smb)}")
 
         # Since 7.77.0, disabling TLS must be explicitly requested otherwise it fails
         if not self.options.with_ssl:
@@ -605,7 +609,8 @@ class LibcurlConan(ConanFile):
         tc.variables["CURL_USE_LIBPSL"] = self.options.with_libpsl
         tc.variables["CURL_USE_LIBSSH2"] = self.options.with_libssh2
         tc.variables["ENABLE_ARES"] = self.options.with_c_ares
-        tc.variables["CURL_ENABLE_SMB"] = self.options.with_smb
+        if Version(self.version) < "8.23.0":
+            tc.variables["CURL_ENABLE_SMB"] = self.options.with_smb
         if not self.options.with_c_ares:
             tc.variables["ENABLE_THREADED_RESOLVER"] = self.options.with_threaded_resolver
         tc.variables["CURL_DISABLE_PROXY"] = not self.options.with_proxy
