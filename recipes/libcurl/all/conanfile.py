@@ -422,7 +422,7 @@ class LibcurlConan(ConanFile):
             f"--with-zstd={self._yes_no(self.options.with_zstd)}",
         ])
 
-        if Version(self.version) < "8.23.0"
+        if Version(self.version) < "8.23.0":
             tc.configure_args.append(f"--enable-smb={self._yes_no(self.options.with_smb)}")
 
         # Since 7.77.0, disabling TLS must be explicitly requested otherwise it fails
