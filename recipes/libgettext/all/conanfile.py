@@ -64,7 +64,7 @@ class GetTextConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libiconv/1.17")
+        self.requires("libiconv/1.18")
 
     def build_requirements(self):
         if self.settings_build.os == "Windows":
@@ -116,7 +116,7 @@ class GetTextConan(ConanFile):
             if (str(self.settings.compiler) == "Visual Studio" and Version(self.settings.compiler.version) >= "12") or \
                (str(self.settings.compiler) == "msvc" and Version(self.settings.compiler.version) >= "180"):
                 tc.extra_cflags += ["-FS"]
-           
+
             if cross_building(self) or self.settings.arch == "armv8":
                 # override guesses with known good values from a native build
                 tc.configure_args.extend([
